@@ -363,3 +363,4 @@ I'm positive there's something wrong in the thermal stress computation...to be c
 For example, the maximum thermal hoop stress should be at the inner surface. 
 Finally, the maximum thermal hoop stress computed via the formula provided in the homework file is yet to be implemented, using the design curves and the sigma_T coefficient.
 """""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
+print("Wassup")
