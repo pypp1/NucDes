@@ -92,6 +92,9 @@ def simpcomp(f, a, b, N):
 # =============================================================================================================================================================
 # PURELY MECHANICAL PROBLEM
 # =============================================================================================================================================================
+dr = int(input("\nEnter no.of points for the r vector: "))
+r = np.linspace(R_int, R_ext, dr)
+
 Def_P_flag = int(input("\nAssume default pressures (75 bar = 7.5 MPa)? (1: Yes, 0: No): "))
 if Def_P_flag == 0:
     P_int = int(input("\nSet the internal pressure (bar): "))
@@ -103,13 +106,13 @@ if Def_P_flag == 0:
 # Mariotte Solution for a thin-walled cylinder and sphere (R_int = R_ext = R)
 # ============================
 if Mar_criterion > 5:
-    Mar_flag = int(input("\nThe cylinder wall can be considered thin. Are you interested in visualizing the Mariotte solution for stress? (1: Yes, 0: No): "))
+    Mariotte_flag = int(input("\nThe cylinder wall can be considered thin. Are you interested in visualizing the Mariotte solution for stress? (1: Yes, 0: No): "))
     sigma_rM_cyl = -P_int_MPa/2                        #Compressive
     sigma_tM_cyl = R_int*P_int_MPa/t                   
     sigma_zM_cyl = R_int*P_int_MPa/(2*t)
     sigma_tM_sph = R_int*P_int_MPa/(2*t)
 
-    if Mar_flag == 1:
+    if Mariotte_flag == 1:
 
         # ======================================
         # Plotting the stress profiles: Mariotte
@@ -126,72 +129,76 @@ if Mar_criterion > 5:
         plt.grid()
         plt.show()
 
-    elif Mar_flag == 0:
+    elif Mariotte_flag == 0:
         print("Skipping Mariotte solution.")
 else:
     print("\nThe cylinder can't be considered thin. Skipping Mariotte solution.")
-
-dr = 1000
-dz = 1000
-r = np.linspace(R_int, R_ext, dr)
+    Mariotte_flag = 0
 
 # ============================ 
 # General Lamé Solution 
 # ============================
-def sigmaL_func(r):
-    if P_int != 0 and P_cpp == 0:                                                                                   # P_int only
-        sigma_rL = lambda r: - rho_i * P_int_MPa * ((R_ext**2)/(r**2) - 1)
-        sigma_tL = lambda r: rho_i * P_int_MPa * ((R_ext**2)/(r**2) + 1)
+if Mariotte_flag == 1:
+    Lame_flag = int(input("\nThe Mariotte solution for a thin cylinder has been visualized. Are you interested in the more general Lamé solution? (1: Yes, 0: No): "))
+    
+elif Mariotte_flag == 0:
+    print("Visualizing general Lamé solution.")
+    Lame_flag = 1
 
-    elif P_int == 0 and P_cpp != 0:                                                                                 # P_out only
-        sigma_rL = lambda r: rho_ii * P_cpp_MPa * ((R_int**2)/(r**2) - 1)
-        sigma_tL = lambda r: - rho_ii * P_cpp_MPa * (1 + (R_int**2)/(r**2)) 
+if Lame_flag == 1:
+    def sigmaL_func(r):
+        if P_int != 0 and P_cpp == 0:                                                                                   # P_int only
+            sigma_rL = lambda r: - rho_i * P_int_MPa * ((R_ext**2)/(r**2) - 1)
+            sigma_tL = lambda r: rho_i * P_int_MPa * ((R_ext**2)/(r**2) + 1)
 
-    elif P_int != 0 and P_cpp != 0:                                                                                 # Both P_int and P_out: more general case
-        """  
-        sigma_rL = lambda r: -(((R_int**2*R_ext**2)/(R_ext**2 - R_int**2))*((P_int_MPa-P_cpp_MPa)/r**2))+(P_int_MPa*(R_int**2))-(P_cpp_MPa*(R_ext**2))/(R_ext**2 - R_int**2)
-        sigma_tL = lambda r: (P_int_MPa*(R_int**2))-(P_cpp_MPa*(R_ext**2))/(R_ext**2 - R_int**2) + (((R_int**2*R_ext**2)/(R_ext**2 - R_int**2))*(P_int_MPa-P_cpp_MPa)/r**2)
-        """
-        sigma_rL = lambda r: (- rho_i * P_int_MPa * ((R_ext**2)/(r**2) - 1)) + (rho_ii * P_cpp_MPa * ((R_int**2)/(r**2) - 1))
-        sigma_tL = lambda r: (- rho_ii * P_cpp_MPa * (1 + (R_int**2)/(r**2))) + (rho_ii * P_cpp_MPa * (1 + (R_int**2)/(r**2)))
+        elif P_int == 0 and P_cpp != 0:                                                                                 # P_out only
+            sigma_rL = lambda r: rho_ii * P_cpp_MPa * ((R_int**2)/(r**2) - 1)
+            sigma_tL = lambda r: - rho_ii * P_cpp_MPa * (1 + (R_int**2)/(r**2)) 
 
-    if P_int == P_cpp:                                                                                              #Hydrostatic Stress Condition
-        print("\nInteral and external pressures are equal: hydrostatic stress condition is verified. Skipping.")
-        eps_z_a = (2*nu-1)*rho_ii*P_cpp_MPa/E
-        eps_z_b = (1-2*nu)*rho_i*P_int_MPa/E
+        elif P_int != 0 and P_cpp != 0:                                                                                 # Both P_int and P_out: more general case
+            sigma_rL = lambda r: (- rho_i * P_int_MPa * ((R_ext**2)/(r**2) - 1)) + (rho_ii * P_cpp_MPa * ((R_int**2)/(r**2) - 1))
+            sigma_tL = lambda r: (- rho_ii * P_cpp_MPa * (1 + (R_int**2)/(r**2))) + (rho_ii * P_cpp_MPa * (1 + (R_int**2)/(r**2)))
 
-    elif P_int != P_cpp:
-        flag_eps = int(input("Enter the stress/strain condition (1: Plane Stress, 0: Plane Strain): "))
+        if P_int == P_cpp:                                                                                              #Hydrostatic Stress Condition
+            print("\nInteral and external pressures are equal: hydrostatic stress condition is verified. Skipping.")
+            eps_z_a = (2*nu-1)*rho_ii*P_cpp_MPa/E
+            eps_z_b = (1-2*nu)*rho_i*P_int_MPa/E
 
-        if flag_eps == 1:                                                                                           #Plane Stress
-            eps_z_a = 2*nu*rho_ii*P_cpp_MPa/E
-            eps_z_b = -2*nu*rho_i*P_int_MPa/E
-        elif flag_eps == 0:                                                                                         #Plane Strain
-            eps_z_a = 0
-            eps_z_b = 0 
+        elif P_int != P_cpp:
+            flag_eps = int(input("\nEnter the stress/strain condition (1: Plane Stress, 0: Plane Strain): "))
 
-    sigma_zL_a = E*eps_z_a - 2*nu*rho_ii*P_cpp_MPa  #a) P_int = 0
-    sigma_zL_b = E*eps_z_b + 2*nu*rho_i*P_int_MPa   #b) P_cpp = 0
-    return (sigma_rL(r), sigma_tL(r), sigma_zL_a + sigma_zL_b)              #Superposition Principle
+            if flag_eps == 1:                                                                                           #Plane Stress
+                eps_z_a = 2*nu*rho_ii*P_cpp_MPa/E
+                eps_z_b = -2*nu*rho_i*P_int_MPa/E
+            elif flag_eps == 0:                                                                                         #Plane Strain
+                eps_z_a = 0
+                eps_z_b = 0 
 
-sigma_L = sigmaL_func(r)
-sigma_rL = sigma_L[0]  
-sigma_tL = sigma_L[1]
-sigma_zL = sigma_L[2]
+        sigma_zL_a = E*eps_z_a - 2*nu*rho_ii*P_cpp_MPa  #a) P_int = 0
+        sigma_zL_b = E*eps_z_b + 2*nu*rho_i*P_int_MPa   #b) P_cpp = 0
+        return (sigma_rL(r), sigma_tL(r), sigma_zL_a + sigma_zL_b)              #Superposition Principle
 
-# ======================================
-# Plotting the stress profiles: Lamé
-# ======================================
-plt.figure(figsize=(15,10))
-plt.plot(r, sigma_rL, label='Radial (r) Stress Lamé')
-plt.plot(r, sigma_tL, label=r'Hoop ($\theta$) Stress Lamé')
-plt.axhline(y=sigma_zL, color='green', label='Axial (z) Stress Lamé')
-plt.xlabel('Radius (m)')
-plt.ylabel('Stress (MPa)')
-plt.title('Stress Distribution in the cylinder wall - Lamé Solution')
-plt.legend()
-plt.grid()
-plt.show()
+    sigma_L = sigmaL_func(r)
+    sigma_rL = sigma_L[0]  
+    sigma_tL = sigma_L[1]
+    sigma_zL = sigma_L[2]
+
+    # ======================================
+    # Plotting the stress profiles: Lamé
+    # ======================================
+    plt.figure(figsize=(15,10))
+    plt.plot(r, sigma_rL, label='Radial (r) Stress Lamé')
+    plt.plot(r, sigma_tL, label=r'Hoop ($\theta$) Stress Lamé')
+    plt.axhline(y=sigma_zL, color='green', label='Axial (z) Stress Lamé')
+    plt.xlabel('Radius (m)')
+    plt.ylabel('Stress (MPa)')
+    plt.title('Stress Distribution in the cylinder wall - Lamé Solution')
+    plt.legend()
+    plt.grid()
+    plt.show()
+
+elif Lame_flag == 0:
+    print("Skipping Lamé solution.")
 
 # =============================================================================================================================================================
 # PURELY THERMAL PROBLEM - POWER IMPOSED - NO THERMAL SHIELD
@@ -207,20 +214,24 @@ q_iii = lambda r: q_0*np.exp(-mu_st*(r-R_int))     #W/(m³)
 # ======================================
 # Plotting the volumetric heat source profile 
 # ======================================
-plt.figure(figsize=(10,10))
-plt.plot(r, q_iii(r), 'k', label='Radial (r) Volumetric heat source Profile')
-plt.axvline(x=r[0], color='red', linestyle='dashed', linewidth='0.5')
-plt.axhline(y=q_iii(r[0]), color='red', linestyle='dashed', linewidth='0.5')
-plt.plot(r[0], q_iii(r[0]), '--or', label='Vessel Inner Surface Value')
-plt.axvline(x=r[-1], color='red', linestyle='dashed', linewidth='0.5')
-plt.axhline(y=q_iii(r[-1]), color='red', linestyle='dashed', linewidth='0.5')
-plt.plot(r[-1], q_iii(r[-1]), '--or', label='Vessel-Insulation Interface Value')
-plt.xlabel('Radius (m)')
-plt.ylabel(r'$q_0$ (W/m$^3$)')
-plt.title('Volumetric heat source profile across the vessel wall')
-plt.legend()
-plt.grid()
-plt.show()
+hs_flag = int(input("\nDo you want to visualize the volumetric heat source q0 inside the wall? (1: Yes, 0: No): "))
+if hs_flag == 1:
+    plt.figure(figsize=(10,10))
+    plt.axvline(x=R_int, color='black', linewidth='3', label='Vessel Inner Surface')
+    plt.axvline(x=R_ext, color='black', linewidth='3', label='Vessel Outer Surface')
+    plt.plot(r, q_iii(r), 'g', label='Radial (r) Volumetric heat source profile')
+    plt.axvline(x=r[0], color='red', linestyle='dashed', linewidth='0.5')
+    plt.axhline(y=q_iii(r[0]), color='red', linestyle='dashed', linewidth='0.5')
+    plt.plot(r[0], q_iii(r[0]), '--or', label='Vessel Inner Surface Value')
+    plt.axvline(x=r[-1], color='red', linestyle='dashed', linewidth='0.5')
+    plt.axhline(y=q_iii(r[-1]), color='red', linestyle='dashed', linewidth='0.5')
+    plt.plot(r[-1], q_iii(r[-1]), '--or', label='Vessel-Insulation Interface Value')
+    plt.xlabel('Radius (m)')
+    plt.ylabel(r'$q_0$ (W/m$^3$)')
+    plt.title('Volumetric heat source profile across the vessel wall')
+    plt.legend()
+    plt.grid()
+    plt.show()
 
 print("\nVolumetric heat source at the vessel inner surface: %.3f W/m³" %q_iii(r[0]))
 print("Volumetric heat source at the vessel-insulation interface: %.3f W/m³" %q_iii(r[-1]))
@@ -242,21 +253,21 @@ u_2 = 1/(R_th_2 + R_th_out)                                                     
 # =============================================================================================================================================================
 # NB: The thermal resistances are computed per unit length of the vessel
 # =============================================================================================================================================================
-q_0_flag = int(input("\nIs there a volumetric heat source q_0? (1: Yes, 0: No): "))
+q_0_flag = int(input("\nDo you want to account for the presence of the volumetric heat source q0 inside the wall? (1: Yes, 0: No): "))
 q_0 = q_0*q_0_flag
 
 # ======================================
 # T profile constants for the vessel: general and under adiabatic outer wall approximation (dT/dx = 0 at r = R_ext)
 # ======================================
-Disc_flag = int(input("\nDo you want to use a discretization approach along z? (1: Yes, 0: No): "))
+Disc_flag = int(input("Do you want to use a discretization approach along z? (1: Yes, 0: No): "))
 
 # ======================================
 # 1D Approach: no discretization along z
 # ======================================
 if Disc_flag == 0:
-    print("\nNo discretization along z. Assuming constant temperature of the primary fluid T1.")
+    print("No discretization along z. Assuming constant temperature of the primary fluid T1.")
     T1_flag = int(input("\nWhat temperature do you want to use as T1 to compute C1 and C2? (0: T_in, 1: T_out_avg, 2: T_out_max, 3: Logarithmic Mean, 4: T_avg): "))
-    adiab_flag = int(input("\nApply Adiabatic Outer Wall approximation? (1: Yes, 0: No): "))
+    adiab_flag = int(input("Apply Adiabatic Outer Wall approximation? (1: Yes, 0: No): "))
 
     if T1_flag == 0:
         T1 = T_in
@@ -280,7 +291,7 @@ if Disc_flag == 0:
     # 1) Discretize the thermal problem along z, obtaining an array of T1 values which will result in an array of C1 and C2 values. Then,
     # compute T(r) for each discretized z and solve the problem in a 2D scheme. This is done later on.
     # 2) Check which one is the worst case scenario (which results in the highest thermal stresses) between T_in and T_out_max, and use that 
-    # value as T1. While keeping a constant T1, this would still be a conservative approach. Clearly, it would not account for the real T profile along z.
+    # value as T1. While keeping a constant T1, this would still be a conservative approach. The choice to adopt this method is left to the user.
     # =============================================================================================================================================================
 
     # ======================================
@@ -305,48 +316,53 @@ if Disc_flag == 0:
     # ======================================
     # Plotting the wall T profiles
     # ======================================
+    T_pl_flag = int(input("\nDo you want to visualize the T profile across the vessel's wall? (1: Yes, 0: No): "))
+    
     if adiab_flag == 0:
         print("\nAverage Vessel Temperature (numerical integration): %.3f °C" %T_vessel_avg)
         #print("Average Vessel Temperature (analytical integration): %.3f °C" %T_vessel_avg_2)
         print("Maximum Vessel Temperature: %.3f °C at r = %.3f m" %(T_vessel_max, r_T_vessel_max))
-
-        plt.figure(figsize=(10,10))
-        plt.plot(r, T_vessel(r), label='Radial (r) T Profile')
-        plt.axvline(x=r_T_vessel_max, color='red', linestyle='dashed', linewidth='0.5')
-        plt.axhline(y=T_vessel_max, color='red', linestyle='dashed', linewidth='0.5')
-        plt.axvline(x=R_int, color='black', linewidth='1.5', label='Vessel Inner Surface')
-        plt.axvline(x=R_ext, color='black', linewidth='1.5', label='Vessel Outer Surface')
-        plt.plot(r_T_vessel_max, T_vessel_max,'--or',label='Max T')
-        plt.axhline(y=T_vessel_avg, color='green', label='Wall Average T')
-        plt.xlabel('Radius (m)')
-        plt.ylabel('T (K)')
-        plt.title('Wall Temperature Profile, Average and Maximum ')
-        plt.legend()
-        plt.grid()
-        plt.show()
+        if T_pl_flag == 1:
+            plt.figure(figsize=(10,10))
+            plt.axvline(x=R_int, color='black', linewidth='3', label='Vessel Inner Surface')
+            plt.axvline(x=R_ext, color='black', linewidth='3', label='Vessel Outer Surface')
+            plt.plot(r, T_vessel(r), label='Radial (r) T Profile')
+            plt.axvline(x=r_T_vessel_max, color='red', linestyle='dashed', linewidth='0.5')
+            plt.axhline(y=T_vessel_max, color='red', linestyle='dashed', linewidth='0.5')
+            plt.plot(r_T_vessel_max, T_vessel_max,'--or',label='Max T')
+            plt.axhline(y=T_vessel_avg, color='green', label='Wall Average T')
+            plt.xlabel('Radius (m)')
+            plt.ylabel('T (K)')
+            plt.title('Wall Temperature Profile, Average and Maximum ')
+            plt.legend()
+            plt.grid()
+            plt.show()
 
     elif adiab_flag == 1:
         print("\nAverage Vessel Temperature under Adiabatic Outer Wall approximation (numerical integration): %.3f °C" %T_vessel_avg)
         #print("Average Vessel Temperature under Adiabatic Outer Wall approximation (analytical integration): %.3f °C" %T_vessel_avg_2)
         print("Maximum Vessel Temperature under Adiabatic Outer Wall approximation: %.3f °C at r = %.3f m" %(T_vessel_max, r_T_vessel_max))
-
-        # ======================================
-        # Under Adiabatic Outer Wall Approximation
-        # ======================================
-        plt.figure(figsize=(10,10))
-        plt.plot(r, T_vessel(r), label='Radial (r) T Profile')
-        plt.axvline(x=r_T_vessel_max, color='red', linestyle='dashed', linewidth='0.5')
-        plt.axhline(y=T_vessel_max, color='red', linestyle='dashed', linewidth='0.5')
-        plt.axvline(x=R_int, color='black', linewidth='1.5', label='Vessel Inner Surface')
-        plt.axvline(x=R_ext, color='black', linewidth='1.5', label='Vessel Outer Surface')
-        plt.plot(r_T_vessel_max, T_vessel_max,'--or', label='Max T')
-        plt.axhline(y=T_vessel_avg, color='green', label='Wall Average T')
-        plt.xlabel('Radius (m)')
-        plt.ylabel('T (K)')
-        plt.title('Wall Temperature Profile, Average and Maximum under AOW Approximation ')
-        plt.legend()
-        plt.grid()
-        plt.show()
+        if T_pl_flag == 1:
+            
+            # ======================================
+            # Under Adiabatic Outer Wall Approximation
+            # ======================================
+            plt.figure(figsize=(10,10))
+            plt.axvline(x=R_int, color='black', linewidth='3', label='Vessel Inner Surface')
+            plt.axvline(x=R_ext, color='black', linewidth='3', label='Vessel Outer Surface')
+            plt.plot(r, T_vessel(r), label='Radial (r) T Profile')
+            plt.axvline(x=r_T_vessel_max, color='red', linestyle='dashed', linewidth='0.5')
+            plt.axhline(y=T_vessel_max, color='red', linestyle='dashed', linewidth='0.5')
+            plt.axvline(x=R_int, color='black', linewidth='3', label='Vessel Inner Surface')
+            plt.axvline(x=R_ext, color='black', linewidth='3', label='Vessel Outer Surface')
+            plt.plot(r_T_vessel_max, T_vessel_max,'--or', label='Max T')
+            plt.axhline(y=T_vessel_avg, color='green', label='Wall Average T')
+            plt.xlabel('Radius (m)')
+            plt.ylabel('T (K)')
+            plt.title('Wall Temperature Profile, Average and Maximum under AOW Approximation ')
+            plt.legend()
+            plt.grid()
+            plt.show()
     
     # ======================================
     # Thermal stresses computation
@@ -363,7 +379,7 @@ if Disc_flag == 0:
 
     sigma_th_max = max(sigma_t_th)
     r_sigma_th_max = r[np.argmax(sigma_t_th)]
-    print("\nMaximum Thermal Hoop Stress: %.3f Mpa at r = %.3f m" %(sigma_th_max, r_sigma_th_max))
+    print("Maximum Thermal Hoop Stress: %.3f Mpa at r = %.3f m" %(sigma_th_max, r_sigma_th_max))
     #sigma_th_max_SIMP = max(sigma_t_th_SIMP(r))
     #r_sigma_th_max_SIMP = r[np.argmax(sigma_t_th_SIMP(r))]
     #print("Maximum Thermal Hoop Stress (Simplified formula): %.3f Mpa at r = %.3f m" %(sigma_th_max_SIMP, r_sigma_th_max_SIMP))
@@ -371,34 +387,41 @@ if Disc_flag == 0:
     # ======================================
     # Plotting the thermal stress profiles
     # ======================================
-    plt.figure(figsize=(10,10))
-    plt.plot(r, sigma_r_th, linewidth='0.75', label='Radial (r) Thermal Stress Profile')
-    plt.plot(r, sigma_t_th, linewidth='0.75', label='Hoop (θ) Thermal Stress Profile')
-    #plt.plot(r, sigma_t_th_SIMP(r), label='Simplified Hoop (θ) Thermal Stress Profile')
-    plt.plot(r, sigma_z_th, color='green', linewidth='0.5', label='Axial (z) Thermal Stress Profile')
-    plt.axhline(y=0, color='black', linewidth='1', label='y=0')
-    plt.axvline(x=r_sigma_th_max, color='red', linestyle='dashed', linewidth='0.5')
-    plt.axhline(y=sigma_th_max, color='red', linestyle='dashed', linewidth='0.5')
-    #plt.axvline(x=r_sigma_th_max_SIMP, color='cyan', linestyle='dashed', linewidth='0.5')
-    #plt.axhline(y=sigma_th_max_SIMP, color='cyan', linestyle='dashed', linewidth='0.5')
-    plt.plot(r_sigma_th_max, sigma_th_max,'--or', label='Max Hoop Stress')
-    #plt.plot(r_sigma_th_max_SIMP, sigma_th_max_SIMP,'--oc', label='Simplified Max Hoop Stress')
-    plt.xlabel('Radius (m)')
-    plt.ylabel('Thermal Stress (MPa)')
-    plt.title('Wall Thermal Stress Profiles and Maximum Hoop Stress')
-    plt.legend()
-    plt.grid()
-    plt.show()
-
+    sigma_th_pl_flag = int(input("\nDo you want to visualize a plot of the thermal stress profiles? (1: Yes, 0: No): "))
+    if sigma_th_pl_flag == 1:
+        plt.figure(figsize=(10,10))
+        plt.axvline(x=R_int, color='black', linewidth='3', label='Vessel Inner Surface')
+        plt.axvline(x=R_ext, color='black', linewidth='3', label='Vessel Outer Surface')
+        plt.plot(r, sigma_r_th, linewidth='0.75', label='Radial (r) Thermal Stress Profile')
+        plt.plot(r, sigma_t_th, linewidth='0.75', label='Hoop (θ) Thermal Stress Profile')
+        plt.plot(r, sigma_t_th_SIMP(r), label='Simplified Hoop (θ) Thermal Stress Profile')
+        plt.plot(r, sigma_z_th, color='green', linewidth='0.5', label='Axial (z) Thermal Stress Profile')
+        plt.axhline(y=0, color='black', linewidth='1', label='y=0')
+        plt.axvline(x=r_sigma_th_max, color='red', linestyle='dashed', linewidth='0.5')
+        plt.axhline(y=sigma_th_max, color='red', linestyle='dashed', linewidth='0.5')
+        plt.plot(r_sigma_th_max, sigma_th_max,'--or', label='Max Hoop Stress')
+        #plt.axvline(x=r_sigma_th_max_SIMP, color='cyan', linestyle='dashed', linewidth='0.5')
+        #plt.axhline(y=sigma_th_max_SIMP, color='cyan', linestyle='dashed', linewidth='0.5')
+        #plt.plot(r_sigma_th_max_SIMP, sigma_th_max_SIMP,'--oc', label='Simplified Max Hoop Stress')
+        plt.xlabel('Radius (m)')
+        plt.ylabel('Thermal Stress (MPa)')
+        plt.title('Wall Thermal Stress Profiles and Maximum Hoop Stress')
+        plt.legend()
+        plt.grid()
+        plt.show()
     # =============================================================================================================================================================
     # The maximum thermal hoop stress computed via the formula provided in the homework file is yet to be implemented, using the design curves and the sigma_T coefficient.
     # =============================================================================================================================================================
 
+    # =============================================================================================================================================================
+    # CHECK FOR NEGATIVE THERMAL FLUX VALUES AND EXPECTED PROFILES
+    # =============================================================================================================================================================
 elif Disc_flag == 1:
     
     # ======================================
     # T discretization along z
     # ======================================
+    dz = int(input("Enter no. of points for the T_z vector: "))
     T_z = np.linspace(T_in, T_out_avg, dz)
     adiab_flag = int(input("\nApply Adiabatic Outer Wall approximation? (1: Yes, 0: No): "))
 
