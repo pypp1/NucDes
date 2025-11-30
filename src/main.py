@@ -8,7 +8,7 @@ from scipy import integrate
 # ============================
 D_barr_ext = 2.5       #m
 D_vess_int = 3.0       #m
-t_th_ins = 5.0         #cm 
+t_th_ins = 0.05        #m 
 k_th_ins = 1.4         #W/mK
 
 # ============================
@@ -138,7 +138,9 @@ if Mar_criterion > 5:
         # Plotting the stress profiles: Mariotte
         # ======================================
         plt.figure(figsize=(15,10))
-        plt.xlim(R_int, R_ext)
+        #plt.xlim(R_int, R_ext)
+        plt.axvline(x = R_int, color='black', linewidth='3', label='Vessel Inner Surface')
+        plt.axvline(x = R_ext, color='black', linewidth='3', label='Vessel Outer Surface')
         plt.axhline(y = sigma_rM_cyl, color='red', label='Radial (r) Stress Mariotte')
         plt.axhline(y = sigma_tM_cyl, color='blue', label=r'Hoop ($\theta$) Stress Mariotte')
         plt.axhline(y = sigma_zM_cyl, color='green', label='Axial (z) Stress Mariotte')
@@ -219,6 +221,8 @@ if Lame_flag == 1:
     # Plotting the stress profiles: Lamé
     # ======================================
     plt.figure(figsize=(15,10))
+    plt.axvline(x = R_int, color='black', linewidth='3', label='Vessel Inner Surface')
+    plt.axvline(x = R_ext, color='black', linewidth='3', label='Vessel Outer Surface')
     plt.plot(r, sigma_rL, label='Radial (r) Stress Lamé')
     plt.plot(r, sigma_tL, label=r'Hoop ($\theta$) Stress Lamé')
     plt.axhline(y = sigma_zL, color='green', label='Axial (z) Stress Lamé')
@@ -426,9 +430,9 @@ if Disc_flag == 0:
             print(e)
     
     if adiab_flag == 0:
-        print("\nAverage Vessel Temperature (numerical integration): %.3f °C" %T_vessel_avg)
+        print("\nAverage Vessel Temperature (numerical integration): %.3f °C" %(T_vessel_avg - 273.15))
         #print("Average Vessel Temperature (analytical integration): %.3f °C" %T_vessel_avg_2)
-        print("Maximum Vessel Temperature: %.3f °C at r = %.3f m" %(T_vessel_max, r_T_vessel_max))
+        print("Maximum Vessel Temperature: %.3f °C at r = %.3f m" %(T_vessel_max - 273.15, r_T_vessel_max))
         if T_pl_flag == 1:
             plt.figure(figsize=(10,10))
             plt.axvline(x = R_int, color='black', linewidth='3', label='Vessel Inner Surface')
@@ -444,9 +448,9 @@ if Disc_flag == 0:
             plt.show()
 
     elif adiab_flag == 1:
-        print("\nAverage Vessel Temperature under Adiabatic Outer Wall approximation (numerical integration): %.3f °C" %T_vessel_avg)
+        print("\nAverage Vessel Temperature under Adiabatic Outer Wall approximation (numerical integration): %.3f °C" %(T_vessel_avg - 273.15))
         #print("Average Vessel Temperature under Adiabatic Outer Wall approximation (analytical integration): %.3f °C" %T_vessel_avg_2)
-        print("Maximum Vessel Temperature under Adiabatic Outer Wall approximation: %.3f °C at r = %.3f m" %(T_vessel_max, r_T_vessel_max))
+        print("Maximum Vessel Temperature under Adiabatic Outer Wall approximation: %.3f °C at r = %.3f m" %(T_vessel_max - 273.15, r_T_vessel_max))
         if T_pl_flag == 1:
             
             # ======================================
