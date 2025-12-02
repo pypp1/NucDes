@@ -482,7 +482,7 @@ if Disc_flag == 0:
     for i in range(len(r)):
         sigma_r_th[i] = (E*alpha_l/(1-nu))*(1/(r[i]**2)) * (( ((r[i]**2)-(R_int**2))/((R_ext**2)-(R_int**2)) ) * simpcomp(f, R_int, R_ext, dr) - simpcomp(f, R_int, r[i], dr))
         sigma_t_th[i] = (E*alpha_l/(1-nu))*(1/(r[i]**2)) * (( (((r[i]**2)+(R_int**2))/((R_ext**2)-(R_int**2)) ) * simpcomp(f, R_int, R_ext, dr)) + simpcomp(f, R_int, r[i], dr) - T_vessel(r[i])*(r[i]**2))
-    sigma_t_th_SIMP = lambda r: (E*alpha_l/(1-nu))*((T_vessel_avg + 273.15) - T_vessel(r))   #Simplified formula assuming average T
+    sigma_t_th_SIMP = lambda r: (E*alpha_l/(1-nu))*(T_vessel_avg - T_vessel(r))              #Simplified formula assuming average T
     sigma_z_th = sigma_r_th + sigma_t_th                                                     #Superposition principle under the hypothesis of long, hollow cylinder with load-free ends
 
     sigma_th_max = max(sigma_t_th)
@@ -622,7 +622,6 @@ elif Disc_flag == 1:
             # ======================================
             ff = lambda rr: (-((q_0/(k_st*mu_st**2)) * np.exp(-mu_st * (rr - R_int))) + C1[i] * (rr - R_int) + C2[i])*rr
             for j in range(dr):
-                print(j)
                 sigma_r_th[i, j] = (E*alpha_l/(1-nu))*(1/(r[j]**2)) * (( ((r[j]**2)-(R_int**2))/((R_ext**2)-(R_int**2)) ) * simpcomp(ff, R_int, R_ext, dr) - simpcomp(ff, R_int, r[j], dr))
                 sigma_t_th[i, j] = (E*alpha_l/(1-nu))*(1/(r[j]**2)) * (( (((r[j]**2)+(R_int**2))/((R_ext**2)-(R_int**2)) ) * simpcomp(ff, R_int, R_ext, dr)) + simpcomp(ff, R_int, r[j], dr) - T_vessel_r_lamb(r[j])*(r[j]**2))
                 sigma_t_th_SIMP[i, j] = (E*alpha_l/(1-nu))*(T_vessel_avg_arr[i] - T_vessel_r_lamb(r[j]))   
@@ -742,7 +741,7 @@ elif Disc_flag == 1:
     plt.title('Simplified Hoop Stress Map (r vs T$_z$)')
     plt.tight_layout()
 
-    plt.subplot(1,4,4)
+    plt.subplot(1,4,3)
     pcm = plt.pcolormesh(R_mesh, T_z_mesh, sigma_z_th, shading='auto', cmap='viridis')
     plt.colorbar(pcm, label=r'$\sigma$ (MPa)')
     plt.xlabel('Radius (m)')
