@@ -10,13 +10,14 @@ D_barr_ext = 2.5       #m
 D_vess_int = 3.0       #m
 t_th_ins = 0.05        #m 
 k_th_ins = 1.4         #W/mK
+L = 7                  #m
 
 # ============================
 # Primary fluid
 # ============================
-T_in = 214                 #°C
-T_out_avg = 254            #°C
-T_out_max = 270            #°C
+T_in = 214 + 273.15        #K
+T_out_avg = 254 + 273.15   #K
+T_out_max = 270 + 273.15   #K
 P_int = 75                 #bar
 m_flr = 3227               #kg/s
 Cp = 4534                  #J/(kg·K)
@@ -27,7 +28,7 @@ k = 0.658                  #W/(m·K)
 # ============================
 # Containment (CPP) water
 # ============================
-T_cpp = 70                      #°C
+T_cpp = 70 + 273.15             #K
 P_cpp = 75                      #bar
 Cp_cpp = 4172.5                 #J/(kg·K)
 rho_cpp = 981.2                 #kg/m³
@@ -286,16 +287,16 @@ print("Volumetric heat source at the vessel-insulation interface: %.3f W/m³" %q
 Pr = (Cp*mu)/k                                                                              #Prandtl number                                        
 Re = (rho*v*D_vess_int)/mu                                                                  #Reynolds number
 Nu_1 = 0.023*(Re**0.8)*(Pr**0.4)                                                            #Dittus-Boelter equation for forced convection
-Gr = (rho**2)*9.81*beta_cpp*DeltaT*(D_vess_int**3)/(mu**2)                                  #Grashof number
+Gr = (rho**2)*9.81*beta_cpp*DeltaT*((D_vess_int + 2*t)**3)/(mu**2)                          #Grashof number (Uses the external diameter as characteristic length, might wanna use L though?)
 Nu_2 = 0.13*((Gr*Pr)**(1/3))                                                                #McAdams correlation for natural convection
 h_1 = (Nu_1*k)/D_vess_int                                                                   #W/(m²·K)
 h_2 = (Nu_2*k)/D_vess_int                                                                   #W/(m²·K)
-R_th_2 = (1/(2*np.pi*k_th_ins))*np.log((R_ext + t_th_ins)/(R_ext))                          #Thermal Resistance of the insulation layer
-R_th_out = 1/(h_2*2*np.pi*(R_ext + t_th_ins))                                               #Thermal Resistance of the outer convective layer
+R_th_2 = (1/(2*np.pi*k_th_ins*L))*np.log((R_ext + t_th_ins)/R_ext)                          #Thermal Resistance of the insulation layer
+R_th_out = 1/(h_2*2*np.pi*L*(R_ext + t_th_ins))                                             #Thermal Resistance of the outer convective layer
 u_2 = 1/(R_th_2 + R_th_out)                                                                 #Overall heat transfer coefficient outside the vessel
 
 # =============================================================================================================================================================
-# NB: The thermal resistances are computed per unit length of the vessel
+# NB: The thermal resistances were computed per unit length of the vessel until L = 7m was given in class
 # =============================================================================================================================================================
 while True:
     try:
@@ -310,7 +311,7 @@ while True:
 q_0 = q_0*q_0_flag
 
 # ======================================
-# T profile constants for the vessel: general and under adiabatic outer wall approximation (dT/dx = 0 at r = R_ext)
+# Discretization Check
 # ======================================
 while True:
     try:
@@ -327,10 +328,10 @@ while True:
 # 1D Approach: no discretization along z
 # ======================================
 if Disc_flag == 0:
-    print("No discretization along z. Assuming constant temperature of the primary fluid T1.")
+    print("No discretization along z. Assuming constant temperature of the primary fluid T1 = T_in.")
     while True:
         try:
-            T1_flag = int(input("\nWhat temperature do you want to use as T1 to compute C1 and C2? (0: T_in, 1: T_out_avg, 2: T_out_max, 3: T_avg, 4: T_avg_log): "))
+            T1_flag = int(input("\nWhat temperature do you want to use as T1 to compute C1 and C2? (0: T_in, 1: T_in + 10%, 2: T_in + 20%, 3: T_avg, 4: T_out_avg): "))
             if T1_flag not in (0, 1, 2, 3, 4):
                 raise RuntimeError("Invalid input! Please enter one of the allowed values: 1, 2, 3, 4.")
             break  
@@ -349,31 +350,33 @@ if Disc_flag == 0:
         except RuntimeError as e:
             print(e)
 
-    if T1_flag == 0:                #All these temperatures are expressed in K for good measure
-        T1 = T_in + 273.15
+    if T1_flag == 0:                #All these temperatures are expressed in K. T_out_max and T_avg_log have been discarded in favor of margins on T_in, to account for transients due to the system's geometry
+        T1 = T_in
     elif T1_flag == 1:
-        T1 = T_out_avg + 273.15
+        T1 = T_in * 1.1
     elif T1_flag == 2:
-        T1 = T_out_max + 273.15
+        T1 = T_in * 1.2
     elif T1_flag == 3:
-        T1 = ((T_in + T_out_avg)/2) + 273.15
+        T1 = ((T_in + T_out_avg)/2)
     elif T1_flag == 4:
-        T1 = (T_in - T_out_avg)/np.log((T_in + 273.15)/(T_out_avg + 273.15))
-
+        T1 = T_out_avg
+    
+    # ======================================
+    # T profile constants for the vessel: general and under adiabatic outer wall approximation (dT/dx = 0 at r = R_ext)
+    # ======================================
     if adiab_flag == 0:
-        C1 = ((q_0/(k_st*mu_st**2))*(np.exp(-mu_st*t)-1)-(q_0/mu_st)*((1/h_1)+(np.exp(-mu_st*t)/u_2))-(T1-(T_cpp + 273.15)))/(t+(k_st/h_1)+(k_st/u_2))
+        C1 = ((q_0/(k_st*mu_st**2))*(np.exp(-mu_st*t)-1)-(q_0/mu_st)*((1/h_1)+(np.exp(-mu_st*t)/u_2))-(T1-T_cpp))/(t+(k_st/h_1)+(k_st/u_2))
+
     elif adiab_flag == 1:
         C1 = -((q_0/(k_st*mu_st))*np.exp(-mu_st*t))
+
     C2 = T1 + (q_0/(h_1*mu_st)) + C1*(k_st/h_1) + (q_0/(k_st*mu_st**2))
     # =============================================================================================================================================================
-    # This approach uses a constant T1 to compute C1 and C2, but T of the primary fluid changes along z...More logical ways to proceed would be:
+    # This approach uses a constant T1 to compute C1 and C2, but T of the primary fluid changes along z... So, one could:
 
     # 1) Discretize the thermal problem along z, obtaining an array of T1 values which will result in an array of C1 and C2 values. Then,
     # compute T(r) for each discretized z and solve the problem in a 2D scheme. This is done later on.
-    # 2) Check which one is the worst case scenario (which results in the highest thermal stresses) between T_in and T_out_max, and use that 
-    # value as T1. While keeping a constant T1, this would still be a conservative approach. The choice to adopt this method is left to the user.
-
-    # EDIT: T_IN SEEMS TO MAKE THE MOST SENSE DUE TO THE SYSTEM'S GEOMETRY, ALL OTHER OPTIONS MIGHT BE DISCARDED BUT ARE STILL LEFT IN THE CODE AS OF NOW.
+    # 2) Simply keep T_in due to the geometry of the system and the characteristic time scales involved. At most, one could add some margin for transients.
     # =============================================================================================================================================================
 
     # ======================================
@@ -389,11 +392,11 @@ if Disc_flag == 0:
     # Thermal power fluxes (kW/m²) on the inner and outer vessel surface
     # ======================================
     DeltaT_1 = T1 - T_vessel(r[0])
+
     str1 = "\nT1 = T_in has been assumed: a logarithmic mean DeltaT could thus be useful to account for the T profile along z in an approximate way, even though the vessel wall temperature is not constant."
     str2 = "The heat flux computed with the regular DeltaT will still be displayed."
     str3 = "Do you want to adopt such an approach? (1: Yes, 0: No): "
     prompt = "\n".join([str1, str2, str3]) + " "
-    
     if T1_flag == 0:
         while True:
             try:
@@ -406,11 +409,11 @@ if Disc_flag == 0:
             except RuntimeError as e:
                 print(e)
         if LogDelta_flag == 1:
-            DeltaT_LM1 = ((T1-T_vessel(r[0]))-((T_out_avg + 273.15)-T_vessel(r[0])))/(np.log((T1-T_vessel(r[0]))/((T_out_avg + 273.15)-T_vessel(r[0]))))        #Log Mean Temperature Difference to account for T change along z, instead of just using T1-T_wall
+            DeltaT_LM1 = ((T1-T_vessel(r[0]))-(T_out_avg-T_vessel(r[0])))/(np.log((T1-T_vessel(r[0]))/(T_out_avg-T_vessel(r[0]))))        #Log Mean Temperature Difference to account for T change along z, instead of just using T1-T_wall
             q_s1_log = h_1*DeltaT_LM1/1000                                                                                                                      #kW/m²
             print("\nThermal power flux on the inner vessel surface - Logarithmic Mean DeltaT Approach: %.3f kW/m²" %q_s1_log)
     q_s1 = h_1*DeltaT_1/1000                                                                                                                                    #kW/m²
-    q_s2 = u_2*(T_vessel(r[-1])-(T_cpp + 273.15))/1000                                                                                                          #kW/m²
+    q_s2 = u_2*(T_vessel(r[-1])-T_cpp)/1000                                                                                                                     #kW/m²
 
     print("\nThermal power flux on the inner vessel surface: %.3f kW/m²" %q_s1)
     print("Thermal power flux on the outer vessel surface: %.3f kW/m²" %q_s2)
@@ -446,7 +449,7 @@ if Disc_flag == 0:
             plt.legend()
             plt.grid()
             plt.show()
-
+        
     elif adiab_flag == 1:
         print("\nAverage Vessel Temperature under Adiabatic Outer Wall approximation (numerical integration): %.3f °C" %(T_vessel_avg - 273.15))
         #print("Average Vessel Temperature under Adiabatic Outer Wall approximation (analytical integration): %.3f °C" %T_vessel_avg_2)
@@ -468,7 +471,7 @@ if Disc_flag == 0:
             plt.legend()
             plt.grid()
             plt.show()
-    
+        
     # ======================================
     # Thermal stresses computation
     # ======================================
@@ -574,7 +577,7 @@ elif Disc_flag == 1:
     # T discretization along z
     # ======================================
     dz = 1000
-    T_z = np.linspace(T_in + 273.15, T_out_avg + 273.15, dz)
+    T_z = np.linspace(T_in, T_out_avg, dz)
     while True:
         try:
             adiab_flag = int(input("\nApply Adiabatic Outer Wall approximation? (1: Yes, 0: No): "))
@@ -587,7 +590,7 @@ elif Disc_flag == 1:
             print(e)
 
     if adiab_flag == 0:
-        C1 = ((q_0/(k_st*mu_st**2))*(np.exp(-mu_st*t)-1)-(q_0/mu_st)*((1/h_1)+(np.exp(-mu_st*t)/u_2))-(T_z - (T_cpp + 273.15)))/(t+(k_st/h_1)+(k_st/u_2))      # Make C1 a 1D array aligned with T_z (avoid wrapping in another dimension)
+        C1 = ((q_0/(k_st*mu_st**2))*(np.exp(-mu_st*t)-1)-(q_0/mu_st)*((1/h_1)+(np.exp(-mu_st*t)/u_2))-(T_z - T_cpp))/(t+(k_st/h_1)+(k_st/u_2))      # Make C1 a 1D array aligned with T_z (avoid wrapping in another dimension)
     elif adiab_flag == 1:
         C1 = np.full_like(T_z, -((q_0/(k_st*mu_st)) * np.exp(-mu_st*t)))                                                                                       # Constant C1 for all z points -> replicate to match T_z shape
     C2 = T_z + (q_0/(h_1*mu_st)) + C1 * (k_st/h_1) + (q_0/(k_st*mu_st**2))                                                                                     # C2 should also be a 1D array matching T_z
@@ -646,7 +649,7 @@ elif Disc_flag == 1:
     for i in range(len(T_z)):
         DeltaT_1[i] = T_z[i] - T_vessel_Mat[i, 0]                               #Between the vessel's inner surface and the primary fluid
         q_s1[i] = h_1*DeltaT_1[i]/1000                                          #kW/m²
-        q_s2[i] = u_2*(T_vessel_Mat[i, -1]-(T_cpp + 273.15))/1000               #kW/m²
+        q_s2[i] = u_2*(T_vessel_Mat[i, -1]-T_cpp)/1000               #kW/m²
     
     print("\nThermal power flux on the inner vessel surface: \nMin: %.3f kW/m² \nMax: %.3f kW/m²" %(np.min(q_s1),np.max(q_s1)))
     print("\nThermal power flux on the outer vessel surface: \nMin: %.3f kW/m² \nMax: %.3f kW/m²" %(np.min(q_s2),np.max(q_s2)))
