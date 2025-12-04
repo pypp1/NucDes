@@ -164,10 +164,49 @@ else:
 # ============================ 
 # General Lamé Solution 
 # ============================
+def sigmaL_func(r):
+    
+    A = ((P_int_MPa*(R_int**2))-(P_cpp_MPa*(R_ext**2)))/((R_ext**2)-(R_int**2))
+    B = (((R_int**2)*(R_ext**2))/((R_ext**2)-(R_int**2)))*(P_int_MPa-P_cpp_MPa)
+    sigma_rL = lambda r: A + B/(r**2)
+    sigma_tL = lambda r: A - B/(r**2)
+
+    if P_int == P_cpp:                                                                                              #Hydrostatic Stress Condition
+        print("\nInteral and external pressures are equal: hydrostatic stress condition is verified. Skipping.")
+        eps_z_a = (2*nu-1)*rho_ii*P_cpp_MPa/E
+        eps_z_b = (1-2*nu)*rho_i*P_int_MPa/E
+
+    elif P_int != P_cpp:
+        while True:
+            try:
+                flag_eps = int(input("\nEnter the stress/strain condition (1: Plane Stress, 0: Plane Strain): "))
+                if flag_eps not in (0, 1):
+                    raise RuntimeError("Invalid input! Please enter either 0 or 1.")
+                break  
+            except ValueError:
+                print("Please enter a valid integer.")
+            except RuntimeError as e:
+                print(e)
+        if flag_eps == 1:                                                                                           #Plane Stress
+            eps_z_a = 2*nu*rho_ii*P_cpp_MPa/E
+            eps_z_b = -2*nu*rho_i*P_int_MPa/E
+        elif flag_eps == 0:                                                                                         #Plane Strain
+            eps_z_a = 0
+            eps_z_b = 0 
+
+    sigma_zL_a = E*eps_z_a - 2*nu*rho_ii*P_cpp_MPa  #a) P_int = 0
+    sigma_zL_b = E*eps_z_b + 2*nu*rho_i*P_int_MPa   #b) P_cpp = 0
+    return (sigma_rL(r), sigma_tL(r), sigma_zL_a + sigma_zL_b)              #Superposition Principle
+
+sigma_L = sigmaL_func(r)
+sigma_rL = sigma_L[0]  
+sigma_tL = sigma_L[1]
+sigma_zL = sigma_L[2]
+
 if Mariotte_flag == 1:
     while True:
         try:
-            Lame_flag = int(input("\nThe Mariotte solution for a thin cylinder has been visualized. Are you interested in the more general Lamé solution? (1: Yes, 0: No): "))
+            Lame_flag = int(input("\nThe Mariotte solution for a thin cylinder has been visualized. Are you interested in visualizing the more general Lamé solution? (1: Yes, 0: No): "))
             if Lame_flag not in (0, 1):
                 raise RuntimeError("Invalid input! Please enter either 0 or 1.")
             break  
@@ -175,51 +214,12 @@ if Mariotte_flag == 1:
             print("Please enter a valid integer.")
         except RuntimeError as e:
             print(e)
-    
+
 elif Mariotte_flag == 0:
     print("Visualizing general Lamé solution.")
     Lame_flag = 1
 
 if Lame_flag == 1:
-    def sigmaL_func(r):
-        
-        A = ((P_int_MPa*(R_int**2))-(P_cpp_MPa*(R_ext**2)))/((R_ext**2)-(R_int**2))
-        B = (((R_int**2)*(R_ext**2))/((R_ext**2)-(R_int**2)))*(P_int_MPa-P_cpp_MPa)
-        sigma_rL = lambda r: A + B/(r**2)
-        sigma_tL = lambda r: A - B/(r**2)
-
-        if P_int == P_cpp:                                                                                              #Hydrostatic Stress Condition
-            print("\nInteral and external pressures are equal: hydrostatic stress condition is verified. Skipping.")
-            eps_z_a = (2*nu-1)*rho_ii*P_cpp_MPa/E
-            eps_z_b = (1-2*nu)*rho_i*P_int_MPa/E
-
-        elif P_int != P_cpp:
-            while True:
-                try:
-                    flag_eps = int(input("\nEnter the stress/strain condition (1: Plane Stress, 0: Plane Strain): "))
-                    if flag_eps not in (0, 1):
-                        raise RuntimeError("Invalid input! Please enter either 0 or 1.")
-                    break  
-                except ValueError:
-                    print("Please enter a valid integer.")
-                except RuntimeError as e:
-                    print(e)
-            if flag_eps == 1:                                                                                           #Plane Stress
-                eps_z_a = 2*nu*rho_ii*P_cpp_MPa/E
-                eps_z_b = -2*nu*rho_i*P_int_MPa/E
-            elif flag_eps == 0:                                                                                         #Plane Strain
-                eps_z_a = 0
-                eps_z_b = 0 
-
-        sigma_zL_a = E*eps_z_a - 2*nu*rho_ii*P_cpp_MPa  #a) P_int = 0
-        sigma_zL_b = E*eps_z_b + 2*nu*rho_i*P_int_MPa   #b) P_cpp = 0
-        return (sigma_rL(r), sigma_tL(r), sigma_zL_a + sigma_zL_b)              #Superposition Principle
-
-    sigma_L = sigmaL_func(r)
-    sigma_rL = sigma_L[0]  
-    sigma_tL = sigma_L[1]
-    sigma_zL = sigma_L[2]
-
     # ======================================
     # Plotting the stress profiles: Lamé
     # ======================================
@@ -645,7 +645,7 @@ if Disc_flag == 0:
     if Mar_criterion > 5:
         while True:
             try:
-                ThinTubes_flag = int(input("\nThe cylinder wall can be considered thin. Are you interested in the thin limits for Elastic Instability and Plastic Collapse? (1: Yes, 0: No): "))
+                ThinTubes_flag = int(input("\nThe cylinder wall can be considered thin. Are you interested in the thin tube limits for Elastic Instability and Plastic Collapse? (1: Yes, 0: No): "))
                 if ThinTubes_flag not in (0, 1):
                     raise RuntimeError("Invalid input! Please enter either 0 or 1.")
                 break  
@@ -683,24 +683,29 @@ if Disc_flag == 0:
         print("Adopting Corradi Design Procedure.")
         Corradi_flag = 1
 
+    q_E_fun = lambda Dt: 2 * (E/(1-(nu**2))) * (1/(Dt*((Dt-1)**2)))     #Elastic Instability Limit for Thick Tubes
+    q_0_fun = lambda Dt: 2 * Yield_stress * 1/Dt * (1+(1/(2*Dt)))       #Plastic Collapse Limit for Thick Tubes
+    Dt_Crit_Ratio = np.sqrt(E/(Yield_stress*(1-(nu**2))))
+    Dt_ratio_plot = np.linspace(2,50,1000)
+    Current_Slenderness = (D_vess_int+2*t)/t
+
     if Corradi_flag == 1:
+
         # ============================ 
         # Corradi Design Procedure
         # ============================
-        q_E_fun = lambda Dt: 2 * (E/(1-(nu**2))) * (1/(Dt*((Dt-1)**2)))     #Elastic Instability Limit for Thick Tubes
-        q_0_fun = lambda Dt: 2 * Yield_stress * 1/Dt * (1+(1/(2*Dt)))       #Plastic Collapse Limit for Thick Tubes
-        
         def Corradi(Slenderness):
-            print("\nAdopting Corradi Design Procedure.")
+            if ThinTubes_flag == 1:
+                print("Adopting Corradi Design Procedure.")
             if isinstance(Slenderness, np.ndarray):
                 while True:
                     try:
-                        s = int(input("Please enter a safety factor between 1.5 and 2: "))
+                        s = float(input("Please enter a safety factor between 1.5 and 2: "))
                         if s < 1.5 or s > 2:
                             raise RuntimeError("Invalid input! Please enter a safety factor between 1.5 and 2.")
                         break  
                     except ValueError:
-                        print("Please enter a valid integer.")
+                        print("Please enter a valid float.")
                     except RuntimeError as e:
                         print(e)
                 mu = np.zeros(len(Slenderness))
@@ -720,55 +725,102 @@ if Disc_flag == 0:
                 q_a = q_C/s
             else:
                 raise TypeError("The 1st input must be a numpy array.")
-            return (q_C, q_a)
+            if len(q_C) == 1:
+                q_C = q_C.item()
+            if len(q_a) == 1:
+                q_a = q_a.item()
+            if len(mu) == 1:
+                mu = mu.item()
+            return (q_C, q_a, s, mu)
         
         # ============================ 
         # Corradi Design Procedure Results
         # ============================
-        Dt_Crit_Ratio = np.sqrt(E/(Yield_stress*(1-(nu**2))))
-        Dt_ratio_plot = np.linspace(2,50,1000)
-        Current_Slenderness = (D_vess_int+2*t)/t
-        Corradi_results = Corradi(Dt_ratio_plot)
         Corradi_vessel = Corradi(np.array([Current_Slenderness]))
         print("\nAccording to the Corradi Design Procedure:")
-        print("The theoretical limit for collapse pressure, accounting for ovality, is: q_c = %.3f MPa = %.3f bar" %(Corradi_vessel[0],10*Corradi_vessel[0]))
-        print("The allowable external pressure is thus: q_a = %.3f MPa = %.3f bar" %(Corradi_vessel[1], 10*Corradi_vessel[1]))
+        print("The theoretical limit for collapse pressure, accounting for ovality, is: q_c = %.3f MPa = %.3f bar" %(Corradi_vessel[0], 10*Corradi_vessel[0]))
+        print("A safety factor s = %.3f was assumed. \nThe allowable external pressure is thus: q_a = %.3f MPa = %.3f bar" %(Corradi_vessel[2], Corradi_vessel[1], 10*Corradi_vessel[1]))
     
     elif Corradi_flag == 0:
         print("Skipping Corradi Design Procedure.")
     
-    """
-    while True:
-        try:
-            Collapse_pl_flag = int(input("\nDo you want to visualize the buckling and plastic collapse curves? (1: Yes, 0: No): "))
-            if Collapse_pl_flag not in (0, 1):
-                raise RuntimeError("Invalid input! Please enter either 0 or 1.")
-            break  
-        except ValueError:
-            print("Please enter a valid integer.")
-        except RuntimeError as e:
-            print(e)
-    
-    if Collapse_pl_flag == 1:
+    # ============================ 
+    # Elastic instability and plastic collapse curves
+    # ============================
+    if ThinTubes_flag == 1 and Corradi_flag == 0:
+        while True:
+            try:
+                Collapse_pl_flag = int(input("\nDo you want to visualize the buckling and plastic collapse curves for thin and thick tubes? (1: Yes, 0: No): "))
+                if Collapse_pl_flag not in (0, 1):
+                    raise RuntimeError("Invalid input! Please enter either 0 or 1.")
+                break  
+            except ValueError:
+                print("Please enter a valid integer.")
+            except RuntimeError as e:
+                print(e)
         
-        # ============================ 
-        # Plastic collapse and buckling Plots
-        # ============================
-        plt.figure(figsize = (8, 8))
-        plt.semilogy(Dt_ratio_plot, p_E_fun(Dt_ratio_plot), 'blue', label='p$_E$')
-        plt.semilogy(Dt_ratio_plot, q_E_fun(Dt_ratio_plot), '--b', label='q$_E$')
-        plt.semilogy(Dt_ratio_plot, p_0_fun(Dt_ratio_plot), 'red', label='p$_0$')
-        plt.semilogy(Dt_ratio_plot, q_0_fun(Dt_ratio_plot), '--r', label='q$_0$')
-        plt.axvline(x = Dt_Crit_Ratio, color = 'black', linewidth = '3', label = 'Critical Slenderness')
-        plt.axvline(x = Current_Slenderness, color = 'green', linewidth = '3', label = 'Current Vessel Slenderness')
-        plt.xlabel("Geometrical Slenderness D/t")
-        plt.ylabel("Theoretical Limit Values (MPa)")
-        plt.title("Plastic Collapse and Buckling Curves")
-        plt.legend()
-        plt.grid()
-        plt.show()
-    """
-    
+        if Collapse_pl_flag == 1:
+            
+            # ============================ 
+            # Plastic collapse and buckling Plots
+            # ============================
+            plt.figure(figsize = (8, 8))
+            plt.semilogy(Dt_ratio_plot, p_E_fun(Dt_ratio_plot), 'blue', label='p$_E$')
+            plt.semilogy(Dt_ratio_plot, q_E_fun(Dt_ratio_plot), '--b', label='q$_E$')
+            plt.semilogy(Dt_ratio_plot, p_0_fun(Dt_ratio_plot), 'red', label='p$_0$')
+            plt.semilogy(Dt_ratio_plot, q_0_fun(Dt_ratio_plot), '--r', label='q$_0$')
+            plt.axvline(x = Dt_Crit_Ratio, color = 'black', linewidth = '3', label = 'Critical Slenderness')
+            plt.axvline(x = Current_Slenderness, color = 'green', linewidth = '3', label = 'Current Vessel Slenderness')
+            plt.xlabel("Geometrical Slenderness D/t")
+            plt.ylabel("Theoretical Limit Values (MPa)")
+            plt.title("Plastic Collapse and Buckling Curves")
+            plt.legend()
+            plt.grid()
+            plt.show()
+
+    elif ThinTubes_flag == 1 and Corradi_flag == 1:
+        while True:
+            try:
+                Collapse_pl_flag = int(input("\nDo you want to visualize the buckling and plastic collapse curves for thin and thick tubes and the Corradi curve? (1: Yes, 0: No): "))
+                if Collapse_pl_flag not in (0, 1):
+                    raise RuntimeError("Invalid input! Please enter either 0 or 1.")
+                break  
+            except ValueError:
+                print("Please enter a valid integer.")
+            except RuntimeError as e:
+                print(e)
+        
+        if Collapse_pl_flag == 1:
+            
+            # ============================ 
+            # Plastic collapse and buckling Plots
+            # ============================
+            plt.figure(figsize = (8, 8))
+            plt.subplot(1,2,1)
+            plt.semilogy(Dt_ratio_plot, p_E_fun(Dt_ratio_plot), 'blue', label='p$_E$')
+            plt.semilogy(Dt_ratio_plot, q_E_fun(Dt_ratio_plot), '--b', label='q$_E$')
+            plt.semilogy(Dt_ratio_plot, p_0_fun(Dt_ratio_plot), 'red', label='p$_0$')
+            plt.semilogy(Dt_ratio_plot, q_0_fun(Dt_ratio_plot), '--r', label='q$_0$')
+            plt.semilogy(Dt_ratio_plot, Corradi(Dt_ratio_plot)[0], 'orange', label='Corradi q$_c$')
+            plt.axvline(x = Dt_Crit_Ratio, color = 'black', linewidth = '3', label = 'Critical Slenderness')
+            plt.axvline(x = Current_Slenderness, color = 'green', linewidth = '3', label = 'Current Vessel Slenderness')
+            plt.xlabel("Geometrical Slenderness D/t")
+            plt.ylabel("Theoretical Limit Values (MPa)")
+            plt.title("Plastic Collapse and Buckling Curves")
+            plt.legend()
+            plt.grid()
+            plt.tight_layout()
+
+            plt.subplot(1,2,2)
+            plt.plot(Dt_ratio_plot, Corradi(Dt_ratio_plot)[3], 'k', label=r'Corradi $\mu$')
+            plt.xlabel("Geometrical Slenderness D/t")
+            plt.ylabel(r"Corradi $\mu$")
+            plt.title(r"$\mu$ coefficient - Corradi Procedure")
+            plt.legend()
+            plt.grid()
+            plt.tight_layout()
+            plt.show()
+
 elif Disc_flag == 1:
     
     # ======================================
