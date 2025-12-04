@@ -284,16 +284,16 @@ print("Volumetric heat source at the vessel-insulation interface: %.3f W/m³" %q
 # ======================================
 # Dimensionless numbers and heat transfer coefficients
 # ======================================
-Pr = (Cp*mu)/k                                                                              #Prandtl number                                        
-Re = (rho*v*D_vess_int)/mu                                                                  #Reynolds number
-Nu_1 = 0.023*(Re**0.8)*(Pr**0.4)                                                            #Dittus-Boelter equation for forced convection
-Gr = (rho**2)*9.81*beta_cpp*DeltaT*((D_vess_int + 2*t)**3)/(mu**2)                          #Grashof number (Uses the external diameter as characteristic length, might wanna use L though?)
-Nu_2 = 0.13*((Gr*Pr)**(1/3))                                                                #McAdams correlation for natural convection
-h_1 = (Nu_1*k)/D_vess_int                                                                   #W/(m²·K)
-h_2 = (Nu_2*k)/D_vess_int                                                                   #W/(m²·K)
-R_th_2 = (1/(2*np.pi*k_th_ins*L))*np.log((R_ext + t_th_ins)/R_ext)                          #Thermal Resistance of the insulation layer
-R_th_out = 1/(h_2*2*np.pi*L*(R_ext + t_th_ins))                                             #Thermal Resistance of the outer convective layer
-u_2 = 1/(R_th_2 + R_th_out)                                                                 #Overall heat transfer coefficient outside the vessel
+Pr = (Cp*mu)/k                                                                              #Prandtl number
+Pr_cpp = (Cp_cpp*mu_cpp)/k_cpp                                                              #Prandtl number of the containment water                                        
+Re = (rho*v*(D_vess_int-D_barr_ext))/mu                                                     #Reynolds number
+Nu_1 = 0.023*(Re*0.8)*(Pr**0.4)                                                             #Dittus-Boelter equation for forced convection
+Gr = (rho_cpp**2)*9.81*beta_cpp*DeltaT*(L**3)/(mu_cpp**2)                                   #Grashof number (Uses the external diameter as characteristic length, might wanna use L though?)
+Nu_2 = 0.13*((Gr*Pr_cpp)**(1/3))                                                            #McAdams correlation for natural convection
+h_1 = (Nu_1*k)/(D_vess_int-D_barr_ext)                                                      #W/(m²·K)
+h_2 = (Nu_2*k_cpp)/L                                                                        #W/(m²·K)
+R_th_2_tot = (1/(2*np.pi*(R_ext + t_th_ins)*L)) * ((((R_ext + t_th_ins)/k_th_ins)*np.log((R_ext + t_th_ins)/R_ext)) + (1/h_2))                          #Thermal Resistance of the insulation layer + natural convection outside the vessel
+u_2 = 1/(2*np.pi*(R_ext + t_th_ins)*L*R_th_2_tot)                                           #W/(m²·K)   -   Overall heat transfer coefficient outside the vessel
 
 # =============================================================================================================================================================
 # NB: The thermal resistances were computed per unit length of the vessel until L = 7m was given in class
