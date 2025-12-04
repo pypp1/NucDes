@@ -991,7 +991,7 @@ elif Disc_flag == 1:
     plt.title('Simplified Hoop Stress Map (r vs T$_z$)')
     plt.tight_layout()
 
-    plt.subplot(1,4,3)
+    plt.subplot(1,4,4)
     pcm = plt.pcolormesh(R_mesh, T_z_mesh, sigma_z_th, shading='auto', cmap='viridis')
     plt.colorbar(pcm, label=r'$\sigma$ (MPa)')
     plt.xlabel('Radius (m)')
