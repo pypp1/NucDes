@@ -740,6 +740,11 @@ if Disc_flag == 0:
         print("\nAccording to the Corradi Design Procedure:")
         print("The theoretical limit for collapse pressure, accounting for ovality, is: q_c = %.3f MPa = %.3f bar" %(Corradi_vessel[0], 10*Corradi_vessel[0]))
         print("A safety factor s = %.3f was assumed. \nThe allowable external pressure is thus: q_a = %.3f MPa = %.3f bar" %(Corradi_vessel[2], Corradi_vessel[1], 10*Corradi_vessel[1]))
+        
+        if (P_cpp < 10*Corradi_vessel[1]):
+            print("The given external pressure of %.3f bar is lower than the allowable pressure of %.3f bar: SUCCESS!" %(P_cpp, 10*Corradi_vessel[1]))
+        else:
+            print("The given external pressure of %.3f bar is higher than the allowable pressure of %.3f bar: a change in thickness is required!" %(P_cpp, 10*Corradi_vessel[1]))
     
     elif Corradi_flag == 0:
         print("Skipping Corradi Design Procedure.")
