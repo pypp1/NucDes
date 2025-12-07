@@ -141,7 +141,6 @@ if Mar_criterion > 5:
         # Plotting the stress profiles: Mariotte
         # ======================================
         plt.figure(figsize=(15,10))
-        #plt.xlim(R_int, R_ext)
         plt.axvline(x = R_int, color='black', linewidth='3', label='Vessel Inner Surface')
         plt.axvline(x = R_ext, color='black', linewidth='3', label='Vessel Outer Surface')
         plt.axhline(y = sigma_rM_cyl, color='red', label='Radial (r) Stress Mariotte')
@@ -240,15 +239,9 @@ if Lame_flag == 1:
 elif Lame_flag == 0:
     print("Skipping Lamé solution.")
     
-    
-    
-    
-    
-    
-    
-    
-#asking the user if they want to consider thermal shield
-    
+# ======================================
+# Thermal Shield Check
+# ======================================    
 while True:
     try:
         TS_flag = int(input("\nDo you want to approach the case with a thermal shield? (1: Yes, 0: No): "))
@@ -259,8 +252,6 @@ while True:
         print("Please enter a valid integer.")
     except RuntimeError as e:
         print(e)
-        
-      
 
 # =============================================================================================================================================================
 # PURELY THERMAL PROBLEM - POWER IMPOSED - NO THERMAL SHIELD
@@ -1029,26 +1020,15 @@ if TS_flag == 0:
         plt.title('Axial Stress Map (r vs T$_z$)')
         plt.tight_layout()
         plt.show()
-        
-        
-        
-        
-        
-        
-        
-
 
 # =============================================================================================================================================================
-# PURELY THERMAL PROBLEM - POWER IMPOSED - THERMAL SHIELD CASE
+# PURELY THERMAL PROBLEM - POWER IMPOSED - THERMAL SHIELD
 # =============================================================================================================================================================
-
 elif TS_flag == 1:
     
     Shield_thickness = -0.001 #the shield does not exist at first
-    Sigma_allowable = 0 #MPa, will be defined by user
-
+    Sigma_allowable = 0 #MPa, will be defined by user but should be computed via ASME III NB4000
     Phi_0_noShield = Phi_0
-
         
     Phi = lambda r: Phi_0*np.exp(-mu_st*(r-R_int))     #1/(m²·s)
     I = lambda r: E_y_J*Phi(r)*B                       #W/(m²)
@@ -1068,11 +1048,7 @@ elif TS_flag == 1:
     h_1 = (Nu_1*k)/(D_vess_int-D_barr_ext)                                                      #W/(m²·K)
     h_2 = (Nu_2*k_cpp)/L                                                                        #W/(m²·K)
     R_th_2_tot = (1/(2*np.pi*(R_ext + t_th_ins)*L)) * ((((R_ext + t_th_ins)/k_th_ins)*np.log((R_ext + t_th_ins)/R_ext)) + (1/h_2))                          #Thermal Resistance of the insulation layer + natural convection outside the vessel
-    u_2 = 1/(2*np.pi*(R_ext + t_th_ins)*L*R_th_2_tot)                                           #W/(m²·K)   -   Overall heat transfer coefficient outside the vessel
-
-    # =============================================================================================================================================================
-    # NB: The thermal resistances were computed per unit length of the vessel until L = 7m was given in class
-    # =============================================================================================================================================================    
+    u_2 = 1/(2*np.pi*(R_ext + t_th_ins)*L*R_th_2_tot)                                           #W/(m²·K)   -   Overall heat transfer coefficient outside the vessel    
 
     # ======================================
     # Discretization Check
@@ -1135,13 +1111,6 @@ elif TS_flag == 1:
             C1 = -((q_0/(k_st*mu_st))*np.exp(-mu_st*t))
 
         C2 = T1 + (q_0/(h_1*mu_st)) + C1*(k_st/h_1) + (q_0/(k_st*mu_st**2))
-        # =============================================================================================================================================================
-        # This approach uses a constant T1 to compute C1 and C2, but T of the primary fluid changes along z... So, one could:
-
-        # 1) Discretize the thermal problem along z, obtaining an array of T1 values which will result in an array of C1 and C2 values. Then,
-        # compute T(r) for each discretized z and solve the problem in a 2D scheme. This is done later on.
-        # 2) Simply keep T_in due to the geometry of the system and the characteristic time scales involved. At most, one could add some margin for transients.
-        # =============================================================================================================================================================
 
         # ======================================
         # T profiles across the vessel wall, average Ts, maxima and their positions
@@ -1151,9 +1120,6 @@ elif TS_flag == 1:
         T_vessel_max = max(T_vessel(r))
         r_T_vessel_max = r[np.argmax(T_vessel(r))]
         #T_vessel_avg_2 = (q_0/(k_st*mu_st**2))*((np.exp(-mu_st*t)-1)/(mu_st*t))+ C1*(t/2) + C2 
-
-
-
 
         while True:
             try:
@@ -1167,13 +1133,13 @@ elif TS_flag == 1:
         print("\nCalculating thermal shield thickness accordingly...")
         
         
-        #iteration for shield thickness
-            
-        while True:
+        # ======================================
+        # Thermal Shield Thickness Iterative Computation
+        # ======================================
+        while True:                 #Needs to be changed to: while Primary+Secondary > 3Sm and Primary > Sm and while shield thickness < Maximum shield thickness
             
             Shield_thickness += 0.001
             Phi_0 = Phi_0_noShield * np.exp(-mu_st * Shield_thickness)
-            
             q_0 = B*Phi_0*E_y_J*mu_st 
             
             if adiab_flag == 0:
@@ -1189,7 +1155,6 @@ elif TS_flag == 1:
             T_vessel_max = max(T_vessel(r))
             r_T_vessel_max = r[np.argmax(T_vessel(r))]
             
-        
             f = lambda r: T_vessel(r)*r
 
             sigma_r_th = np.zeros(dr)
@@ -1203,7 +1168,6 @@ elif TS_flag == 1:
             sigma_th_max = max(sigma_t_th)
             r_sigma_th_max = r[np.argmax(sigma_t_th)]
             
-            
             mu20ba114 = 0.61
             mu20ba116 = 0.67
             mu30ba114 = 0.76
@@ -1216,9 +1180,6 @@ elif TS_flag == 1:
             sigmaT_eq = lambda x: sigmaT_1st + ((sigmaT_2nd-sigmaT_1st)/(30-20))*(x - 20)
             sigmaT = sigmaT_eq(mu_st)                                                              #Double-interpolated (linear) sigmaT coefficient for mu = 24 
             sigma_t_th_max_DES = sigmaT*(alpha_l*E*q_0)/(k_st*(1-nu)*(mu_st**2))
-            
-            
-            
             
             # ======================================
             # Principal stresses sum and elastic regime verification
@@ -1244,28 +1205,10 @@ elif TS_flag == 1:
             sigma_cVM_L = max(np.sqrt(0.5*((sigma_r_totL - sigma_t_totL)**2 + (sigma_t_totL - sigma_z_totL)**2 + (sigma_z_totL - sigma_r_totL)**2))) #The max should be the worst case, in theory
             
             print(Shield_thickness)
-            
             if sigma_cTR_L < Sigma_allowable:
                 break
-            
+    
         print("\nShield thickness to satisfy defined stress limit: %.3f mm" %(Shield_thickness * 1000))
-        
-        
-        
-        
-        
-        
-            
-            
-            
-            
-            
-            
-            
-            
-            
-            
-            
 
         # ======================================
         # Thermal power fluxes (kW/m²) on the inner and outer vessel surface
@@ -1450,17 +1393,6 @@ elif TS_flag == 1:
         print("\nVon Mises Equivalent Stress - Mariotte solution: %.3f Mpa" %sigma_cVM_M)
         print("Von Mises Equivalent Stress - Lamé solution: %.3f Mpa" %sigma_cVM_L)
 
-
-
-
-
-
-
-
-
-
-
-
     elif Disc_flag == 1:
         
         # ======================================
@@ -1631,7 +1563,7 @@ elif TS_flag == 1:
         plt.title('Simplified Hoop Stress Map (r vs T$_z$)')
         plt.tight_layout()
 
-        plt.subplot(1,4,3)
+        plt.subplot(1,4,4)
         pcm = plt.pcolormesh(R_mesh, T_z_mesh, sigma_z_th, shading='auto', cmap='viridis')
         plt.colorbar(pcm, label=r'$\sigma$ (MPa)')
         plt.xlabel('Radius (m)')
@@ -1639,7 +1571,11 @@ elif TS_flag == 1:
         plt.title('Axial Stress Map (r vs T$_z$)')
         plt.tight_layout()
         plt.show()
-        
+
+# ======================================
+# Why is this here?
+# ======================================
+"""
     # ======================================
     # Plotting the volumetric heat source profile 
     # ======================================
@@ -1671,8 +1607,8 @@ elif TS_flag == 1:
 
     print("\nVolumetric heat source at the vessel inner surface: %.3f W/m³" %q_iii(r[0]))
     print("Volumetric heat source at the vessel-insulation interface: %.3f W/m³" %q_iii(r[-1]))
-
-    print("Thermal shield thickness: %.3f meters" %Shield_thickness)
+"""
+print("Thermal shield thickness: %.3f meters" %Shield_thickness)            #Why have a second thickness print after the 1st one?
     
     
     
