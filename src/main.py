@@ -847,7 +847,7 @@ if TS_flag == 0:
         # ======================================
         # T discretization along z
         # ======================================
-        dz = 1000
+        dz = 100
         T_z = np.linspace(T_in, T_out_avg, dz)
         while True:
             try:
@@ -887,7 +887,7 @@ if TS_flag == 0:
                 T_vessel_avg_arr[i] = (1 / t) * integrate.quad(T_vessel_r_lamb, R_int, R_ext)[0]                                                       # integrate the scalar function over radius (returns scalar)
                 T_vessel_max_arr[i] = np.max(T_vessel_r[i, :])
                 r_T_vessel_max_arr[i] = r[np.argmax(T_vessel_r[i, :])]
-                print(i)
+                print("progress: %.3i/%.3i" %(i, dz))
                 # ======================================
                 # Thermal stresses computation
                 # ======================================
@@ -1050,6 +1050,14 @@ elif TS_flag == 1:
     R_th_2_tot = (1/(2*np.pi*(R_ext + t_th_ins)*L)) * ((((R_ext + t_th_ins)/k_th_ins)*np.log((R_ext + t_th_ins)/R_ext)) + (1/h_2))                          #Thermal Resistance of the insulation layer + natural convection outside the vessel
     u_2 = 1/(2*np.pi*(R_ext + t_th_ins)*L*R_th_2_tot)                                           #W/(m²·K)   -   Overall heat transfer coefficient outside the vessel    
 
+
+
+
+
+
+
+
+
     # ======================================
     # Discretization Check
     # ======================================
@@ -1063,6 +1071,10 @@ elif TS_flag == 1:
             print("Please enter a valid integer.")
         except RuntimeError as e:
             print(e)
+
+
+
+
 
     # ======================================
     # 1D Approach: no discretization along z
@@ -1209,6 +1221,48 @@ elif TS_flag == 1:
                 break
     
         print("\nShield thickness to satisfy defined stress limit: %.3f mm" %(Shield_thickness * 1000))
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        # ======================================
+        # Plotting the volumetric heat source profile 
+        # ======================================
+        while True:
+            try:
+                hs_flag = int(input("\nDo you want to visualize the volumetric heat source q0 inside the wall? (1: Yes, 0: No): "))
+                if hs_flag not in (0, 1):
+                    raise RuntimeError("Invalid input! Please enter either 0 or 1.")
+                break  
+            except ValueError:
+                print("Please enter a valid integer.")
+            except RuntimeError as e:
+                print(e)
+
+        if hs_flag == 1:
+            plt.figure(figsize=(10,10))
+            plt.axvline(x = R_int, color='black', linewidth='3', label='Vessel Inner Surface')
+            plt.axvline(x = R_ext, color='black', linewidth='3', label='Vessel Outer Surface')
+            plt.plot(r, q_iii(r), 'g', label='Radial (r) Volumetric heat source profile')
+            plt.plot(r[0], q_iii(r[0]), 'or', label='Vessel Inner Surface Value')
+            plt.plot(r[-1], q_iii(r[-1]), 'or', label='Vessel-Insulation Interface Value')
+            plt.axhline(y = 0, color='black', linewidth='1', label='y=0')
+            plt.xlabel('Radius (m)')
+            plt.ylabel(r'$q_0$ (W/m$^3$)')
+            plt.title('Volumetric heat source profile across the vessel wall')
+            plt.legend()
+            plt.grid()
+            plt.show()
+
+        print("\nVolumetric heat source at the vessel inner surface: %.3f W/m³" %q_iii(r[0]))
+        print("Volumetric heat source at the vessel-insulation interface: %.3f W/m³" %q_iii(r[-1]))
 
         # ======================================
         # Thermal power fluxes (kW/m²) on the inner and outer vessel surface
@@ -1438,7 +1492,7 @@ elif TS_flag == 1:
                 T_vessel_avg_arr[i] = (1 / t) * integrate.quad(T_vessel_r_lamb, R_int, R_ext)[0]                                                       # integrate the scalar function over radius (returns scalar)
                 T_vessel_max_arr[i] = np.max(T_vessel_r[i, :])
                 r_T_vessel_max_arr[i] = r[np.argmax(T_vessel_r[i, :])]
-                print(i)
+                print("progress: %.3i/%.3i" %(i, dz))
                 # ======================================
                 # Thermal stresses computation
                 # ======================================
@@ -1571,46 +1625,3 @@ elif TS_flag == 1:
         plt.title('Axial Stress Map (r vs T$_z$)')
         plt.tight_layout()
         plt.show()
-
-# ======================================
-# Why is this here?
-# ======================================
-"""
-    # ======================================
-    # Plotting the volumetric heat source profile 
-    # ======================================
-    while True:
-        try:
-            hs_flag = int(input("\nDo you want to visualize the volumetric heat source q0 inside the wall? (1: Yes, 0: No): "))
-            if hs_flag not in (0, 1):
-                raise RuntimeError("Invalid input! Please enter either 0 or 1.")
-            break  
-        except ValueError:
-            print("Please enter a valid integer.")
-        except RuntimeError as e:
-            print(e)
-
-    if hs_flag == 1:
-        plt.figure(figsize=(10,10))
-        plt.axvline(x = R_int, color='black', linewidth='3', label='Vessel Inner Surface')
-        plt.axvline(x = R_ext, color='black', linewidth='3', label='Vessel Outer Surface')
-        plt.plot(r, q_iii(r), 'g', label='Radial (r) Volumetric heat source profile')
-        plt.plot(r[0], q_iii(r[0]), 'or', label='Vessel Inner Surface Value')
-        plt.plot(r[-1], q_iii(r[-1]), 'or', label='Vessel-Insulation Interface Value')
-        plt.axhline(y = 0, color='black', linewidth='1', label='y=0')
-        plt.xlabel('Radius (m)')
-        plt.ylabel(r'$q_0$ (W/m$^3$)')
-        plt.title('Volumetric heat source profile across the vessel wall')
-        plt.legend()
-        plt.grid()
-        plt.show()
-
-    print("\nVolumetric heat source at the vessel inner surface: %.3f W/m³" %q_iii(r[0]))
-    print("Volumetric heat source at the vessel-insulation interface: %.3f W/m³" %q_iii(r[-1]))
-"""
-print("Thermal shield thickness: %.3f meters" %Shield_thickness)            #Why have a second thickness print after the 1st one?
-    
-    
-    
-    
-
