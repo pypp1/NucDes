@@ -346,7 +346,7 @@ if TS_flag == 0:
     # 1D Approach: no discretization along z
     # ======================================
     if Disc_flag == 0:
-        print("No discretization along z. Assuming constant temperature of the primary fluid T1 = T_in.")
+        print("No discretization along z. Assuming constant temperature of the primary fluid T1.")
         while True:
             try:
                 T1_flag = int(input("\nWhat temperature do you want to use as T1 to compute C1 and C2? (0: T_in, 1: T_in + 10%, 2: T_in + 20%, 3: T_avg, 4: T_out_avg): "))
@@ -603,7 +603,7 @@ if TS_flag == 0:
             except RuntimeError as e:
                 print(e)
 
-        T_des_vessel = T_vessel_avg                                                     #K  -   Check in the HARVEY Chapter how to choose the design T
+        T_des_vessel = T_vessel_avg                                                     #K  -   Check in the HARVEY/Thermomechanics Chapter how to choose the design T
         T_des_vessel_C = T_des_vessel - 273.15                                          #°C
         p_yield = np.polyfit(T_thr, sigma_y, deg = len(T_thr)-1)
         p_intensity = np.polyfit(T_thr, sigma_in, deg = len(T_thr)-1)
@@ -1135,10 +1135,10 @@ elif TS_flag == 1:
 
         while True:
             try:
-                Sigma_allowable = int(input("\nDefine allowable stress on the vessel [MPa]: "))
+                Sigma_allowable = float(input("\nDefine allowable stress on the vessel [MPa]: "))
                 break
             except ValueError:
-                print("Please enter a valid integer.")
+                print("Please enter a valid float.")
             except RuntimeError as e:
                 print(e)
                 
