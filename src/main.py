@@ -162,7 +162,7 @@ else:
 # ============================ 
 # General Lamé Solution 
 # ============================
-def sigmaL_func(r):
+def sigmaL_func(r, P_int_MPa, P_cpp_MPa):
     
     A = ((P_int_MPa*(R_int**2))-(P_cpp_MPa*(R_ext**2)))/((R_ext**2)-(R_int**2))
     B = (((R_int**2)*(R_ext**2))/((R_ext**2)-(R_int**2)))*(P_int_MPa-P_cpp_MPa)
@@ -196,7 +196,7 @@ def sigmaL_func(r):
     sigma_zL_b = E*eps_z_b + 2*nu*rho_i*P_int_MPa   #b) P_cpp = 0
     return (sigma_rL(r), sigma_tL(r), sigma_zL_a + sigma_zL_b)              #Superposition Principle
 
-sigma_L = sigmaL_func(r)
+sigma_L = sigmaL_func(r, P_int_MPa, P_cpp_MPa)
 sigma_rL = sigma_L[0]  
 sigma_tL = sigma_L[1]
 sigma_zL = sigma_L[2]
@@ -1035,7 +1035,7 @@ elif TS_flag == 1:
     while True:
         try:
             t_shield = float(input("\nPlease enter the initial value of the thermal shield thickness (m): "))
-            if t_shield < 0 or t_shield > (D_vess_int - D_barr_ext):
+            if t_shield < 0 or t_shield > ((D_vess_int - D_barr_ext)/2):
                 raise RuntimeError("The thermal shield thickness is either negative or too large for the RPV.")
             break  
         except ValueError:
@@ -1510,7 +1510,31 @@ elif TS_flag == 1:
             plt.show()
 
         # ======================================
-        # Principal stresses sum and elastic regime verification in the vessel
+        # Hydrostatic Stresses and Principal Stresses in the thermal shield 
+        # ======================================
+        sigma_L_S = sigmaL_func(r_S, P_int_MPa, P_int_MPa)
+        sigma_rL_S = sigma_L_S[0]  
+        sigma_tL_S = sigma_L_S[1]
+        sigma_zL_S = sigma_L_S[2]
+        
+        sigma_r_totL_S = sigma_rL_S + sigma_r_th_S
+        sigma_t_totL_S = sigma_tL_S + sigma_t_th_S
+        sigma_z_totL_S = sigma_zL_S + sigma_z_th_S
+
+        # ============================ 
+        # Thermal Shield Comparison stress - Guest-Tresca Theory - Lamé + Thermal stresses
+        # ============================
+        sigma_cTR_LS = np.max([abs(sigma_t_totL_S - sigma_r_totL_S), abs(sigma_z_totL_S - sigma_r_totL_S), abs(sigma_t_totL_S - sigma_z_totL_S)])
+        print("Guest-Tresca Equivalent Stress in the thermal shield - Lamé solution: %.3f Mpa" %sigma_cTR_LS)
+
+        # ============================ 
+        # Thermal Shield Comparison stress - Von Mises Theory - Lamé + Thermal stresses
+        # ============================
+        sigma_cVM_LS = max(np.sqrt(0.5*((sigma_r_totL_S - sigma_t_totL_S)**2 + (sigma_t_totL_S - sigma_z_totL_S)**2 + (sigma_z_totL_S - sigma_r_totL_S)**2))) #The max should be the worst case, in theory
+        print("Von Mises Equivalent Stress in the thermal shield - Lamé solution: %.3f Mpa" %sigma_cVM_LS)
+
+        # ======================================
+        # Principal stresses in the vessel
         # ======================================
         sigma_r_totM = sigma_rM_cyl + sigma_r_th_V
         sigma_t_totM = sigma_tM_cyl + sigma_t_th_V
@@ -1563,6 +1587,26 @@ elif TS_flag == 1:
         print("\nFor a design thermal shield temperature of %.3f °C: " %T_des_shield_C)
         print('Yield Stress: Sy'," = %.3f MPa" %Yield_stress_S)
         print('Stress Intensity: Sm'," = %.3f MPa" %Stress_Intensity_S)
+
+        # ======================================
+        # Thermal Shield Thermomechanical Integrity Verification
+        # ======================================
+        if abs(max(sigma_r_totL_S)) > 3*Stress_Intensity_S or abs(max(sigma_t_totL_S)) > 3*Stress_Intensity_S or abs(max(sigma_z_totL_S)) > 3*Stress_Intensity_S:
+            flag_primsec = 1
+        else:
+            flag_primsec = 0
+
+        if abs(max(sigma_r_th_S)) > Stress_Intensity_S or abs(max(sigma_t_th_S)) > Stress_Intensity_S or abs(max(sigma_z_th_S)) > Stress_Intensity_S:
+            flag_sec = 1
+        else:
+            flag_sec = 0
+
+        if flag_primsec == 1 or flag_sec == 1:
+            print("\nThe current stress state in the thermal shield is not acceptable.")
+            acc = 0
+        elif flag_primsec == 0 and flag_sec == 0:
+            print("\nThe current stress state in the thermal shield is acceptable.")
+            acc = 1
 
         while True:
             try:
