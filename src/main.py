@@ -367,9 +367,12 @@ elif TS_flag == 1:
         # ======================================
         plt.figure(figsize=(15,15))
         plt.subplot(1,2,1)
-        plt.xlim(D_barr_ext/2, R_int)
-        plt.axvline(x = D_barr_ext/2, color='black', linewidth='3', label='Barrel Outer Surface')
-        plt.axvline(x = R_int, color='black', linewidth='3', label='Vessel Inner Surface')
+        if R_shield_ext - R_shield_int > 0.1:
+            plt.xlim(D_barr_ext/2, R_int)
+            plt.axvline(x = D_barr_ext/2, color='black', linewidth='3', label='Barrel Outer Surface')
+            plt.axvline(x = R_int, color='black', linewidth='3', label='Vessel Inner Surface')
+        else:
+            plt.xlim(R_shield_int - 0.1, R_shield_ext + 0.1)
         plt.axvline(x = R_shield_int, color='black', linewidth='3', label='Thermal Shield Inner Surface')
         plt.axvline(x = R_shield_ext, color='black', linewidth='3', label='Thermal Shield Outer Surface')
         plt.plot(r_S, q_iiiS(r_S), 'g', label='Radial (r) Volumetric heat source profile')
@@ -664,9 +667,12 @@ if Disc_flag == 0:
                 # Thermal Shield T Profile
                 # ======================================
                 plt.subplot(1,2,2)
-                plt.xlim(D_barr_ext/2, R_int)
-                plt.axvline(x = D_barr_ext/2, color='black', linewidth='3', label='Barrel Outer Surface')
-                plt.axvline(x = R_int, color='black', linewidth='3', label='Vessel Inner Surface')
+                if R_shield_ext - R_shield_int > 0.1:
+                    plt.xlim(D_barr_ext/2, R_int)
+                    plt.axvline(x = D_barr_ext/2, color='black', linewidth='3', label='Barrel Outer Surface')
+                    plt.axvline(x = R_int, color='black', linewidth='3', label='Vessel Inner Surface')
+                else:
+                    plt.xlim(R_shield_int - 0.1, R_shield_ext + 0.1)
                 plt.axvline(x = R_shield_int, color='black', linewidth='3', label='Thermal Shield Inner Surface')
                 plt.axvline(x = R_shield_ext, color='black', linewidth='3', label='Thermal Shield Outer Surface')
                 plt.plot(r_S, T_shield(r_S) - 273.15, label='Radial (r) T Profile')
@@ -710,9 +716,12 @@ if Disc_flag == 0:
                 # Thermal Shield T Profile
                 # ======================================
                 plt.subplot(1,2,2)
-                plt.xlim(D_barr_ext/2, R_int)
-                plt.axvline(x = D_barr_ext/2, color='black', linewidth='3', label='Barrel Outer Surface')
-                plt.axvline(x = R_int, color='black', linewidth='3', label='Vessel Inner Surface')
+                if R_shield_ext - R_shield_int > 0.1:
+                    plt.xlim(D_barr_ext/2, R_int)
+                    plt.axvline(x = D_barr_ext/2, color='black', linewidth='3', label='Barrel Outer Surface')
+                    plt.axvline(x = R_int, color='black', linewidth='3', label='Vessel Inner Surface')
+                else:
+                    plt.xlim(R_shield_int - 0.1, R_shield_ext + 0.1)
                 plt.axvline(x = R_shield_int, color='black', linewidth='3', label='Thermal Shield Inner Surface')
                 plt.axvline(x = R_shield_ext, color='black', linewidth='3', label='Thermal Shield Outer Surface')
                 plt.plot(r_S, T_shield(r_S) - 273.15, label='Radial (r) T Profile')
@@ -951,9 +960,9 @@ if Disc_flag == 0:
             # ============================
             plt.figure(figsize = (12,10))
             plt.subplot(1,2,1)
-            plt.plot(T_thr, sigma_y, 's', label = 'Yield Stress Data')
-            plt.plot(Tplot, Yield_Interpolator(Tplot), '--', label = 'Yield Stress n-1 Interpolation')
-            plt.plot(Tplot, Yield_CubicSpline(Tplot), label = 'Yield Stress Cubic Spline Interpolation')
+            plt.plot(T_thr, sigma_y, 'sk', label = 'Yield Stress Data')
+            plt.plot(Tplot, Yield_Interpolator(Tplot), '--', color = 'orange', label = 'Yield Stress n-1 Interpolation')
+            plt.plot(Tplot, Yield_CubicSpline(Tplot), 'green', label = 'Yield Stress Cubic Spline Interpolation')
             plt.plot(T_des_vessel_C, Yield_stress, '--or', label = r'Current Vessel Yield Stress $\sigma$$_y$')
             plt.xlabel("Temperature (°C)")
             plt.ylabel(r"Yield Stress $\sigma$$_y$")
@@ -963,9 +972,9 @@ if Disc_flag == 0:
             plt.tight_layout()
             
             plt.subplot(1,2,2)
-            plt.plot(T_thr, sigma_in, 's', label = 'Stress Intensity Data')
-            plt.plot(Tplot, Intensity_Interpolator(Tplot), '--', label = 'Stress Intensity n-1 Interpolation')
-            plt.plot(Tplot, Intensity_CubicSpline(Tplot), label = 'Stress Intensity Cubic Spline Interpolation')
+            plt.plot(T_thr, sigma_in, 'sk', label = 'Stress Intensity Data')
+            plt.plot(Tplot, Intensity_Interpolator(Tplot), '--', color = 'orange', label = 'Stress Intensity n-1 Interpolation')
+            plt.plot(Tplot, Intensity_CubicSpline(Tplot), 'green', label = 'Stress Intensity Cubic Spline Interpolation')
             plt.plot(T_des_vessel_C, Stress_Intensity, '--or', label = r'Current Vessel Stress Intensity $\sigma$$_m$')
             plt.xlabel("Temperature (°C)")
             plt.ylabel(r"Stress Intensity $\sigma$$_m$")
@@ -1010,9 +1019,9 @@ if Disc_flag == 0:
             # ============================
             plt.figure(figsize = (12,10))
             plt.subplot(1,2,1)
-            plt.plot(T_thr, sigma_y, 's', label = 'Yield Stress Data')
-            plt.plot(Tplot, Yield_Interpolator(Tplot), '--', label = 'Yield Stress n-1 Interpolation')
-            plt.plot(Tplot, Yield_CubicSpline(Tplot), label = 'Yield Stress Cubic Spline Interpolation')
+            plt.plot(T_thr, sigma_y, 'sk', label = 'Yield Stress Data')
+            plt.plot(Tplot, Yield_Interpolator(Tplot), '--', color = 'orange', label = 'Yield Stress n-1 Interpolation')
+            plt.plot(Tplot, Yield_CubicSpline(Tplot), 'green', label = 'Yield Stress Cubic Spline Interpolation')
             plt.plot(T_des_vessel_C, Yield_stress, '--or', label = r'Current Vessel Yield Stress $\sigma$$_y$')
             plt.plot(T_des_shield_C, Yield_stress_S, '--ob', label = r'Current Thermal Shield Yield Stress $\sigma$$_y$')
             plt.xlabel("Temperature (°C)")
@@ -1023,9 +1032,9 @@ if Disc_flag == 0:
             plt.tight_layout()
             
             plt.subplot(1,2,2)
-            plt.plot(T_thr, sigma_in, 's', label = 'Stress Intensity Data')
-            plt.plot(Tplot, Intensity_Interpolator(Tplot), '--', label = 'Stress Intensity n-1 Interpolation')
-            plt.plot(Tplot, Intensity_CubicSpline(Tplot), label = 'Stress Intensity Cubic Spline Interpolation')
+            plt.plot(T_thr, sigma_in, 'sk', label = 'Stress Intensity Data')
+            plt.plot(Tplot, Intensity_Interpolator(Tplot), '--', color = 'orange', label = 'Stress Intensity n-1 Interpolation')
+            plt.plot(Tplot, Intensity_CubicSpline(Tplot), 'green', label = 'Stress Intensity Cubic Spline Interpolation')
             plt.plot(T_des_vessel_C, Stress_Intensity, '--or', label = r'Current Vessel Stress Intensity $\sigma$$_m$')
             plt.plot(T_des_shield_C, Stress_Intensity_S, '--ob', label = r'Current Thermal Shield Stress Intensity $\sigma$$_m$')
             plt.xlabel("Temperature (°C)")
