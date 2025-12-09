@@ -302,13 +302,21 @@ if TS_flag == 0:
         plt.show()
 
 elif TS_flag == 1:
-
-    t_shield = 0.01                                   #m   -   Initial value for the shield thickness, since it's being considered there's no point in starting from 0
     while True:
         try:
-            D_shield_int = float(input("\nPlease enter the initial thermal shield inner diameter (m) between 2.6m and 2.8m to choose its position: "))
-            if D_shield_int < 2.6 or D_shield_int > 2.8:
-                raise RuntimeError("The thermal shield is too close to the barrel or to the vessel.")
+            t_shield = float(input("\nPlease enter the initial value of the thermal shield thickness (m): "))
+            if t_shield < 0 or t_shield > (D_vess_int - D_barr_ext):
+                raise RuntimeError("The thermal shield thickness is either negative or too large for the RPV.")
+            break  
+        except ValueError:
+            print("Please enter a valid float.")
+        except RuntimeError as e:
+            print(e)
+    while True:
+        try:
+            D_shield_int = float(input("\nPlease enter the initial thermal shield inner diameter (m) to choose its position: "))
+            if (D_shield_int < D_barr_ext) or (D_shield_int/2 + t_shield) > D_vess_int/2:
+                raise RuntimeError("The thermal shield is either starting inside the barrel or clipping inside the vessel.")
             break  
         except ValueError:
             print("Please enter a valid float.")
@@ -355,10 +363,13 @@ elif TS_flag == 1:
 
     if hs_flag == 1:
         # ======================================
-        # Vessel
+        # Thermal Shield
         # ======================================
         plt.figure(figsize=(15,15))
         plt.subplot(1,2,1)
+        plt.xlim(D_barr_ext/2, R_int)
+        plt.axvline(x = D_barr_ext/2, color='black', linewidth='3', label='Barrel Outer Surface')
+        plt.axvline(x = R_int, color='black', linewidth='3', label='Vessel Inner Surface')
         plt.axvline(x = R_shield_int, color='black', linewidth='3', label='Thermal Shield Inner Surface')
         plt.axvline(x = R_shield_ext, color='black', linewidth='3', label='Thermal Shield Outer Surface')
         plt.plot(r_S, q_iiiS(r_S), 'g', label='Radial (r) Volumetric heat source profile')
@@ -372,10 +383,9 @@ elif TS_flag == 1:
         plt.grid()
 
         # ======================================
-        # Thermal Shield
+        # Vessel
         # ======================================
         plt.subplot(1,2,2)
-        plt.xlim(R_shield_int - 0.1, R_shield_ext + 0.1)
         plt.axvline(x = R_int, color='black', linewidth='3', label='Vessel Inner Surface')
         plt.axvline(x = R_ext, color='black', linewidth='3', label='Vessel Outer Surface')
         plt.plot(r, q_iii(r), 'g', label='Radial (r) Volumetric heat source profile')
@@ -514,7 +524,7 @@ if Disc_flag == 0:
         T_shield = lambda r: -((q_0S/(k_st*mu_st**2))*np.exp(-mu_st*(r-R_shield_int))) + C1_S*(r-R_shield_int) + C2_S
         T_shield_avg = (1/t_shield)*integrate.quad(T_shield, R_shield_int, R_shield_ext)[0]
         T_shield_max = max(T_shield(r_S))
-        r_T_shield_max = r[np.argmax(T_shield(r_S))]
+        r_T_shield_max = r_S[np.argmax(T_shield(r_S))]
 
     # ======================================
     # Thermal power fluxes (kW/m²) on the inner and outer vessel surface
@@ -550,6 +560,9 @@ if Disc_flag == 0:
     # Plotting the T profiles
     # ======================================
     if TS_flag == 0:
+        # ======================================
+        # Without thermal shield
+        # ======================================
         while True:
             try:
                 T_pl_flag = int(input("\nDo you want to visualize the T profile across the vessel's wall? (1: Yes, 0: No): "))
@@ -606,6 +619,9 @@ if Disc_flag == 0:
                 plt.show()
 
     elif TS_flag == 1:
+        # ======================================
+        # With thermal shield
+        # ======================================
         while True:
             try:
                 T_pl_flag = int(input("\nDo you want to visualize the T profile across the vessel's wall and the thermal shield? (1: Yes, 0: No): "))
@@ -648,6 +664,9 @@ if Disc_flag == 0:
                 # Thermal Shield T Profile
                 # ======================================
                 plt.subplot(1,2,2)
+                plt.xlim(D_barr_ext/2, R_int)
+                plt.axvline(x = D_barr_ext/2, color='black', linewidth='3', label='Barrel Outer Surface')
+                plt.axvline(x = R_int, color='black', linewidth='3', label='Vessel Inner Surface')
                 plt.axvline(x = R_shield_int, color='black', linewidth='3', label='Thermal Shield Inner Surface')
                 plt.axvline(x = R_shield_ext, color='black', linewidth='3', label='Thermal Shield Outer Surface')
                 plt.plot(r_S, T_shield(r_S) - 273.15, label='Radial (r) T Profile')
@@ -691,6 +710,9 @@ if Disc_flag == 0:
                 # Thermal Shield T Profile
                 # ======================================
                 plt.subplot(1,2,2)
+                plt.xlim(D_barr_ext/2, R_int)
+                plt.axvline(x = D_barr_ext/2, color='black', linewidth='3', label='Barrel Outer Surface')
+                plt.axvline(x = R_int, color='black', linewidth='3', label='Vessel Inner Surface')
                 plt.axvline(x = R_shield_int, color='black', linewidth='3', label='Thermal Shield Inner Surface')
                 plt.axvline(x = R_shield_ext, color='black', linewidth='3', label='Thermal Shield Outer Surface')
                 plt.plot(r_S, T_shield(r_S) - 273.15, label='Radial (r) T Profile')
@@ -718,7 +740,7 @@ if Disc_flag == 0:
 
     sigma_t_th_V_max = max(sigma_t_th_V)
     r_sigma_t_th_V_max = r[np.argmax(sigma_t_th_V)]
-    print("Maximum Thermal Hoop Stress in the vessel: %.3f Mpa at r = %.3f m" %(sigma_t_th_V_max, r_sigma_t_th_V_max))
+    print("\nMaximum Thermal Hoop Stress in the vessel: %.3f Mpa at r = %.3f m" %(sigma_t_th_V_max, r_sigma_t_th_V_max))
     #sigma_t_th_V_max_SIMP = max(sigma_t_th_V_SIMP(r))
     #r_sigma_t_th_V_max_SIMP = r[np.argmax(sigma_t_th_V_SIMP(r))]
     #print("Maximum Thermal Hoop Stress (Simplified formula): %.3f Mpa at r = %.3f m" %(sigma_t_th_V_max_SIMP, r_sigma_t_th_V_max_SIMP))
@@ -738,7 +760,7 @@ if Disc_flag == 0:
         sigma_z_th_S = sigma_r_th_S + sigma_t_th_S                                                     #Superposition principle under the hypothesis of long, hollow cylinder with load-free ends
 
         sigma_t_th_S_max = max(sigma_t_th_S)
-        r_sigma_t_th_S_max = r[np.argmax(sigma_t_th_S)]
+        r_sigma_t_th_S_max = r_S[np.argmax(sigma_t_th_S)]
         print("Maximum Thermal Hoop Stress in the thermal shield: %.3f Mpa at r = %.3f m" %(sigma_t_th_S_max, r_sigma_t_th_S_max))
         #sigma_t_th_S_max_SIMP = max(sigma_t_th_S_SIMP(r))
         #r_sigma_t_th_S_max_SIMP = r[np.argmax(sigma_t_th_S_SIMP(r))]
@@ -766,6 +788,9 @@ if Disc_flag == 0:
     # Plotting the thermal stress profiles
     # ======================================
     if TS_flag == 0:
+        # ======================================
+        # Without thermal shield
+        # ======================================
         while True:
             try:
                 sigma_th_pl_flag = int(input("\nDo you want to visualize a plot of the thermal stress profiles in the vessel? (1: Yes, 0: No): "))
@@ -798,6 +823,9 @@ if Disc_flag == 0:
             plt.show()
 
     elif TS_flag == 1:
+        # ======================================
+        # With thermal shield
+        # ======================================
         while True:
             try:
                 sigma_th_pl_flag = int(input("\nDo you want to visualize a plot of the thermal stress profiles in the vessel and in the thermal shield? (1: Yes, 0: No): "))
@@ -833,6 +861,9 @@ if Disc_flag == 0:
             # Thermal shield thermal stress profiles
             # ======================================
             plt.subplot(1,2,2)
+            plt.xlim(D_barr_ext/2, R_int)
+            plt.axvline(x = D_barr_ext/2, color='black', linewidth='3', label='Barrel Outer Surface')
+            plt.axvline(x = R_int, color='black', linewidth='3', label='Vessel Inner Surface')
             plt.axvline(x = R_shield_int, color='black', linewidth='3', label='Thermal Shield Inner Surface')
             plt.axvline(x = R_shield_ext, color='black', linewidth='3', label='Thermal Shield Outer Surface')
             plt.plot(r_S, sigma_r_th_S, linewidth='0.75', label='Radial (r) Thermal Stress Profile')
@@ -893,54 +924,61 @@ if Disc_flag == 0:
     print('Yield Stress: Sy'," = %.3f MPa" %Yield_stress)
     print('Stress Intensity: Sm'," = %.3f MPa" %Stress_Intensity)
 
-    while True:
-        try:
-            Interp_pl_flag = int(input("\nDo you want to visualize a plot of the Yield Stress and Stress Intensity as given by ASME for the vessel? (1: Yes, 0: No): "))
-            if Interp_pl_flag not in (0, 1):
-                raise RuntimeError("Invalid input! Please enter either 0 or 1.")
-            break  
-        except ValueError:
-            print("Please enter a valid integer.")
-        except RuntimeError as e:
-            print(e)
-    
-    if max(T_thr) > T_des_vessel_C:
-        Tplot = np.linspace(min(T_thr), max(T_thr), 1000)
-    else:
-        Tplot = np.linspace(min(T_thr), T_des_vessel_C, 1000)
-    
-    if Interp_pl_flag == 1:
+    if TS_flag == 0:
+        # ======================================
+        # Without thermal shield
+        # ======================================
+        while True:
+            try:
+                Interp_pl_flag = int(input("\nDo you want to visualize a plot of the Yield Stress and Stress Intensity as given by ASME for the vessel? (1: Yes, 0: No): "))
+                if Interp_pl_flag not in (0, 1):
+                    raise RuntimeError("Invalid input! Please enter either 0 or 1.")
+                break  
+            except ValueError:
+                print("Please enter a valid integer.")
+            except RuntimeError as e:
+                print(e)
         
-        # ============================ 
-        # Yield Stress and Stress Intensity Data Plots  -   Vessel
-        # ============================
-        plt.figure(figsize = (12,10))
-        plt.subplot(1,2,1)
-        plt.plot(T_thr, sigma_y, 's', label = 'Yield Stress Data')
-        plt.plot(Tplot, Yield_Interpolator(Tplot), '--', label = 'Yield Stress n-1 Interpolation')
-        plt.plot(Tplot, Yield_CubicSpline(Tplot), label = 'Yield Stress Cubic Spline Interpolation')
-        plt.plot(T_des_vessel_C, Yield_stress, '--or', label = r'Current Vessel Yield Stress $\sigma$$_y$')
-        plt.xlabel("Temperature (°C)")
-        plt.ylabel(r"Yield Stress $\sigma$$_y$")
-        plt.title("Yield Stress Data and Interpolation VS Temperature", fontsize = 10)
-        plt.legend()
-        plt.grid()
-        plt.tight_layout()
+        if max(T_thr) > T_des_vessel_C:
+            Tplot = np.linspace(min(T_thr), max(T_thr), 1000)
+        else:
+            Tplot = np.linspace(min(T_thr), T_des_vessel_C, 1000)
         
-        plt.subplot(1,2,2)
-        plt.plot(T_thr, sigma_in, 's', label = 'Stress Intensity Data')
-        plt.plot(Tplot, Intensity_Interpolator(Tplot), '--', label = 'Stress Intensity n-1 Interpolation')
-        plt.plot(Tplot, Intensity_CubicSpline(Tplot), label = 'Stress Intensity Cubic Spline Interpolation')
-        plt.plot(T_des_vessel_C, Stress_Intensity, '--or', label = r'Current Vessel Stress Intensity $\sigma$$_m$')
-        plt.xlabel("Temperature (°C)")
-        plt.ylabel(r"Stress Intensity $\sigma$$_m$")
-        plt.title("Stress Intensity Data and Interpolation VS Temperature", fontsize = 10)
-        plt.legend()
-        plt.grid()
-        plt.tight_layout()
-        plt.show()
+        if Interp_pl_flag == 1:
+            
+            # ============================ 
+            # Yield Stress and Stress Intensity Data Plots  -   Vessel
+            # ============================
+            plt.figure(figsize = (12,10))
+            plt.subplot(1,2,1)
+            plt.plot(T_thr, sigma_y, 's', label = 'Yield Stress Data')
+            plt.plot(Tplot, Yield_Interpolator(Tplot), '--', label = 'Yield Stress n-1 Interpolation')
+            plt.plot(Tplot, Yield_CubicSpline(Tplot), label = 'Yield Stress Cubic Spline Interpolation')
+            plt.plot(T_des_vessel_C, Yield_stress, '--or', label = r'Current Vessel Yield Stress $\sigma$$_y$')
+            plt.xlabel("Temperature (°C)")
+            plt.ylabel(r"Yield Stress $\sigma$$_y$")
+            plt.title("Yield Stress Data and Interpolation VS Temperature", fontsize = 10)
+            plt.legend()
+            plt.grid()
+            plt.tight_layout()
+            
+            plt.subplot(1,2,2)
+            plt.plot(T_thr, sigma_in, 's', label = 'Stress Intensity Data')
+            plt.plot(Tplot, Intensity_Interpolator(Tplot), '--', label = 'Stress Intensity n-1 Interpolation')
+            plt.plot(Tplot, Intensity_CubicSpline(Tplot), label = 'Stress Intensity Cubic Spline Interpolation')
+            plt.plot(T_des_vessel_C, Stress_Intensity, '--or', label = r'Current Vessel Stress Intensity $\sigma$$_m$')
+            plt.xlabel("Temperature (°C)")
+            plt.ylabel(r"Stress Intensity $\sigma$$_m$")
+            plt.title("Stress Intensity Data and Interpolation VS Temperature", fontsize = 10)
+            plt.legend()
+            plt.grid()
+            plt.tight_layout()
+            plt.show()
     
-    if TS_flag == 1:
+    elif TS_flag == 1:
+        # ======================================
+        # With thermal shield
+        # ======================================
         T_des_shield = T_shield_avg                                                     #K  -   Check in the HARVEY/Thermomechanics Chapter how to choose the design T
         T_des_shield_C = T_des_shield - 273.15                                          #°C
         Yield_stress_S = Yield_CubicSpline(T_des_shield_C)
@@ -951,31 +989,32 @@ if Disc_flag == 0:
 
         while True:
             try:
-                InterpS_pl_flag = int(input("\nDo you want to visualize a plot of the Yield Stress and Stress Intensity as given by ASME for the thermal shield? (1: Yes, 0: No): "))
-                if InterpS_pl_flag not in (0, 1):
+                Interp_pl_flag = int(input("\nDo you want to visualize a plot of the Yield Stress and Stress Intensity as given by ASME for both the vessel and the thermal shield? (1: Yes, 0: No): "))
+                if Interp_pl_flag not in (0, 1):
                     raise RuntimeError("Invalid input! Please enter either 0 or 1.")
                 break  
             except ValueError:
                 print("Please enter a valid integer.")
             except RuntimeError as e:
                 print(e)
-
-        if max(T_thr) > T_des_shield_C:
-            Tplot_S = np.linspace(min(T_thr), max(T_thr), 1000)
-        else:
-            Tplot_S = np.linspace(min(T_thr), T_des_shield_C, 1000)
-
-        if InterpS_pl_flag == 1:
         
+        if max(T_thr) > T_des_vessel_C:
+            Tplot = np.linspace(min(T_thr), max(T_thr), 1000)
+        else:
+            Tplot = np.linspace(min(T_thr), T_des_vessel_C, 1000)
+        
+        if Interp_pl_flag == 1:
+            
             # ============================ 
-            # Yield Stress and Stress Intensity Data Plots  -   Thermal Shield
+            # Yield Stress and Stress Intensity Data Plots  -   Vessel and thermal shield
             # ============================
             plt.figure(figsize = (12,10))
             plt.subplot(1,2,1)
             plt.plot(T_thr, sigma_y, 's', label = 'Yield Stress Data')
-            plt.plot(Tplot_S, Yield_Interpolator(Tplot_S), '--', label = 'Yield Stress n-1 Interpolation')
-            plt.plot(Tplot_S, Yield_CubicSpline(Tplot_S), label = 'Yield Stress Cubic Spline Interpolation')
-            plt.plot(T_des_shield_C, Yield_stress_S, '--or', label = r'Current Thermal Shield Yield Stress $\sigma$$_y$')
+            plt.plot(Tplot, Yield_Interpolator(Tplot), '--', label = 'Yield Stress n-1 Interpolation')
+            plt.plot(Tplot, Yield_CubicSpline(Tplot), label = 'Yield Stress Cubic Spline Interpolation')
+            plt.plot(T_des_vessel_C, Yield_stress, '--or', label = r'Current Vessel Yield Stress $\sigma$$_y$')
+            plt.plot(T_des_shield_C, Yield_stress_S, '--ob', label = r'Current Thermal Shield Yield Stress $\sigma$$_y$')
             plt.xlabel("Temperature (°C)")
             plt.ylabel(r"Yield Stress $\sigma$$_y$")
             plt.title("Yield Stress Data and Interpolation VS Temperature", fontsize = 10)
@@ -985,9 +1024,10 @@ if Disc_flag == 0:
             
             plt.subplot(1,2,2)
             plt.plot(T_thr, sigma_in, 's', label = 'Stress Intensity Data')
-            plt.plot(Tplot_S, Intensity_Interpolator(Tplot_S), '--', label = 'Stress Intensity n-1 Interpolation')
-            plt.plot(Tplot_S, Intensity_CubicSpline(Tplot_S), label = 'Stress Intensity Cubic Spline Interpolation')
-            plt.plot(T_des_shield_C, Stress_Intensity_S, '--or', label = r'Current Thermal Shield Stress Intensity $\sigma$$_m$')
+            plt.plot(Tplot, Intensity_Interpolator(Tplot), '--', label = 'Stress Intensity n-1 Interpolation')
+            plt.plot(Tplot, Intensity_CubicSpline(Tplot), label = 'Stress Intensity Cubic Spline Interpolation')
+            plt.plot(T_des_vessel_C, Stress_Intensity, '--or', label = r'Current Vessel Stress Intensity $\sigma$$_m$')
+            plt.plot(T_des_shield_C, Stress_Intensity_S, '--ob', label = r'Current Thermal Shield Stress Intensity $\sigma$$_m$')
             plt.xlabel("Temperature (°C)")
             plt.ylabel(r"Stress Intensity $\sigma$$_m$")
             plt.title("Stress Intensity Data and Interpolation VS Temperature", fontsize = 10)
