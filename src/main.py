@@ -1306,24 +1306,10 @@ elif TS_flag == 1:
             if T_pl_flag == 1:
 
                 # ======================================
-                # Vessel T Profile
+                # Thermal Shield T Profile
                 # ======================================
                 plt.figure(figsize=(15,15))
                 plt.subplot(1,2,1)
-                plt.axvline(x = R_int, color='black', linewidth='3', label='Vessel Inner Surface')
-                plt.axvline(x = R_ext, color='black', linewidth='3', label='Vessel Outer Surface')
-                plt.plot(r, T_vessel(r) - 273.15, label='Radial (r) T Profile')
-                plt.plot(r_T_vessel_max, T_vessel_max - 273.15,'or',label='Max T')
-                plt.axhline(y = T_vessel_avg - 273.15, color='green', label='Vessel Wall Average T')
-                plt.xlabel('Radius (m)')
-                plt.ylabel('T (°C)')
-                plt.title('Vessel Wall Temperature Profile, Average and Maximum ')
-                plt.legend()
-                plt.grid()
-                # ======================================
-                # Thermal Shield T Profile
-                # ======================================
-                plt.subplot(1,2,2)
                 if R_shield_ext - R_shield_int > 0.1:
                     plt.xlim(D_barr_ext/2, R_int)
                     plt.axvline(x = D_barr_ext/2, color='black', linewidth='3', label='Barrel Outer Surface')
@@ -1338,6 +1324,21 @@ elif TS_flag == 1:
                 plt.xlabel('Radius (m)')
                 plt.ylabel('T (°C)')
                 plt.title('Thermal Shield Temperature Profile, Average and Maximum ')
+                plt.legend()
+                plt.grid()
+
+                # ======================================
+                # Vessel T Profile
+                # ======================================
+                plt.subplot(1,2,2)
+                plt.axvline(x = R_int, color='black', linewidth='3', label='Vessel Inner Surface')
+                plt.axvline(x = R_ext, color='black', linewidth='3', label='Vessel Outer Surface')
+                plt.plot(r, T_vessel(r) - 273.15, label='Radial (r) T Profile')
+                plt.plot(r_T_vessel_max, T_vessel_max - 273.15,'or',label='Max T')
+                plt.axhline(y = T_vessel_avg - 273.15, color='green', label='Vessel Wall Average T')
+                plt.xlabel('Radius (m)')
+                plt.ylabel('T (°C)')
+                plt.title('Vessel Wall Temperature Profile, Average and Maximum ')
                 plt.legend()
                 plt.grid()
                 plt.show()
@@ -1355,24 +1356,10 @@ elif TS_flag == 1:
             if T_pl_flag == 1:
                 
                 # ======================================
-                # Vessel Under Adiabatic Outer Wall Approximation
+                # Thermal Shield T Profile
                 # ======================================
                 plt.figure(figsize=(15,15))
                 plt.subplot(1,2,1)
-                plt.axvline(x = R_int, color='black', linewidth='3', label='Vessel Inner Surface')
-                plt.axvline(x = R_ext, color='black', linewidth='3', label='Vessel Outer Surface')
-                plt.plot(r, T_vessel(r) - 273.15, label='Radial (r) T Profile')
-                plt.plot(r_T_vessel_max, T_vessel_max - 273.15,'or', label='Max T')
-                plt.axhline(y = T_vessel_avg - 273.15, color='green', label='Wall Average T')
-                plt.xlabel('Radius (m)')
-                plt.ylabel('T (°C)')
-                plt.title('Wall Temperature Profile, Average and Maximum under AOW Approximation ')
-                plt.legend()
-                plt.grid()
-                # ======================================
-                # Thermal Shield T Profile
-                # ======================================
-                plt.subplot(1,2,2)
                 if R_shield_ext - R_shield_int > 0.1:
                     plt.xlim(D_barr_ext/2, R_int)
                     plt.axvline(x = D_barr_ext/2, color='black', linewidth='3', label='Barrel Outer Surface')
@@ -1387,6 +1374,21 @@ elif TS_flag == 1:
                 plt.xlabel('Radius (m)')
                 plt.ylabel('T (°C)')
                 plt.title('Thermal Shield Temperature Profile, Average and Maximum ')
+                plt.legend()
+                plt.grid()
+                
+                # ======================================
+                # Vessel Under Adiabatic Outer Wall Approximation
+                # ======================================
+                plt.subplot(1,2,2)
+                plt.axvline(x = R_int, color='black', linewidth='3', label='Vessel Inner Surface')
+                plt.axvline(x = R_ext, color='black', linewidth='3', label='Vessel Outer Surface')
+                plt.plot(r, T_vessel(r) - 273.15, label='Radial (r) T Profile')
+                plt.plot(r_T_vessel_max, T_vessel_max - 273.15,'or', label='Max T')
+                plt.axhline(y = T_vessel_avg - 273.15, color='green', label='Wall Average T')
+                plt.xlabel('Radius (m)')
+                plt.ylabel('T (°C)')
+                plt.title('Wall Temperature Profile, Average and Maximum under AOW Approximation ')
                 plt.legend()
                 plt.grid()
                 plt.show()
@@ -1466,30 +1468,16 @@ elif TS_flag == 1:
         if sigma_th_pl_flag == 1:
 
             # ======================================
-            # Vessel thermal stress profiles
+            # Thermal shield thermal stress profiles
             # ======================================
             plt.figure(figsize=(15,15))
             plt.subplot(1,2,1)
-            plt.axvline(x = R_int, color='black', linewidth='3', label='Vessel Inner Surface')
-            plt.axvline(x = R_ext, color='black', linewidth='3', label='Vessel Outer Surface')
-            plt.plot(r, sigma_r_th_V, linewidth='0.75', label='Radial (r) Thermal Stress Profile')
-            plt.plot(r, sigma_t_th_V, linewidth='0.75', label='Hoop (θ) Thermal Stress Profile')
-            plt.plot(r, sigma_z_th_V, color='green', linewidth='0.5', label='Axial (z) Thermal Stress Profile')
-            plt.axhline(y = 0, color='black', linewidth='1', label='y=0')
-            plt.plot(r_sigma_t_th_V_max, sigma_t_th_V_max,'or', label='Max Hoop Stress')
-            plt.xlabel('Radius (m)')
-            plt.ylabel('Thermal Stress (MPa)')
-            plt.title('Vessel Wall Thermal Stress Profiles and Maximum Hoop Stress')
-            plt.legend()
-            plt.grid()
-            
-            # ======================================
-            # Thermal shield thermal stress profiles
-            # ======================================
-            plt.subplot(1,2,2)
-            plt.xlim(D_barr_ext/2, R_int)
-            plt.axvline(x = D_barr_ext/2, color='black', linewidth='3', label='Barrel Outer Surface')
-            plt.axvline(x = R_int, color='black', linewidth='3', label='Vessel Inner Surface')
+            if R_shield_ext - R_shield_int > 0.1:
+                plt.xlim(D_barr_ext/2, R_int)
+                plt.axvline(x = D_barr_ext/2, color='black', linewidth='3', label='Barrel Outer Surface')
+                plt.axvline(x = R_int, color='black', linewidth='3', label='Vessel Inner Surface')
+            else:
+                plt.xlim(R_shield_int - 0.1, R_shield_ext + 0.1)
             plt.axvline(x = R_shield_int, color='black', linewidth='3', label='Thermal Shield Inner Surface')
             plt.axvline(x = R_shield_ext, color='black', linewidth='3', label='Thermal Shield Outer Surface')
             plt.plot(r_S, sigma_r_th_S, linewidth='0.75', label='Radial (r) Thermal Stress Profile')
@@ -1500,6 +1488,23 @@ elif TS_flag == 1:
             plt.xlabel('Radius (m)')
             plt.ylabel('Thermal Stress (MPa)')
             plt.title('Thermal Shield Thermal Stress Profiles and Maximum Hoop Stress')
+            plt.legend()
+            plt.grid()
+            
+            # ======================================
+            # Vessel thermal stress profiles
+            # ======================================
+            plt.subplot(1,2,2)
+            plt.axvline(x = R_int, color='black', linewidth='3', label='Vessel Inner Surface')
+            plt.axvline(x = R_ext, color='black', linewidth='3', label='Vessel Outer Surface')
+            plt.plot(r, sigma_r_th_V, linewidth='0.75', label='Radial (r) Thermal Stress Profile')
+            plt.plot(r, sigma_t_th_V, linewidth='0.75', label='Hoop (θ) Thermal Stress Profile')
+            plt.plot(r, sigma_z_th_V, color='green', linewidth='0.5', label='Axial (z) Thermal Stress Profile')
+            plt.axhline(y = 0, color='black', linewidth='1', label='y=0')
+            plt.plot(r_sigma_t_th_V_max, sigma_t_th_V_max,'or', label='Max Hoop Stress')
+            plt.xlabel('Radius (m)')
+            plt.ylabel('Thermal Stress (MPa)')
+            plt.title('Vessel Wall Thermal Stress Profiles and Maximum Hoop Stress')
             plt.legend()
             plt.grid()
             plt.show()
