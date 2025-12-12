@@ -62,7 +62,7 @@ B = 1.4                        #Build-up factor
 # ============================
 # Computed additional data
 # ============================
-t = 0.1                                    #m #First guess
+t = 0.05                                    #m #First guess
 R_int = D_vess_int/2                        #m
 R_ext = R_int + t                           #m
 G = E/(2*(1+nu))                            #MPa
@@ -132,7 +132,7 @@ if Def_P_flag == 0:
 if Mar_criterion > 5:
     while True:
         try:
-            Mariotte_flag = int(input("\nThe cylinder wall can be considered thin. Are you interested in visualizing the Mariotte solution for stress? (1: Yes, 0: No): "))
+            Mariotte_flag = int(input("\nWith an initial thickness value of %.3f m, the vessel can be considered thin. Are you interested in visualizing the Mariotte solution for stress? (1: Yes, 0: No): " %t))
             if Mariotte_flag not in (0, 1):
                 raise RuntimeError("Invalid input! Please enter either 0 or 1.")
             break  
@@ -258,7 +258,7 @@ elif Lame_flag == 0:
 # ======================================    
 while True:
     try:
-        TS_flag = int(input("\nDo you want to approach the case with a thermal shield? (1: Yes, 0: No): "))
+        TS_flag = int(input("\nDo you want to consider the presence of a thermal shield between the barrel and the vessel? (1: Yes, 0: No): "))
         if TS_flag not in (0, 1):
             raise RuntimeError("Invalid input! Please enter either 0 or 1.")
         break  
@@ -725,24 +725,25 @@ if TS_flag == 0:
         Dt_ratio_plot = np.linspace(2,50,1000)
 
         if Corradi_flag == 1:
-
             # ============================ 
             # Corradi Design Procedure
             # ============================
+            while True:
+                try:
+                    s = float(input("Please enter a safety factor between 1.5 and 2 for the Corradi design procedure: "))
+                    if s < 1.5 or s > 2:
+                        raise RuntimeError("Invalid input! Please enter a safety factor between 1.5 and 2.")
+                    break  
+                except ValueError:
+                    print("Please enter a valid float.")
+                except RuntimeError as e:
+                    print(e)
+            
             def Corradi(Slenderness):
                 if ThinTubes_flag == 1:
                     print("Adopting Corradi Design Procedure.")
+
                 if isinstance(Slenderness, np.ndarray):
-                    while True:
-                        try:
-                            s = float(input("Please enter a safety factor between 1.5 and 2: "))
-                            if s < 1.5 or s > 2:
-                                raise RuntimeError("Invalid input! Please enter a safety factor between 1.5 and 2.")
-                            break  
-                        except ValueError:
-                            print("Please enter a valid float.")
-                        except RuntimeError as e:
-                            print(e)
                     mu = np.zeros(len(Slenderness))
                     Z = lambda Dt: (np.sqrt(3)/4) * (2*Dt + 1) * W                  #Accounts for ovality
                     q_U = lambda Dt: q_0_fun(Dt)/np.sqrt(1+(Z(Dt)**2))
@@ -1047,32 +1048,36 @@ if TS_flag == 0:
 # PURELY THERMAL PROBLEM - POWER IMPOSED - THERMAL SHIELD
 # =============================================================================================================================================================
 elif TS_flag == 1:
-    """
-    while True:
-        try:
-            t_shield_user = float(input("\nPlease enter the initial value of the thermal shield thickness (m): "))
-            if t_shield_user < 0 or t_shield_user > ((D_vess_int - D_barr_ext)/2):
-                raise RuntimeError("The thermal shield thickness is either negative or too large for the RPV.")
-            break  
-        except ValueError:
-            print("Please enter a valid float.")
-        except RuntimeError as e:
-            print(e)
-    
-    
-    while True:
-        try:
-            D_shield_int = float(input("\nPlease enter the initial thermal shield inner diameter (m) to choose its position: "))
-            if (D_shield_int < D_barr_ext) or (D_shield_int/2 + t_shield_user) > D_vess_int/2:
-                raise RuntimeError("The thermal shield is either starting inside the barrel or clipping inside the vessel.")
-            break  
-        except ValueError:
-            print("Please enter a valid float.")
-        except RuntimeError as e:
-            print(e)
-    """
+
     t_shield_user = 0.001 #letting the user pick a first guess value causes it to become the minimum. this could be addressed, but the easy and right solution is to deprive the user of this freedom
-    
+    while True:
+        try:
+            User_D_flag = float(input("\nDo you want to choose the thermal shield's position? If not, the default (middle) position will be assumed. (1: Yes, 0: No): "))
+            if User_D_flag not in (0, 1):
+                raise RuntimeError("Invalid input! Please enter either 0 or 1.")
+            break  
+        except ValueError:
+            print("Please enter a valid integer.")
+        except RuntimeError as e:
+            print(e)
+
+    if User_D_flag == 1:            #Allows the user to either assume the default, middle position for the thermal shield or to position it himself
+        while True:
+            try:
+                D_shield_int = float(input("\nPlease enter the initial thermal shield inner diameter (m) to choose its position: "))
+                if (D_shield_int < D_barr_ext) or (D_shield_int/2 + t_shield_user) > D_vess_int/2:
+                    raise RuntimeError("The thermal shield is either starting inside the barrel or clipping inside the vessel.")
+                break  
+            except ValueError:
+                print("Please enter a valid float.")
+            except RuntimeError as e:
+                print(e)
+        R_shield_int = D_shield_int/2
+
+    elif User_D_flag == 0:
+        print("Assuming default thermal shield position.")
+        R_shield_int = D_barr_ext/2 + (D_vess_int - D_barr_ext)/4 - t_shield_user/2 
+
     print("No discretization along z. Assuming constant temperature of the primary fluid T1.")
     while True:
         try:
@@ -1102,30 +1107,52 @@ elif TS_flag == 1:
     counter = 0
     counter_vessel = 0
     N_max = 10000
+
     t_shield = t_shield_user - 0.001
-    t_shield_max = 0.1          #arbitrary and perhaps excessive
+    t_shield_max = 0.1                      #arbitrary and perhaps excessive
     t_vessel_max = 0.3
+    
+    while True:
+        try:
+            s = float(input("Please enter a safety factor between 1.5 and 2 for the Corradi design procedure: "))
+            if s < 1.5 or s > 2:
+                raise RuntimeError("Invalid input! Please enter a safety factor between 1.5 and 2.")
+            break  
+        except ValueError:
+            print("Please enter a valid float.")
+        except RuntimeError as e:
+            print(e)
 
     while final_flag == 0:
         t_shield += 0.001
         counter += 1
         print("Iteration no. %d" %counter)
-        #print("The vessel thickness has been increased %d times by 2cm. Current vessel thickness: %.3f m" %(counter_vessel, t))
-        #print("Current thermal shield thickness: %.3f m" %t_shield)
         if counter > N_max:
             print("Exceeded maximum number of iterations: %d. Exiting the loop." %N_max)
             break
         if t > t_vessel_max:
             print("Vessel thickness exceeds feasibility margin. Exiting the loop.")
             break
-        if t_shield > t_shield_max:
-            print("Ran into excessive thermal shield thickness. Adding 1cm to the vessel thickness instead. Restarting...")
-            t += 0.01
-            t_shield = t_shield_user
-            #counter = 0
-            counter_vessel += 1
-            continue
-        R_shield_int = 1.375 - t_shield/2 #D_shield_int/2
+        if User_D_flag == 1:        #If the thermal shield is not in the middle, geometrical constraints are present: the thermal shield must not bump into the vessel
+            if t_shield > t_shield_max or (D_shield_int/2 + t_shield) > D_vess_int/2:
+                print("Ran into excessive thermal shield thickness. Adding 1cm to the vessel thickness instead. Restarting...")
+                t += 0.01
+                t_shield = t_shield_user
+                counter_vessel += 1
+                continue
+        elif User_D_flag == 0:      #If the thermal shield is in the middle, only its thickness must be checked: no geometrical constraints
+            if t_shield > t_shield_max:
+                print("Ran into excessive thermal shield thickness. Adding 1cm to the vessel thickness instead. Restarting...")
+                t += 0.01
+                t_shield = t_shield_user
+                counter_vessel += 1
+                continue
+
+        if User_D_flag == 1:
+            R_shield_int = D_shield_int/2
+        elif User_D_flag == 0:
+            R_shield_int = D_barr_ext/2 + (D_vess_int - D_barr_ext)/4 - t_shield/2
+
         R_shield_ext = R_shield_int + t_shield
         D_shield_ext = 2*R_shield_ext
         D_shield_int = 2*R_shield_int
@@ -1133,8 +1160,6 @@ elif TS_flag == 1:
         r_S = np.linspace(R_shield_int, R_shield_ext, dr)
 
         Phi_0S = Phi_0                                                #All gamma rays reach the shield, not the vessel
-
-
 
         # ======================================
         # Dimensionless numbers and heat transfer coefficients
@@ -1165,8 +1190,6 @@ elif TS_flag == 1:
         elif T1_flag == 4:
             T1 = T_out_avg
 
-
-
         R_ext = R_int + t
         r = np.linspace(R_int, R_ext, dr)
 
@@ -1185,8 +1208,6 @@ elif TS_flag == 1:
         I = lambda r: E_y_J*Phi(r)*B                                   #W/(m²)
         q_0 = B*(Phi_S(r_S)[-1])*E_y_J*mu_st                           #W/(m³)
         q_iii = lambda r: q_0*np.exp(-mu_st*(r-R_int))                 #W/(m³) 
-
-        
         
         # ======================================
         # T profile constants for the vessel: general and under adiabatic outer wall approximation (dT/dx = 0 at r = R_ext)
@@ -1242,7 +1263,9 @@ elif TS_flag == 1:
 
         sigma_t_th_V_max = max(sigma_t_th_V)
         r_sigma_t_th_V_max = r[np.argmax(sigma_t_th_V)]
-
+        sigma_t_th_V_max_SIMP = max(sigma_t_th_V_SIMP(r))
+        r_sigma_t_th_V_max_SIMP = r[np.argmax(sigma_t_th_V_SIMP(r))]
+        
         # ======================================
         # Thermal Shield Thermal stresses computation
         # ======================================
@@ -1258,6 +1281,8 @@ elif TS_flag == 1:
 
         sigma_t_th_S_max = max(sigma_t_th_S)
         r_sigma_t_th_S_max = r_S[np.argmax(sigma_t_th_S)]
+        sigma_t_th_S_max_SIMP = max(sigma_t_th_S_SIMP(r))
+        r_sigma_t_th_S_max_SIMP = r[np.argmax(sigma_t_th_S_SIMP(r))]
 
         # ======================================
         # Hydrostatic Stresses and Principal Stresses in the thermal shield 
@@ -1338,15 +1363,10 @@ elif TS_flag == 1:
             flag_prim = 1
         else:
             flag_prim = 0
-
         
         if flag_primsec == 1 or flag_prim == 1:
-            #print("\nThe current stress state in the thermal shield is not acceptable. \nPrimary&Secondary flag: %d \nSecondary flag: %d" %(flag_primsec, flag_prim))
-            #print(abs(max(sigma_r_th_S)),"   -   ",abs(max(sigma_t_th_S)),"   -   ",abs(max(sigma_z_th_S)))
-            #print(T_des_shield_C, Stress_Intensity_S)
             shield_flag = 0
         elif flag_primsec == 0 and flag_prim == 0:
-            #print("\nThe current stress state in the thermal shield is acceptable.")
             shield_flag = 1
 
         # ============================ 
@@ -1366,20 +1386,7 @@ elif TS_flag == 1:
             # Corradi Design Procedure
             # ============================
             def Corradi(Slenderness):
-                # if ThinTubes_flag == 1:
-                #     print("Adopting Corradi Design Procedure.")
                 if isinstance(Slenderness, np.ndarray):
-                    # while True:
-                    #     try:
-                    #         s = float(input("Please enter a safety factor between 1.5 and 2: "))
-                    #         if s < 1.5 or s > 2:
-                    #             raise RuntimeError("Invalid input! Please enter a safety factor between 1.5 and 2.")
-                    #         break  
-                    #     except ValueError:
-                    #         print("Please enter a valid float.")
-                    #     except RuntimeError as e:
-                    #         print(e)
-                    s = 2
                     mu = np.zeros(len(Slenderness))
                     Z = lambda Dt: (np.sqrt(3)/4) * (2*Dt + 1) * W                  #Accounts for ovality
                     q_U = lambda Dt: q_0_fun(Dt)/np.sqrt(1+(Z(Dt)**2))
@@ -1409,62 +1416,10 @@ elif TS_flag == 1:
             # Corradi Design Procedure Results
             # ============================
             Corradi_vessel = Corradi(np.array([Current_Slenderness]))
-            #print("\nAccording to the Corradi Design Procedure:")
-            #print("Current slenderness: ",Current_Slenderness)
-            #print("The theoretical limit for collapse pressure, accounting for ovality, is: q_c = %.3f MPa = %.3f bar" %(Corradi_vessel[0], 10*Corradi_vessel[0]))
-            #print("A safety factor s = %.3f was assumed. \nThe allowable external pressure is thus: q_a = %.3f MPa = %.3f bar" %(Corradi_vessel[2], Corradi_vessel[1], 10*Corradi_vessel[1]))
-            
             if (P_cpp < 10*Corradi_vessel[1] and sigma_cTR_M < sigma_allowable and sigma_cTR_L < sigma_allowable):
-                #print("The given external pressure of %.3f bar is lower than the allowable pressure of %.3f bar \nand the comparison stress according to Tresca-Lamé Sc = %.3f MPa is lower than the allowable stress Sa = %.3f MPa \nand the thermal shield's integrity is ensured: the design is correct!" %(P_cpp, 10*Corradi_vessel[1], sigma_cTR_L, sigma_allowable))
                 final_flag = 1
             else:
-                #print("The given external pressure of %.3f bar is higher than the allowable pressure of %.3f bar: a change in thickness is required!" %(P_cpp, 10*Corradi_vessel[1]))
                 final_flag = 0
-    
-        # elif Corradi_flag == 0:
-        #     print("Skipping Corradi Design Procedure.")
-    
-    print("\nFinal Results:")
-    
-    print("\nThe vessel thickness has been increased %d times by 1cm. Computed vessel thickness: %.3f m" %(counter_vessel, t))
-    print("Computed thermal shield thickness: %.3f m" %t_shield)
-    
-    if flag_primsec == 1 or flag_prim == 1:
-        print("\nThe current stress state in the thermal shield is not acceptable. \nPrimary&Secondary flag: %d \nSecondary flag: %d" %(flag_primsec, flag_prim))
-        print(abs(max(sigma_r_th_S)),"   -   ",abs(max(sigma_t_th_S)),"   -   ",abs(max(sigma_z_th_S)))
-        print(T_des_shield_C, Stress_Intensity_S)
-    elif flag_primsec == 0 and flag_prim == 0:
-        print("\nThe current stress state in the thermal shield is acceptable.")
-        
-    Corradi_vessel = Corradi(np.array([Current_Slenderness]))
-    print("\nAccording to the Corradi Design Procedure:")
-    print("Current slenderness: ",Current_Slenderness)
-    print("The theoretical limit for collapse pressure, accounting for ovality, is: q_c = %.3f MPa = %.3f bar" %(Corradi_vessel[0], 10*Corradi_vessel[0]))
-    print("A safety factor s = %.3f was assumed. \nThe allowable external pressure is thus: q_a = %.3f MPa = %.3f bar" %(Corradi_vessel[2], Corradi_vessel[1], 10*Corradi_vessel[1]))
-    
-    if (P_cpp < 10*Corradi_vessel[1] and sigma_cTR_M < sigma_allowable and sigma_cTR_L < sigma_allowable):
-        print("The given external pressure of %.3f bar is lower than the allowable pressure of %.3f bar \nand the comparison stress according to Tresca-Lamé Sc = %.3f MPa is lower than the allowable stress Sa = %.3f MPa \nand the thermal shield's integrity is ensured: the design is correct!" %(P_cpp, 10*Corradi_vessel[1], sigma_cTR_L, sigma_allowable))
-    else:
-        print("The given external pressure of %.3f bar is higher than the allowable pressure of %.3f bar: a change in thickness is required!" %(P_cpp, 10*Corradi_vessel[1]))
-        
-    print("\nGuest-Tresca Equivalent Stress in the vessel - Lamé solution: %.3f Mpa" %sigma_cTR_L)
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
     
     # ======================================
     # Plotting the volumetric heat source profiles 
@@ -1491,7 +1446,7 @@ elif TS_flag == 1:
             plt.axvline(x = D_barr_ext/2, color='black', linewidth='3', label='Barrel Outer Surface')
             plt.axvline(x = R_int, color='black', linewidth='3', label='Vessel Inner Surface')
         else:
-            plt.xlim(R_shield_int - 0.1, R_shield_ext + 0.1)
+            plt.xlim(R_shield_int - 0.05, R_shield_ext + 0.05)
         plt.axvline(x = R_shield_int, color='black', linewidth='3', label='Thermal Shield Inner Surface')
         plt.axvline(x = R_shield_ext, color='black', linewidth='3', label='Thermal Shield Outer Surface')
         plt.plot(r_S, q_iiiS(r_S), 'g', label='Radial (r) Volumetric heat source profile')
@@ -1557,7 +1512,7 @@ elif TS_flag == 1:
                 plt.axvline(x = D_barr_ext/2, color='black', linewidth='3', label='Barrel Outer Surface')
                 plt.axvline(x = R_int, color='black', linewidth='3', label='Vessel Inner Surface')
             else:
-                plt.xlim(R_shield_int - 0.1, R_shield_ext + 0.1)
+                plt.xlim(R_shield_int - 0.05, R_shield_ext + 0.05)
             plt.axvline(x = R_shield_int, color='black', linewidth='3', label='Thermal Shield Inner Surface')
             plt.axvline(x = R_shield_ext, color='black', linewidth='3', label='Thermal Shield Outer Surface')
             plt.plot(r_S, T_shield(r_S) - 273.15, label='Radial (r) T Profile')
@@ -1607,7 +1562,7 @@ elif TS_flag == 1:
                 plt.axvline(x = D_barr_ext/2, color='black', linewidth='3', label='Barrel Outer Surface')
                 plt.axvline(x = R_int, color='black', linewidth='3', label='Vessel Inner Surface')
             else:
-                plt.xlim(R_shield_int - 0.1, R_shield_ext + 0.1)
+                plt.xlim(R_shield_int - 0.05, R_shield_ext + 0.05)
             plt.axvline(x = R_shield_int, color='black', linewidth='3', label='Thermal Shield Inner Surface')
             plt.axvline(x = R_shield_ext, color='black', linewidth='3', label='Thermal Shield Outer Surface')
             plt.plot(r_S, T_shield(r_S) - 273.15, label='Radial (r) T Profile')
@@ -1661,7 +1616,7 @@ elif TS_flag == 1:
             plt.axvline(x = D_barr_ext/2, color='black', linewidth='3', label='Barrel Outer Surface')
             plt.axvline(x = R_int, color='black', linewidth='3', label='Vessel Inner Surface')
         else:
-            plt.xlim(R_shield_int - 0.1, R_shield_ext + 0.1)
+            plt.xlim(R_shield_int - 0.05, R_shield_ext + 0.05)
         plt.axvline(x = R_shield_int, color='black', linewidth='3', label='Thermal Shield Inner Surface')
         plt.axvline(x = R_shield_ext, color='black', linewidth='3', label='Thermal Shield Outer Surface')
         plt.plot(r_S, sigma_r_th_S, linewidth='0.75', label='Radial (r) Thermal Stress Profile')
@@ -1760,148 +1715,177 @@ elif TS_flag == 1:
 
     print("\nVolumetric heat source at the vessel inner surface: %.3f W/m³" %q_iii(r[0]))
     print("Volumetric heat source at the vessel-insulation interface: %.3f W/m³" %q_iii(r[-1]))
+
     print("\nHeat transfer coefficient h1 = %.3f W/(m²·K)" %h_1)
     print("Heat transfer coefficient h2 = %.3f W/(m²·K)" %h_2)
     print("Overall heat transfer coefficient outside the vessel u2 = %.3f W/(m²·K)" %u_2)
+    
     print("\nThermal power flux on the inner vessel surface: %.3f kW/m²" %q_s1)
     print("Thermal power flux on the outer vessel surface: %.3f kW/m²" %q_s2)
+    
     print("\nMaximum Thermal Hoop Stress in the vessel: %.3f Mpa at r = %.3f m" %(sigma_t_th_V_max, r_sigma_t_th_V_max))
-    sigma_t_th_V_max_SIMP = max(sigma_t_th_V_SIMP(r))
-    r_sigma_t_th_V_max_SIMP = r[np.argmax(sigma_t_th_V_SIMP(r))]
-    print("Maximum Thermal Hoop Stress (Simplified formula): %.3f Mpa at r = %.3f m" %(sigma_t_th_V_max_SIMP, r_sigma_t_th_V_max_SIMP))
+    #print("Maximum Thermal Hoop Stress in the vessel (Simplified formula): %.3f Mpa at r = %.3f m" %(sigma_t_th_V_max_SIMP, r_sigma_t_th_V_max_SIMP))
     print("Maximum Thermal Hoop Stress in the thermal shield: %.3f Mpa at r = %.3f m" %(sigma_t_th_S_max, r_sigma_t_th_S_max))
-    sigma_t_th_S_max_SIMP = max(sigma_t_th_S_SIMP(r))
-    r_sigma_t_th_S_max_SIMP = r[np.argmax(sigma_t_th_S_SIMP(r))]
-    print("Maximum Thermal Hoop Stress (Simplified formula): %.3f Mpa at r = %.3f m" %(sigma_t_th_S_max_SIMP, r_sigma_t_th_S_max_SIMP))
-    print("Maximum Thermal Hoop Stress via Design Curves: %.3f MPa" %sigma_t_th_max_DES)
-    print("Guest-Tresca Equivalent Stress in the thermal shield - Lamé solution: %.3f Mpa" %sigma_cTR_LS)
+    #print("Maximum Thermal Hoop Stress in the thermal shield (Simplified formula): %.3f Mpa at r = %.3f m" %(sigma_t_th_S_max_SIMP, r_sigma_t_th_S_max_SIMP))
+    print("Maximum Thermal Hoop Stress in the vessel    -   Via design Curves: %.3f MPa" %sigma_t_th_max_DES)
+
+    print("\nGuest-Tresca Equivalent Stress in the thermal shield - Lamé solution: %.3f Mpa" %sigma_cTR_LS)
     print("Von Mises Equivalent Stress in the thermal shield - Lamé solution: %.3f Mpa" %sigma_cVM_LS)
+
     print("\nGuest-Tresca Equivalent Stress in the vessel - Mariotte solution: %.3f Mpa" %sigma_cTR_M)
     print("Guest-Tresca Equivalent Stress in the vessel - Lamé solution: %.3f Mpa" %sigma_cTR_L)
+    
     print("\nVon Mises Equivalent Stress in the vessel - Mariotte solution: %.3f Mpa" %sigma_cVM_M)
     print("Von Mises Equivalent Stress in the vessel - Lamé solution: %.3f Mpa" %sigma_cVM_L)
+
     print("\nFor a design vessel temperature of %.3f °C: " %T_des_vessel_C)
     print('Yield Stress: Sy'," = %.3f MPa" %Yield_stress)
     print('Stress Intensity: Sm'," = %.3f MPa" %Stress_Intensity)
+
     print("\nFor a design thermal shield temperature of %.3f °C: " %T_des_shield_C)
     print('Yield Stress: Sy'," = %.3f MPa" %Yield_stress_S)
     print('Stress Intensity: Sm'," = %.3f MPa" %Stress_Intensity_S)
 
-# ============================ 
-# Sizing of a thick cylinder under external pressure
-# ============================
-if Mar_criterion > 5:
-    while True:
-        try:
-            ThinTubes_flag = int(input("\nThe cylinder wall can be considered thin. Are you interested in the thin tube limits for Elastic Instability and Plastic Collapse? (1: Yes, 0: No): "))
-            if ThinTubes_flag not in (0, 1):
-                raise RuntimeError("Invalid input! Please enter either 0 or 1.")
-            break  
-        except ValueError:
-            print("Please enter a valid integer.")
-        except RuntimeError as e:
-            print(e)
+    # ============================ 
+    # Sizing of a thick cylinder under external pressure
+    # ============================
+    if Mar_criterion > 5:
+        while True:
+            try:
+                ThinTubes_flag = int(input("\nThe cylinder wall can be considered thin. Are you interested in the thin tube limits for Elastic Instability and Plastic Collapse? (1: Yes, 0: No): "))
+                if ThinTubes_flag not in (0, 1):
+                    raise RuntimeError("Invalid input! Please enter either 0 or 1.")
+                break  
+            except ValueError:
+                print("Please enter a valid integer.")
+            except RuntimeError as e:
+                print(e)
+
+        if ThinTubes_flag == 1:
+            p_E_fun = lambda Dt: 2 * (E/(1-(nu**2))) * (1/(Dt**3))              #Elastic Instability Limit for Thin Tubes
+            p_0_fun = lambda Dt: 2 * Yield_stress * 1/Dt                        #Plastic Collapse Limit for Thin Tubes  -   Vessel
+            p_0_fun_S = lambda Dt: 2 * Yield_stress_S * 1/Dt                    #Plastic Collapse Limit for Thin Tubes  -   Thermal Shield
+
+        elif ThinTubes_flag == 0:
+            print("Skipping thin tube limits.")
+    else:
+        print("\nThe cylinder can't be considered thin. Skipping thin tube limits.")
+        ThinTubes_flag = 0
 
     if ThinTubes_flag == 1:
-        p_E_fun = lambda Dt: 2 * (E/(1-(nu**2))) * (1/(Dt**3))              #Elastic Instability Limit for Thin Tubes
-        p_0_fun = lambda Dt: 2 * Yield_stress * 1/Dt                        #Plastic Collapse Limit for Thin Tubes  -   Vessel
-        p_0_fun_S = lambda Dt: 2 * Yield_stress_S * 1/Dt                    #Plastic Collapse Limit for Thin Tubes  -   Thermal Shield
-
+        while True:
+            try:
+                Corradi_flag = int(input("\nThe thin tube limits were adopted. Are you interested in the more general Corradi Design Procedure? (1: Yes, 0: No): "))
+                if Corradi_flag not in (0, 1):
+                    raise RuntimeError("Invalid input! Please enter either 0 or 1.")
+                break  
+            except ValueError:
+                print("Please enter a valid integer.")
+            except RuntimeError as e:
+                print(e)
+        
     elif ThinTubes_flag == 0:
-        print("Skipping thin tube limits.")
-else:
-    print("\nThe cylinder can't be considered thin. Skipping thin tube limits.")
-    ThinTubes_flag = 0
+        print("Adopting Corradi Design Procedure.")
+        Corradi_flag = 1
 
-if ThinTubes_flag == 1:
-    while True:
-        try:
-            Corradi_flag = int(input("\nThe thin tube limits were adopted. Are you interested in the more general Corradi Design Procedure? (1: Yes, 0: No): "))
-            if Corradi_flag not in (0, 1):
-                raise RuntimeError("Invalid input! Please enter either 0 or 1.")
-            break  
-        except ValueError:
-            print("Please enter a valid integer.")
-        except RuntimeError as e:
-            print(e)
-    
-elif ThinTubes_flag == 0:
-    print("Adopting Corradi Design Procedure.")
-    Corradi_flag = 1
-
-# ============================ 
-# Elastic instability and plastic collapse curves
-# ============================
-if ThinTubes_flag == 1 and Corradi_flag == 0:
-    while True:
-        try:
-            Collapse_pl_flag = int(input("\nDo you want to visualize the buckling and plastic collapse curves for thin and thick tubes? (1: Yes, 0: No): "))
-            if Collapse_pl_flag not in (0, 1):
-                raise RuntimeError("Invalid input! Please enter either 0 or 1.")
-            break  
-        except ValueError:
-            print("Please enter a valid integer.")
-        except RuntimeError as e:
-            print(e)
-    
-    if Collapse_pl_flag == 1:
+    # ============================ 
+    # Elastic instability and plastic collapse curves
+    # ============================
+    if ThinTubes_flag == 1 and Corradi_flag == 0:
+        while True:
+            try:
+                Collapse_pl_flag = int(input("\nDo you want to visualize the buckling and plastic collapse curves for thin and thick tubes? (1: Yes, 0: No): "))
+                if Collapse_pl_flag not in (0, 1):
+                    raise RuntimeError("Invalid input! Please enter either 0 or 1.")
+                break  
+            except ValueError:
+                print("Please enter a valid integer.")
+            except RuntimeError as e:
+                print(e)
         
-        # ============================ 
-        # Plastic collapse and buckling Plots
-        # ============================
-        plt.figure(figsize = (8, 8))
-        plt.semilogy(Dt_ratio_plot, p_E_fun(Dt_ratio_plot), 'blue', label='p$_E$')
-        plt.semilogy(Dt_ratio_plot, q_E_fun(Dt_ratio_plot), '--b', label='q$_E$')
-        plt.semilogy(Dt_ratio_plot, p_0_fun(Dt_ratio_plot), 'red', label='p$_0$')
-        plt.semilogy(Dt_ratio_plot, q_0_fun(Dt_ratio_plot), '--r', label='q$_0$')
-        plt.axvline(x = Dt_Crit_Ratio, color = 'black', linewidth = '3', label = 'Critical Slenderness')
-        plt.axvline(x = Current_Slenderness, color = 'green', linewidth = '3', label = 'Current Vessel Slenderness')
-        plt.xlabel("Geometrical Slenderness D/t")
-        plt.ylabel("Theoretical Limit Values (MPa)")
-        plt.title("Plastic Collapse and Buckling Curves")
-        plt.legend()
-        plt.grid()
-        plt.show()
+        if Collapse_pl_flag == 1:
+            
+            # ============================ 
+            # Plastic collapse and buckling Plots
+            # ============================
+            plt.figure(figsize = (8, 8))
+            plt.semilogy(Dt_ratio_plot, p_E_fun(Dt_ratio_plot), 'blue', label='p$_E$')
+            plt.semilogy(Dt_ratio_plot, q_E_fun(Dt_ratio_plot), '--b', label='q$_E$')
+            plt.semilogy(Dt_ratio_plot, p_0_fun(Dt_ratio_plot), 'red', label='p$_0$')
+            plt.semilogy(Dt_ratio_plot, q_0_fun(Dt_ratio_plot), '--r', label='q$_0$')
+            plt.axvline(x = Dt_Crit_Ratio, color = 'black', linewidth = '3', label = 'Critical Slenderness')
+            plt.axvline(x = Current_Slenderness, color = 'green', linewidth = '3', label = 'Current Vessel Slenderness')
+            plt.xlabel("Geometrical Slenderness D/t")
+            plt.ylabel("Theoretical Limit Values (MPa)")
+            plt.title("Plastic Collapse and Buckling Curves")
+            plt.legend()
+            plt.grid()
+            plt.show()
 
-elif ThinTubes_flag == 1 and Corradi_flag == 1:
-    while True:
-        try:
-            Collapse_pl_flag = int(input("\nDo you want to visualize the buckling and plastic collapse curves for thin and thick tubes and the Corradi curve? (1: Yes, 0: No): "))
-            if Collapse_pl_flag not in (0, 1):
-                raise RuntimeError("Invalid input! Please enter either 0 or 1.")
-            break  
-        except ValueError:
-            print("Please enter a valid integer.")
-        except RuntimeError as e:
-            print(e)
-    
-    if Collapse_pl_flag == 1:
+    elif ThinTubes_flag == 1 and Corradi_flag == 1:
+        while True:
+            try:
+                Collapse_pl_flag = int(input("\nDo you want to visualize the buckling and plastic collapse curves for thin and thick tubes and the Corradi curve? (1: Yes, 0: No): "))
+                if Collapse_pl_flag not in (0, 1):
+                    raise RuntimeError("Invalid input! Please enter either 0 or 1.")
+                break  
+            except ValueError:
+                print("Please enter a valid integer.")
+            except RuntimeError as e:
+                print(e)
         
-        # ============================ 
-        # Plastic collapse and buckling Plots
-        # ============================
-        plt.figure(figsize = (8, 8))
-        plt.subplot(1,2,1)
-        plt.semilogy(Dt_ratio_plot, p_E_fun(Dt_ratio_plot), 'blue', label='p$_E$')
-        plt.semilogy(Dt_ratio_plot, q_E_fun(Dt_ratio_plot), '--b', label='q$_E$')
-        plt.semilogy(Dt_ratio_plot, p_0_fun(Dt_ratio_plot), 'red', label='p$_0$')
-        plt.semilogy(Dt_ratio_plot, q_0_fun(Dt_ratio_plot), '--r', label='q$_0$')
-        plt.semilogy(Dt_ratio_plot, Corradi(Dt_ratio_plot)[0], 'orange', label='Corradi q$_c$')
-        plt.axvline(x = Dt_Crit_Ratio, color = 'black', linewidth = '3', label = 'Critical Slenderness')
-        plt.axvline(x = Current_Slenderness, color = 'green', linewidth = '3', label = 'Current Vessel Slenderness')
-        plt.xlabel("Geometrical Slenderness D/t")
-        plt.ylabel("Theoretical Limit Values (MPa)")
-        plt.title("Plastic Collapse and Buckling Curves")
-        plt.legend()
-        plt.grid()
-        plt.tight_layout()
+        if Collapse_pl_flag == 1:
+            
+            # ============================ 
+            # Plastic collapse and buckling Plots
+            # ============================
+            plt.figure(figsize = (8, 8))
+            plt.subplot(1,2,1)
+            plt.semilogy(Dt_ratio_plot, p_E_fun(Dt_ratio_plot), 'blue', label='p$_E$')
+            plt.semilogy(Dt_ratio_plot, q_E_fun(Dt_ratio_plot), '--b', label='q$_E$')
+            plt.semilogy(Dt_ratio_plot, p_0_fun(Dt_ratio_plot), 'red', label='p$_0$')
+            plt.semilogy(Dt_ratio_plot, q_0_fun(Dt_ratio_plot), '--r', label='q$_0$')
+            plt.semilogy(Dt_ratio_plot, Corradi(Dt_ratio_plot)[0], 'orange', label='Corradi q$_c$')
+            plt.axvline(x = Dt_Crit_Ratio, color = 'black', linewidth = '3', label = 'Critical Slenderness')
+            plt.axvline(x = Current_Slenderness, color = 'green', linewidth = '3', label = 'Current Vessel Slenderness')
+            plt.xlabel("Geometrical Slenderness D/t")
+            plt.ylabel("Theoretical Limit Values (MPa)")
+            plt.title("Plastic Collapse and Buckling Curves")
+            plt.legend()
+            plt.grid()
+            plt.tight_layout()
 
-        plt.subplot(1,2,2)
-        plt.plot(Dt_ratio_plot, Corradi(Dt_ratio_plot)[3], 'k', label=r'Corradi $\mu$')
-        plt.xlabel("Geometrical Slenderness D/t")
-        plt.ylabel(r"Corradi $\mu$")
-        plt.title(r"$\mu$ coefficient - Corradi Procedure")
-        plt.legend()
-        plt.grid()
-        plt.tight_layout()
-        plt.show()
+            plt.subplot(1,2,2)
+            plt.plot(Dt_ratio_plot, Corradi(Dt_ratio_plot)[3], 'k', label=r'Corradi $\mu$')
+            plt.xlabel("Geometrical Slenderness D/t")
+            plt.ylabel(r"Corradi $\mu$")
+            plt.title(r"$\mu$ coefficient - Corradi Procedure")
+            plt.legend()
+            plt.grid()
+            plt.tight_layout()
+            plt.show()
+    
+    # ============================ 
+    # Final Results Printing
+    # ============================
+    print("\nFinal Results:")
+        
+    print("\nThe vessel thickness has been increased %d times by 1cm. Computed vessel thickness: %.3f m" %(counter_vessel, t))
+    print("Computed thermal shield thickness: %.3f m" %t_shield)
+
+    if flag_primsec == 1 or flag_prim == 1:
+        print("\nThe current stress state in the thermal shield is not acceptable. \nPrimary + Secondary Stresses flag: %d \nPrimary Stresses flag: %d" %(flag_primsec, flag_prim))
+        print("Absolute value of the maximum radial thermal stress: %.3f MPa\nAbsolute value of the maximum hoop thermal stress: %.3f MPa\nAbsolute value of the maximum axial thermal stress: %.3f MPa" %(abs(max(sigma_r_th_S)),abs(max(sigma_t_th_S)),abs(max(sigma_z_th_S))))
+    elif flag_primsec == 0 and flag_prim == 0:
+        print("\nThe current stress state in the thermal shield is acceptable.")
+        
+    Corradi_vessel = Corradi(np.array([Current_Slenderness]))
+    print("\nAccording to the Corradi Design Procedure:")
+    print("Current slenderness: %.3f    -   Critical slenderness: %.3f" %(Current_Slenderness, Dt_Crit_Ratio))
+    print("The theoretical limit for collapse pressure, accounting for ovality, is: q_c = %.3f MPa = %.3f bar" %(Corradi_vessel[0], 10*Corradi_vessel[0]))
+    print("A safety factor s = %.3f was assumed. \nThe allowable external pressure is thus: q_a = %.3f MPa = %.3f bar" %(Corradi_vessel[2], Corradi_vessel[1], 10*Corradi_vessel[1]))
+
+    if (P_cpp < 10*Corradi_vessel[1] and sigma_cTR_M < sigma_allowable and sigma_cTR_L < sigma_allowable):
+        print("\nThe given external pressure of %.3f bar is lower than the allowable pressure of %.3f bar. \nThe comparison stress according to Tresca-Lamé Sc = %.3f MPa is lower than the allowable stress Sa = %.3f MPa. \nThe thermal shield's integrity is ensured: the design is correct!" %(P_cpp, 10*Corradi_vessel[1], sigma_cTR_L, sigma_allowable))
+    else:
+        print("\nThe given external pressure of %.3f bar is higher than the allowable pressure of %.3f bar: a change in thickness is required!" %(P_cpp, 10*Corradi_vessel[1]))
