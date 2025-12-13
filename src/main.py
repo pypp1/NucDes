@@ -1916,6 +1916,8 @@ elif TS_flag == 1:
     print("A safety factor s = %.3f was assumed. \nThe allowable external pressure is thus: q_a = %.3f MPa = %.3f bar" %(Corradi_vessel[2], Corradi_vessel[1], 10*Corradi_vessel[1]))
 
     if (P_cpp < 10*Corradi_vessel[1] and sigma_cTR_M < sigma_allowable and sigma_cTR_L < sigma_allowable):
-        print("\nThe given external pressure of %.3f bar is lower than the allowable pressure of %.3f bar. \nThe comparison stress according to Tresca-Lamé Sc = %.3f MPa is lower than the allowable stress Sa = %.3f MPa. \nThe thermal shield's integrity is ensured: the design is correct!" %(P_cpp, 10*Corradi_vessel[1], sigma_cTR_L, sigma_allowable))
-    else:
+        print("\nThe given external pressure of %.3f bar is lower than the allowable pressure of %.3f bar. \nThe comparison stress according to Tresca-Lamé Sc = %.3f MPa is lower than the allowable stress Sa = %.3f MPa.\nThe comparison stress according to Tresca-Mariotte Sc = %.3f MPa is also lower than the allowable stress Sa = %.3f MPa. \nThe thermal shield's integrity is ensured: the design is correct!" %(P_cpp, 10*Corradi_vessel[1], sigma_cTR_L, sigma_allowable, sigma_cTR_M, sigma_allowable))
+    elif (P_cpp > 10*Corradi_vessel[1]):
         print("\nThe given external pressure of %.3f bar is higher than the allowable pressure of %.3f bar: a change in thickness is required!" %(P_cpp, 10*Corradi_vessel[1]))
+    elif (sigma_cTR_M > sigma_allowable or sigma_cTR_L > sigma_allowable):
+        print("\nEither the Tresca-Mariotte comparison stress Sc = %.3f MPa or the Tresca-Lamè comparison stress Sc = %.3f MPa is higher than the allowable stress Sa = %.3f MPa" %(sigma_cTR_M,sigma_cTR_L,sigma_allowable))
