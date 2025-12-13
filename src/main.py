@@ -11,7 +11,7 @@ D_vess_int = 3.0       #m
 t_th_ins = 0.05        #m 
 k_th_ins = 1.4         #W/mK
 L = 7                  #m
-W = 0.025              #ASSUMED: To be changed using ASME III NB4000, as this is only valid for IRIS SG Tubes
+W = 0.01               #ASSUMED: To be changed using ASME III NB4000, as this is only valid for IRIS SG Tubes
 sigma_allowable = 400  #MPa     -   Assumed randomly, will have to be defined
 
 # ============================
@@ -65,13 +65,14 @@ B = 1.4                        #Build-up factor
 t = 0.05                                    #m #First guess
 R_int = D_vess_int/2                        #m
 R_ext = R_int + t                           #m
+v_flr = m_flr/rho                           #m³/s
 G = E/(2*(1+nu))                            #MPa
 rho_ii = (R_ext**2)/(R_ext**2 - R_int**2)
 rho_i = (R_int**2)/(R_ext**2 - R_int**2)
 P_int_MPa = P_int/10                        #MPa
 P_cpp_MPa = P_cpp/10                        #MPa
 Phi_0 = Phi_0 * 1e4                         #photons/(m²·s)
-Mar_criterion = R_int/t                     
+Mar_criterion = R_int/t  
 
 # ======================================
 # Simpson composite integration function
@@ -1052,16 +1053,16 @@ elif TS_flag == 1:
     t_shield_user = 0.001 #letting the user pick a first guess value causes it to become the minimum. this could be addressed, but the easy and right solution is to deprive the user of this freedom
     while True:
         try:
-            User_D_flag = float(input("\nDo you want to choose the thermal shield's position? If not, the default (middle) position will be assumed. (1: Yes, 0: No): "))
-            if User_D_flag not in (0, 1):
-                raise RuntimeError("Invalid input! Please enter either 0 or 1.")
+            User_D_flag = float(input("\nWhat position of the thermal shield do you want to consider? (2: Arbitrary, 1: Middle, 0: Equal areas): "))
+            if User_D_flag not in (0, 1, 2):
+                raise RuntimeError("Invalid input! Please enter either 0, 1 or 2.")
             break  
         except ValueError:
             print("Please enter a valid integer.")
         except RuntimeError as e:
             print(e)
 
-    if User_D_flag == 1:            #Allows the user to either assume the default, middle position for the thermal shield or to position it himself
+    if User_D_flag == 2:            #Allows the user to assume the default, middle position for the thermal shield, position it himself or choose the position granting equal areas
         while True:
             try:
                 D_shield_int = float(input("\nPlease enter the initial thermal shield inner diameter (m) to choose its position: "))
@@ -1073,10 +1074,17 @@ elif TS_flag == 1:
             except RuntimeError as e:
                 print(e)
         R_shield_int = D_shield_int/2
-
-    elif User_D_flag == 0:
-        print("Assuming default thermal shield position.")
+    elif User_D_flag == 1:
+        print("Assuming middle thermal shield position.")
         R_shield_int = D_barr_ext/2 + (D_vess_int - D_barr_ext)/4 - t_shield_user/2 
+    elif User_D_flag == 0:
+        A_eq = 1
+        B_eq = t_shield_user
+        C_eq = (t_shield_user**2)/2 - ((R_int**2)+((D_barr_ext**2)/4))/2
+        Delta_eq = B_eq - 4*A_eq*C_eq
+        R_shield_int = (-B_eq + np.sqrt(Delta_eq))/(2*A_eq)
+        D_shield_int = 2*R_shield_int
+        print(R_shield_int)
 
     print("No discretization along z. Assuming constant temperature of the primary fluid T1.")
     while True:
@@ -1112,6 +1120,15 @@ elif TS_flag == 1:
     t_shield_max = 0.1                      #arbitrary and perhaps excessive
     t_vessel_max = 0.3
     
+    p_yield = np.polyfit(T_thr, sigma_y, deg = len(T_thr)-1)
+    p_intensity = np.polyfit(T_thr, sigma_in, deg = len(T_thr)-1)
+    
+    Yield_Interpolator = lambda x: np.polyval(p_yield, x)                           #Yield Stress Interpolation Polynomial (n-1)
+    Yield_CubicSpline = interpolate.CubicSpline(T_thr, sigma_y)                     #Yield Stress Cubic Spline Interpolation
+    Intensity_Interpolator = lambda x: np.polyval(p_intensity, x)                   #Stress Intensity Interpolation Polynomial (n-1)
+    Intensity_CubicSpline = interpolate.CubicSpline(T_thr, sigma_in)                #Stress Intenisty Cubic Spline Interpolation
+    Dt_ratio_plot = np.linspace(2,50,1000)
+    
     while True:
         try:
             s = float(input("Please enter a safety factor between 1.5 and 2 for the Corradi design procedure: "))
@@ -1124,7 +1141,7 @@ elif TS_flag == 1:
             print(e)
 
     while final_flag == 0:
-        t_shield += 0.001
+        t_shield += 0.002
         counter += 1
         print("Iteration no. %d" %counter)
         if counter > N_max:
@@ -1133,14 +1150,14 @@ elif TS_flag == 1:
         if t > t_vessel_max:
             print("Vessel thickness exceeds feasibility margin. Exiting the loop.")
             break
-        if User_D_flag == 1:        #If the thermal shield is not in the middle, geometrical constraints are present: the thermal shield must not bump into the vessel
+        if User_D_flag == 2 or User_D_flag == 0:        #If the thermal shield is not in the middle, geometrical constraints are present: the thermal shield must not bump into the vessel
             if t_shield > t_shield_max or (D_shield_int/2 + t_shield) > D_vess_int/2:
                 print("Ran into excessive thermal shield thickness. Adding 1cm to the vessel thickness instead. Restarting...")
                 t += 0.01
                 t_shield = t_shield_user
                 counter_vessel += 1
                 continue
-        elif User_D_flag == 0:      #If the thermal shield is in the middle, only its thickness must be checked: no geometrical constraints
+        elif User_D_flag == 1:      #If the thermal shield is in the middle, only its thickness must be checked: no geometrical constraints
             if t_shield > t_shield_max:
                 print("Ran into excessive thermal shield thickness. Adding 1cm to the vessel thickness instead. Restarting...")
                 t += 0.01
@@ -1148,31 +1165,46 @@ elif TS_flag == 1:
                 counter_vessel += 1
                 continue
 
-        if User_D_flag == 1:
+        if User_D_flag == 2:
             R_shield_int = D_shield_int/2
-        elif User_D_flag == 0:
+            
+        elif User_D_flag == 1:
             R_shield_int = D_barr_ext/2 + (D_vess_int - D_barr_ext)/4 - t_shield/2
-
+            D_shield_int = 2*R_shield_int
+            
+        elif User_D_flag == 0:
+            A_eq = 1
+            B_eq = t_shield
+            C_eq = (t_shield**2)/2 - ((R_int**2)+((D_barr_ext**2)/4))/2
+            Delta_eq = B_eq - 4*A_eq*C_eq
+            R_shield_int = (-B_eq + np.sqrt(Delta_eq))/(2*A_eq)
+            D_shield_int = 2*R_shield_int
+            
         R_shield_ext = R_shield_int + t_shield
         D_shield_ext = 2*R_shield_ext
-        D_shield_int = 2*R_shield_int
         
         r_S = np.linspace(R_shield_int, R_shield_ext, dr)
-
         Phi_0S = Phi_0                                                #All gamma rays reach the shield, not the vessel
 
         # ======================================
         # Dimensionless numbers and heat transfer coefficients
         # ======================================
-        v = m_flr/(rho*np.pi*((D_vess_int**2)-(D_barr_ext**2)-(D_shield_ext**2)+(D_shield_int**2))/4)             #coolant velocity, m/s
+        A_int_S = np.pi*((D_shield_int**2) - (D_barr_ext**2))/4                                     #Inner area crossed by the primary fluid
+        A_ext_S = np.pi*((D_vess_int**2)-(D_shield_ext**2))/4                                       #Outer area crossed by the primary fluid
+        v_int = v_flr/A_int_S                                                                       #Inner coolant velocity
+        v_ext = v_flr/A_ext_S
         
         Pr = (Cp*mu)/k                                                                              #Prandtl number
-        Pr_cpp = (Cp_cpp*mu_cpp)/k_cpp                                                              #Prandtl number of the containment water  
-
-        Re = (rho*v*((D_vess_int - D_shield_ext) + (D_shield_int - D_barr_ext)))/mu                 #Different hydraulic diameter                                                     
-        Nu_1 = 0.023*(Re*0.8)*(Pr**0.4)                                                             
-        h_1 = (Nu_1*k)/((D_vess_int - D_shield_ext) + (D_shield_int - D_barr_ext))         
-
+        Pr_cpp = (Cp_cpp*mu_cpp)/k_cpp                                                              #Prandtl number of the containment water
+        
+        Re_int = (rho*v_int*(D_shield_int - D_barr_ext))/mu                                         #Inner hydraulic diameter                                                     
+        Nu_1_int = 0.023*(Re_int*0.8)*(Pr**0.4)                                                             
+        h_1_int = (Nu_1_int*k)/(D_shield_int - D_barr_ext)
+        
+        Re_ext = (rho*v_ext*(D_vess_int - D_shield_ext))/mu                                         #Outer hydraulic diameter                                                     
+        Nu_1_ext = 0.023*(Re_ext*0.8)*(Pr**0.4)                                                             
+        h_1_ext = (Nu_1_ext*k)/(D_vess_int - D_shield_ext)
+                                                                                 
         Gr = (rho_cpp**2)*9.81*beta_cpp*DeltaT*(L**3)/(mu_cpp**2)                                   #Grashof number (Uses the external diameter as characteristic length, might wanna use L though?)
         Nu_2 = 0.13*((Gr*Pr_cpp)**(1/3))                                                            #McAdams correlation for natural convection
         h_2 = (Nu_2*k_cpp)/L                                                                        #W/(m²·K)
@@ -1212,6 +1244,18 @@ elif TS_flag == 1:
         # ======================================
         # T profile constants for the vessel: general and under adiabatic outer wall approximation (dT/dx = 0 at r = R_ext)
         # ======================================
+        if User_D_flag == 2 or User_D_flag == 1:
+            h_1 = min(h_1_int, h_1_ext)
+            print("\nAssuming minimum heat transfer coefficient between the inner and outer one for the primary fluid: h_1 = %.3f W/(m²·K)" %h_1)
+        elif User_D_flag == 0:
+            if h_1_int == h_1_ext:
+                print("As expected, inner and outer h1 are the same")
+                h_1 = h_1_int
+            else:
+                print("WHAT THE FUCK")
+                print(R_shield_int, "    -   ", R_shield_ext)
+                print(A_int_S, "  -   ",A_ext_S)
+            
         if adiab_flag == 0:
             C1 = ((q_0/(k_st*mu_st**2))*(np.exp(-mu_st*t)-1)-(q_0/mu_st)*((1/h_1)+(np.exp(-mu_st*t)/u_2))-(T1-T_cpp))/(t+(k_st/h_1)+(k_st/u_2))
         elif adiab_flag == 1:
@@ -1244,7 +1288,6 @@ elif TS_flag == 1:
         # Thermal power fluxes (kW/m²) on the inner and outer vessel surface
         # ======================================
         DeltaT_1 = T1 - T_vessel(r[0])
-        #         DeltaT_LM1 = ((T1-T_vessel(r[0]))-(T_out_avg-T_vessel(r[0])))/(np.log((T1-T_vessel(r[0]))/(T_out_avg-T_vessel(r[0]))))        #Log Mean Temperature Difference to account for T change along z, instead of just using T1-T_wall
         q_s1 = h_1*DeltaT_1/1000                                                                                                                                    #kW/m²
         q_s2 = u_2*(T_vessel(r[-1])-T_cpp)/1000                                                                                                                     #kW/m²
 
@@ -1337,14 +1380,6 @@ elif TS_flag == 1:
         T_des_shield = T_shield_avg                                                     #K
         T_des_shield_C = T_des_shield - 273.15                                          #°C
 
-        p_yield = np.polyfit(T_thr, sigma_y, deg = len(T_thr)-1)
-        p_intensity = np.polyfit(T_thr, sigma_in, deg = len(T_thr)-1)
-        
-        Yield_Interpolator = lambda x: np.polyval(p_yield, x)                           #Yield Stress Interpolation Polynomial (n-1)
-        Yield_CubicSpline = interpolate.CubicSpline(T_thr, sigma_y)                     #Yield Stress Cubic Spline Interpolation
-        Intensity_Interpolator = lambda x: np.polyval(p_intensity, x)                   #Stress Intensity Interpolation Polynomial (n-1)
-        Intensity_CubicSpline = interpolate.CubicSpline(T_thr, sigma_in)                #Stress Intenisty Cubic Spline Interpolation
-
         Yield_stress = Yield_CubicSpline(T_des_vessel_C)
         Stress_Intensity = Intensity_CubicSpline(T_des_vessel_C)
     
@@ -1354,12 +1389,12 @@ elif TS_flag == 1:
         # ======================================
         # Thermal Shield Thermomechanical Integrity Verification
         # ======================================
-        if abs(max(sigma_r_totL_S)) > 3*Stress_Intensity_S or abs(max(sigma_t_totL_S)) > 3*Stress_Intensity_S or abs(max(sigma_z_totL_S)) > 3*Stress_Intensity_S:
+        if max(abs(sigma_r_totL_S)) > 3*Stress_Intensity_S or max(abs(sigma_t_totL_S)) > 3*Stress_Intensity_S or max(abs(sigma_z_totL_S)) > 3*Stress_Intensity_S:
             flag_primsec = 1
         else:
             flag_primsec = 0
 
-        if abs(max(sigma_rL_S)) > Stress_Intensity_S or abs(max(sigma_tL_S)) > Stress_Intensity_S or sigma_zL_S > Stress_Intensity_S:
+        if max(abs(sigma_rL_S)) > Stress_Intensity_S or max(abs(sigma_tL_S)) > Stress_Intensity_S or sigma_zL_S > Stress_Intensity_S:
             flag_prim = 1
         else:
             flag_prim = 0
@@ -1378,7 +1413,6 @@ elif TS_flag == 1:
         q_0_fun = lambda Dt: 2 * Yield_stress * 1/Dt * (1+(1/(2*Dt)))       #Plastic Collapse Limit for Thick Tubes
         Dt_Crit_Ratio = np.sqrt(E/(Yield_stress*(1-(nu**2))))
         Current_Slenderness = (D_vess_int+2*t)/t
-        Dt_ratio_plot = np.linspace(2,50,1000)
 
         if Corradi_flag == 1:
 
@@ -1696,7 +1730,7 @@ elif TS_flag == 1:
         plt.grid()
         plt.tight_layout()
         plt.show()
-
+    """
     # ======================================
     # Maximum Hoop Thermal Stress in the vessel via design curves - NB: Requires double interpolation for the tentative thickness used - Manual only: data taken from the given graph
     # ======================================
@@ -1712,7 +1746,7 @@ elif TS_flag == 1:
     sigmaT_eq = lambda x: sigmaT_1st + ((sigmaT_2nd-sigmaT_1st)/(30-20))*(x - 20)
     sigmaT = sigmaT_eq(mu_st)                                                              #Double-interpolated (linear) sigmaT coefficient for mu = 24 
     sigma_t_th_max_DES = sigmaT*(alpha_l*E*q_0)/(k_st*(1-nu)*(mu_st**2))
-
+    """
     print("\nVolumetric heat source at the vessel inner surface: %.3f W/m³" %q_iii(r[0]))
     print("Volumetric heat source at the vessel-insulation interface: %.3f W/m³" %q_iii(r[-1]))
 
@@ -1727,7 +1761,7 @@ elif TS_flag == 1:
     #print("Maximum Thermal Hoop Stress in the vessel (Simplified formula): %.3f Mpa at r = %.3f m" %(sigma_t_th_V_max_SIMP, r_sigma_t_th_V_max_SIMP))
     print("Maximum Thermal Hoop Stress in the thermal shield: %.3f Mpa at r = %.3f m" %(sigma_t_th_S_max, r_sigma_t_th_S_max))
     #print("Maximum Thermal Hoop Stress in the thermal shield (Simplified formula): %.3f Mpa at r = %.3f m" %(sigma_t_th_S_max_SIMP, r_sigma_t_th_S_max_SIMP))
-    print("Maximum Thermal Hoop Stress in the vessel    -   Via design Curves: %.3f MPa" %sigma_t_th_max_DES)
+    #print("Maximum Thermal Hoop Stress in the vessel    -   Via design Curves: %.3f MPa" %sigma_t_th_max_DES)
 
     print("\nGuest-Tresca Equivalent Stress in the thermal shield - Lamé solution: %.3f Mpa" %sigma_cTR_LS)
     print("Von Mises Equivalent Stress in the thermal shield - Lamé solution: %.3f Mpa" %sigma_cVM_LS)
