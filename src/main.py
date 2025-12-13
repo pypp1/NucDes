@@ -65,6 +65,7 @@ B = 1.4                        #Build-up factor
 t = 0.05                                    #m #First guess
 R_int = D_vess_int/2                        #m
 R_ext = R_int + t                           #m
+R_barr_ext = D_barr_ext/2                   #m
 v_flr = m_flr/rho                           #m³/s
 G = E/(2*(1+nu))                            #MPa
 rho_ii = (R_ext**2)/(R_ext**2 - R_int**2)
@@ -1049,7 +1050,6 @@ if TS_flag == 0:
 # PURELY THERMAL PROBLEM - POWER IMPOSED - THERMAL SHIELD
 # =============================================================================================================================================================
 elif TS_flag == 1:
-
     t_shield_user = 0.001 #letting the user pick a first guess value causes it to become the minimum. this could be addressed, but the easy and right solution is to deprive the user of this freedom
     while True:
         try:
@@ -1074,17 +1074,18 @@ elif TS_flag == 1:
             except RuntimeError as e:
                 print(e)
         R_shield_int = D_shield_int/2
+        
     elif User_D_flag == 1:
         print("Assuming middle thermal shield position.")
-        R_shield_int = D_barr_ext/2 + (D_vess_int - D_barr_ext)/4 - t_shield_user/2 
+        R_shield_int = D_barr_ext/2 + (D_vess_int - D_barr_ext)/4 - t_shield_user/2
+         
     elif User_D_flag == 0:
         A_eq = 1
         B_eq = t_shield_user
-        C_eq = (t_shield_user**2)/2 - ((R_int**2)+((D_barr_ext**2)/4))/2
-        Delta_eq = B_eq - 4*A_eq*C_eq
+        C_eq = (t_shield_user**2)/2 - (R_int**2)/2 - (R_barr_ext**2)/2
+        Delta_eq = B_eq**2 - 4*A_eq*C_eq
         R_shield_int = (-B_eq + np.sqrt(Delta_eq))/(2*A_eq)
         D_shield_int = 2*R_shield_int
-        print(R_shield_int)
 
     print("No discretization along z. Assuming constant temperature of the primary fluid T1.")
     while True:
@@ -1115,6 +1116,7 @@ elif TS_flag == 1:
     counter = 0
     counter_vessel = 0
     N_max = 10000
+    eps = 1e-7                              #np.finfo(float).eps (excessive)
 
     t_shield = t_shield_user - 0.001
     t_shield_max = 0.1                      #arbitrary and perhaps excessive
@@ -1141,7 +1143,7 @@ elif TS_flag == 1:
             print(e)
 
     while final_flag == 0:
-        t_shield += 0.002
+        t_shield += 0.001
         counter += 1
         print("Iteration no. %d" %counter)
         if counter > N_max:
@@ -1175,8 +1177,8 @@ elif TS_flag == 1:
         elif User_D_flag == 0:
             A_eq = 1
             B_eq = t_shield
-            C_eq = (t_shield**2)/2 - ((R_int**2)+((D_barr_ext**2)/4))/2
-            Delta_eq = B_eq - 4*A_eq*C_eq
+            C_eq = (t_shield**2)/2 - (R_int**2)/2 - (R_barr_ext**2)/2
+            Delta_eq = B_eq**2 - 4*A_eq*C_eq
             R_shield_int = (-B_eq + np.sqrt(Delta_eq))/(2*A_eq)
             D_shield_int = 2*R_shield_int
             
@@ -1189,8 +1191,8 @@ elif TS_flag == 1:
         # ======================================
         # Dimensionless numbers and heat transfer coefficients
         # ======================================
-        A_int_S = np.pi*((D_shield_int**2) - (D_barr_ext**2))/4                                     #Inner area crossed by the primary fluid
-        A_ext_S = np.pi*((D_vess_int**2)-(D_shield_ext**2))/4                                       #Outer area crossed by the primary fluid
+        A_int_S = np.pi*((R_shield_int**2) - (R_barr_ext**2))                                       #Inner area crossed by the primary fluid
+        A_ext_S = np.pi*((R_int**2) - (R_shield_ext**2))                                            #Outer area crossed by the primary fluid
         v_int = v_flr/A_int_S                                                                       #Inner coolant velocity
         v_ext = v_flr/A_ext_S
         
@@ -1245,16 +1247,10 @@ elif TS_flag == 1:
         # T profile constants for the vessel: general and under adiabatic outer wall approximation (dT/dx = 0 at r = R_ext)
         # ======================================
         if User_D_flag == 2 or User_D_flag == 1:
-            h_1 = min(h_1_int, h_1_ext)
-            print("\nAssuming minimum heat transfer coefficient between the inner and outer one for the primary fluid: h_1 = %.3f W/(m²·K)" %h_1)
+            h_1 = min(h_1_int, h_1_ext)                 #Conservative: minimum h means highest thermal stresses
         elif User_D_flag == 0:
-            if h_1_int == h_1_ext:
-                print("As expected, inner and outer h1 are the same")
-                h_1 = h_1_int
-            else:
-                print("WHAT THE FUCK")
-                print(R_shield_int, "    -   ", R_shield_ext)
-                print(A_int_S, "  -   ",A_ext_S)
+            if h_1_int - h_1_ext <= eps:
+                h_1 = h_1_int                           #Below the tolerance, they can be considered equal
             
         if adiab_flag == 0:
             C1 = ((q_0/(k_st*mu_st**2))*(np.exp(-mu_st*t)-1)-(q_0/mu_st)*((1/h_1)+(np.exp(-mu_st*t)/u_2))-(T1-T_cpp))/(t+(k_st/h_1)+(k_st/u_2))
