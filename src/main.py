@@ -11,7 +11,7 @@ D_vess_int = 3.0       #m
 t_th_ins = 0.05        #m 
 k_th_ins = 1.4         #W/mK
 L = 7                  #m
-W = 0.025              #ASSUMED: To be changed using ASME III NB4000, as this is only valid for IRIS SG Tubes
+W = 0.01               #ASSUMED: To be changed using ASME III NB4000, as this is only valid for IRIS SG Tubes
 sigma_allowable = 400  #MPa     -   Assumed randomly, will have to be defined
 
 # ============================
@@ -60,18 +60,56 @@ E_y_J = E_y * 1.60218e-13      #Joules
 B = 1.4                        #Build-up factor
 
 # ============================
+# Design Curves
+# ============================
+loaded_data = np.load('multiple_arrays.npz')        #This contains all the arrays pertaining the iso-mu design curves
+
+data_mu2 = loaded_data['data_mu2']
+data_mu5 = loaded_data['data_mu5']
+data_mu8 = loaded_data['data_mu8']
+data_mu10 = loaded_data['data_mu10']
+data_mu15 = loaded_data['data_mu15']
+data_mu20 = loaded_data['data_mu20']
+data_mu30 = loaded_data['data_mu30']
+data_mu40 = loaded_data['data_mu40']
+data_mu50 = loaded_data['data_mu50']
+data_mu75 = loaded_data['data_mu75']
+data_mu100 = loaded_data['data_mu100']
+
+mu_curves = {                  # Dictionary to access the curves
+    'mu2': (1, 2, data_mu2),
+    'mu5': (2, 5, data_mu5),
+    'mu8': (3, 8, data_mu8),
+    'mu10': (4, 10, data_mu10),
+    'mu15': (5, 15, data_mu15),
+    'mu20': (6, 20, data_mu20),
+    'mu30': (7, 30, data_mu30),
+    'mu40': (8, 40, data_mu40),
+    'mu50': (9, 50, data_mu50),
+    'mu75': (10, 75, data_mu75),
+    'mu100': (11, 100, data_mu100)
+}
+
+ba_ratio_plot = np.linspace(1.0, 1.20, 1000)
+indexes = np.array([entry[0] for entry in mu_curves.values()])
+mu_values = np.array([entry[1] for entry in mu_curves.values()])
+keys_list = list(mu_curves.keys())
+
+# ============================
 # Computed additional data
 # ============================
 t = 0.05                                    #m #First guess
 R_int = D_vess_int/2                        #m
 R_ext = R_int + t                           #m
+R_barr_ext = D_barr_ext/2                   #m
+v_flr = m_flr/rho                           #m³/s
 G = E/(2*(1+nu))                            #MPa
 rho_ii = (R_ext**2)/(R_ext**2 - R_int**2)
 rho_i = (R_int**2)/(R_ext**2 - R_int**2)
 P_int_MPa = P_int/10                        #MPa
 P_cpp_MPa = P_cpp/10                        #MPa
 Phi_0 = Phi_0 * 1e4                         #photons/(m²·s)
-Mar_criterion = R_int/t                     
+Mar_criterion = R_int/t
 
 # ======================================
 # Simpson composite integration function
@@ -115,7 +153,7 @@ if Def_P_flag == 0:
     P_cpp = int(input("Set the external pressure (bar): "))
     P_cpp_MPa = P_cpp/10
     
-    while P_int != P_cpp: #asks for this here, because asking for it in the sigmaL function would mean having to input the value for every iteration
+    while P_int != P_cpp: #Asks for this here, because asking for it in the sigmaL function would mean having to input the value for every iteration
         try:
             flag_eps = int(input("\nEnter the stress/strain condition (1: Plane Stress, 0: Plane Strain): "))
             if flag_eps not in (0, 1):
@@ -188,18 +226,6 @@ def sigmaL_func(r, P_int_MPa, P_cpp_MPa, verbose): #the "verbose" variable is us
         eps_z_b = (1-2*nu)*rho_i*P_int_MPa/E
 
     elif P_int != P_cpp:
-        """
-        while True and flag_eps != -1:
-            try:
-                flag_eps = int(input("\nEnter the stress/strain condition (1: Plane Stress, 0: Plane Strain): "))
-                if flag_eps not in (0, 1):
-                    raise RuntimeError("Invalid input! Please enter either 0 or 1.")
-                break  
-            except ValueError:
-                print("Please enter a valid integer.")
-            except RuntimeError as e:
-                print(e)
-        """
         if flag_eps == 1:                                                                                           #Plane Stress
             eps_z_a = 2*nu*rho_ii*P_cpp_MPa/E
             eps_z_b = -2*nu*rho_i*P_int_MPa/E
@@ -442,8 +468,8 @@ if TS_flag == 0:
                 DeltaT_LM1 = ((T1-T_vessel(r[0]))-(T_out_avg-T_vessel(r[0])))/(np.log((T1-T_vessel(r[0]))/(T_out_avg-T_vessel(r[0]))))        #Log Mean Temperature Difference to account for T change along z, instead of just using T1-T_wall
                 q_s1_log = h_1*DeltaT_LM1/1000                                                                                                                      #kW/m²
                 print("\nThermal power flux on the inner vessel surface - Logarithmic Mean DeltaT Approach: %.3f kW/m²" %q_s1_log)
-        q_s1 = h_1*DeltaT_1/1000                                                                                                                                    #kW/m²
-        q_s2 = u_2*(T_vessel(r[-1])-T_cpp)/1000                                                                                                                     #kW/m²
+        q_s1 = h_1*DeltaT_1/1000                                                                                                          #kW/m²
+        q_s2 = u_2*(T_vessel(r[-1])-T_cpp)/1000                                                                                           #kW/m²
 
         print("\nThermal power flux on the inner vessel surface: %.3f kW/m²" %q_s1)
         print("Thermal power flux on the outer vessel surface: %.3f kW/m²" %q_s2)
@@ -527,22 +553,30 @@ if TS_flag == 0:
         #print("Maximum Thermal Hoop Stress (Simplified formula): %.3f Mpa at r = %.3f m" %(sigma_t_th_V_max_SIMP, r_sigma_t_th_V_max_SIMP))
 
         # ======================================
-        # Maximum Hoop Thermal Stress in the vessel via design curves - NB: Requires double interpolation for the tentative thickness used - Manual only: data taken from the given graph
+        # Maximum Hoop Thermal Stress in the vessel via design curves
         # ======================================
-        mu20ba114 = 0.61
-        mu20ba116 = 0.67
-        mu30ba114 = 0.76
-        mu30ba116 = 0.8
+        for i in range(len(indexes)):
+            if mu_st > mu_values[i] and mu_st < mu_values[i+1]:
+                mu_L = mu_values[i]
+                mu_R = mu_values[i+1]
+                #print("Current mu values: ", mu_values[i], mu_st, mu_values[i+1])
+                current_L_key, current_R_key = keys_list[i], keys_list[i+1]
+                x_points_L, x_points_R = mu_curves[current_L_key][2][:,0], mu_curves[current_R_key][2][:,0]
+                y_points_L, y_points_R = mu_curves[current_L_key][2][:,1], mu_curves[current_R_key][2][:,1]
+
+                p_L = np.polyfit(x_points_L, y_points_L, deg = 3)                   #len(y_points_L)-1
+                p_R = np.polyfit(x_points_R, y_points_R, deg = 3)
+
+                L_Interpolator = lambda x: np.polyval(p_L, x)
+                R_Interpolator = lambda x: np.polyval(p_R, x)
+
+                sigmaT_L = L_Interpolator(R_ext/R_int)                                                     #Interpolated sigmaT coefficient on the left ISO-mu 
+                sigmaT_R = R_Interpolator(R_ext/R_int)                                                     #Interpolated sigmaT coefficient on the right ISO-mu 
+                sigmaT_eq = lambda x: sigmaT_L + ((sigmaT_R-sigmaT_L)/(mu_R-mu_L))*(x - mu_L)
+                sigmaT = sigmaT_eq(mu_st)                                                                  #Double-interpolated (linear) sigmaT coefficient
         
-        iso_mu20 = lambda x: mu20ba114 + ((mu20ba116-mu20ba114)/(1.16-1.14))*(x - 1.14)
-        sigmaT_1st = iso_mu20(R_ext/R_int)                                                     #Interpolated sigmaT coefficient on the ISO-mu = 20 between b/a = 1.14 and b/a = 1.16
-        iso_mu30 = lambda x: mu30ba114 + ((mu30ba116-mu30ba114)/(1.16-1.14))*(x - 1.14)
-        sigmaT_2nd = iso_mu30(R_ext/R_int)                                                     #Interpolated sigmaT coefficient on the ISO-mu = 30 between b/a = 1.14 and b/a = 1.16
-        sigmaT_eq = lambda x: sigmaT_1st + ((sigmaT_2nd-sigmaT_1st)/(30-20))*(x - 20)
-        sigmaT = sigmaT_eq(mu_st)                                                              #Double-interpolated (linear) sigmaT coefficient for mu = 24 
         sigma_t_th_max_DES = sigmaT*(alpha_l*E*q_0)/(k_st*(1-nu)*(mu_st**2))
-        
-        print("Maximum Thermal Hoop Stress via Design Curves: %.3f MPa" %sigma_t_th_max_DES)
+        print("Maximum thermal hoop stress via design curves: %.3f MPa" %sigma_t_th_max_DES)
 
         # ======================================
         # Plotting the thermal stress profiles
@@ -604,6 +638,32 @@ if TS_flag == 0:
         sigma_cVM_L = max(np.sqrt(0.5*((sigma_r_totL - sigma_t_totL)**2 + (sigma_t_totL - sigma_z_totL)**2 + (sigma_z_totL - sigma_r_totL)**2))) #The max should be the worst case, in theory
         print("\nVon Mises Equivalent Stress in the vessel - Mariotte solution: %.3f Mpa" %sigma_cVM_M)
         print("Von Mises Equivalent Stress in the vessel - Lamé solution: %.3f Mpa" %sigma_cVM_L)
+
+        # ======================================
+        # Plotting the maximum thermal stress via the design curves
+        # ======================================
+        while True:
+            try:
+                des_pl_flag = int(input("\nDo you want to visualize a plot of the design curves and the maximum thermal stress in the vessel? (1: Yes, 0: No): "))
+                if des_pl_flag not in (0, 1):
+                    raise RuntimeError("Invalid input! Please enter either 0 or 1.")
+                break  
+            except ValueError:
+                print("Please enter a valid integer.")
+            except RuntimeError as e:
+                print(e)
+
+        if des_pl_flag == 1:
+            plt.figure(figsize=(10,10))
+            plt.plot(ba_ratio_plot, L_Interpolator(ba_ratio_plot), 'k', label=f'Iso-mu = {mu_L} 1/m')
+            plt.plot(ba_ratio_plot, R_Interpolator(ba_ratio_plot), 'k', label=f'Iso-mu = {mu_R} 1/m')
+            plt.plot(R_ext/R_int, sigmaT,'or', label=r'Current $\sigma$$_T$')
+            plt.xlabel('b/a')
+            plt.ylabel(r'$\sigma$$_T$')
+            plt.title('Design curves')
+            plt.legend()
+            plt.grid()
+            plt.show()
         
         # ============================ 
         # Yield Stress and Stress Intensity Data Interpolation
@@ -680,7 +740,7 @@ if TS_flag == 0:
         if Mar_criterion > 5:
             while True:
                 try:
-                    ThinTubes_flag = int(input("\nThe cylinder wall can be considered thin. Are you interested in the thin tube limits for Elastic Instability and Plastic Collapse? (1: Yes, 0: No): "))
+                    ThinTubes_flag = int(input("\nThe vessel's wall can be considered thin. Are you interested in the thin tube limits for Elastic Instability and Plastic Collapse? (1: Yes, 0: No): "))
                     if ThinTubes_flag not in (0, 1):
                         raise RuntimeError("Invalid input! Please enter either 0 or 1.")
                     break  
@@ -1049,19 +1109,20 @@ if TS_flag == 0:
 # =============================================================================================================================================================
 elif TS_flag == 1:
 
-    t_shield_user = 0.001 #letting the user pick a first guess value causes it to become the minimum. this could be addressed, but the easy and right solution is to deprive the user of this freedom
+    t_shield_user = 0.001           #Initial guess for the thermal shield thickness
+
     while True:
         try:
-            User_D_flag = float(input("\nDo you want to choose the thermal shield's position? If not, the default (middle) position will be assumed. (1: Yes, 0: No): "))
-            if User_D_flag not in (0, 1):
-                raise RuntimeError("Invalid input! Please enter either 0 or 1.")
+            User_D_flag = float(input("\nWhat position of the thermal shield do you want to consider? (2: Arbitrary, 1: Middle, 0: Equal areas): "))
+            if User_D_flag not in (0, 1, 2):
+                raise RuntimeError("Invalid input! Please enter either 0, 1 or 2.")
             break  
         except ValueError:
             print("Please enter a valid integer.")
         except RuntimeError as e:
             print(e)
 
-    if User_D_flag == 1:            #Allows the user to either assume the default, middle position for the thermal shield or to position it himself
+    if User_D_flag == 2:            #Allows the user to assume the default, middle position for the thermal shield, position it himself or choose the position granting equal areas
         while True:
             try:
                 D_shield_int = float(input("\nPlease enter the initial thermal shield inner diameter (m) to choose its position: "))
@@ -1073,10 +1134,18 @@ elif TS_flag == 1:
             except RuntimeError as e:
                 print(e)
         R_shield_int = D_shield_int/2
-
+        
+    elif User_D_flag == 1:
+        print("Assuming middle thermal shield position.")
+        R_shield_int = D_barr_ext/2 + (D_vess_int - D_barr_ext)/4 - t_shield_user/2
+         
     elif User_D_flag == 0:
-        print("Assuming default thermal shield position.")
-        R_shield_int = D_barr_ext/2 + (D_vess_int - D_barr_ext)/4 - t_shield_user/2 
+        A_eq = 1
+        B_eq = t_shield_user
+        C_eq = (t_shield_user**2)/2 - (R_int**2)/2 - (R_barr_ext**2)/2
+        Delta_eq = B_eq**2 - 4*A_eq*C_eq
+        R_shield_int = (-B_eq + np.sqrt(Delta_eq))/(2*A_eq)
+        D_shield_int = 2*R_shield_int
 
     print("No discretization along z. Assuming constant temperature of the primary fluid T1.")
     while True:
@@ -1107,10 +1176,20 @@ elif TS_flag == 1:
     counter = 0
     counter_vessel = 0
     N_max = 10000
+    eps = 1e-7                              #np.finfo(float).eps (excessive)
 
     t_shield = t_shield_user - 0.001
     t_shield_max = 0.1                      #arbitrary and perhaps excessive
     t_vessel_max = 0.3
+    
+    p_yield = np.polyfit(T_thr, sigma_y, deg = len(T_thr)-1)
+    p_intensity = np.polyfit(T_thr, sigma_in, deg = len(T_thr)-1)
+    
+    Yield_Interpolator = lambda x: np.polyval(p_yield, x)                           #Yield Stress Interpolation Polynomial (n-1)
+    Yield_CubicSpline = interpolate.CubicSpline(T_thr, sigma_y)                     #Yield Stress Cubic Spline Interpolation
+    Intensity_Interpolator = lambda x: np.polyval(p_intensity, x)                   #Stress Intensity Interpolation Polynomial (n-1)
+    Intensity_CubicSpline = interpolate.CubicSpline(T_thr, sigma_in)                #Stress Intenisty Cubic Spline Interpolation
+    Dt_ratio_plot = np.linspace(2,50,1000)
     
     while True:
         try:
@@ -1133,46 +1212,61 @@ elif TS_flag == 1:
         if t > t_vessel_max:
             print("Vessel thickness exceeds feasibility margin. Exiting the loop.")
             break
-        if User_D_flag == 1:        #If the thermal shield is not in the middle, geometrical constraints are present: the thermal shield must not bump into the vessel
+        if User_D_flag == 2 or User_D_flag == 0:        #If the thermal shield is not in the middle, geometrical constraints are present: the thermal shield must not bump into the vessel
             if t_shield > t_shield_max or (D_shield_int/2 + t_shield) > D_vess_int/2:
-                print("Ran into excessive thermal shield thickness. Adding 1cm to the vessel thickness instead. Restarting...")
+                print("Ran into excessive thermal shield thickness or bumped into the vessel. Adding 1cm to the vessel thickness instead. Restarting...")
                 t += 0.01
-                t_shield = t_shield_user
+                t_shield = t_shield_user - 0.001
                 counter_vessel += 1
                 continue
-        elif User_D_flag == 0:      #If the thermal shield is in the middle, only its thickness must be checked: no geometrical constraints
+        elif User_D_flag == 1:      #If the thermal shield is in the middle, only its thickness must be checked: no geometrical constraints
             if t_shield > t_shield_max:
                 print("Ran into excessive thermal shield thickness. Adding 1cm to the vessel thickness instead. Restarting...")
                 t += 0.01
-                t_shield = t_shield_user
+                t_shield = t_shield_user - 0.001
                 counter_vessel += 1
                 continue
 
-        if User_D_flag == 1:
+        if User_D_flag == 2:
             R_shield_int = D_shield_int/2
-        elif User_D_flag == 0:
+            
+        elif User_D_flag == 1:
             R_shield_int = D_barr_ext/2 + (D_vess_int - D_barr_ext)/4 - t_shield/2
-
+            D_shield_int = 2*R_shield_int
+            
+        elif User_D_flag == 0:
+            A_eq = 1
+            B_eq = t_shield
+            C_eq = (t_shield**2)/2 - (R_int**2)/2 - (R_barr_ext**2)/2
+            Delta_eq = B_eq**2 - 4*A_eq*C_eq
+            R_shield_int = (-B_eq + np.sqrt(Delta_eq))/(2*A_eq)
+            D_shield_int = 2*R_shield_int
+            
         R_shield_ext = R_shield_int + t_shield
         D_shield_ext = 2*R_shield_ext
-        D_shield_int = 2*R_shield_int
         
         r_S = np.linspace(R_shield_int, R_shield_ext, dr)
-
         Phi_0S = Phi_0                                                #All gamma rays reach the shield, not the vessel
 
         # ======================================
         # Dimensionless numbers and heat transfer coefficients
         # ======================================
-        v = m_flr/(rho*np.pi*((D_vess_int**2)-(D_barr_ext**2)-(D_shield_ext**2)+(D_shield_int**2))/4)             #coolant velocity, m/s
+        A_int_S = np.pi*((R_shield_int**2) - (R_barr_ext**2))                                       #Inner area crossed by the primary fluid
+        A_ext_S = np.pi*((R_int**2) - (R_shield_ext**2))                                            #Outer area crossed by the primary fluid
+        v_int = v_flr/A_int_S                                                                       #Inner coolant velocity
+        v_ext = v_flr/A_ext_S
         
         Pr = (Cp*mu)/k                                                                              #Prandtl number
-        Pr_cpp = (Cp_cpp*mu_cpp)/k_cpp                                                              #Prandtl number of the containment water  
-
-        Re = (rho*v*((D_vess_int - D_shield_ext) + (D_shield_int - D_barr_ext)))/mu                 #Different hydraulic diameter                                                     
-        Nu_1 = 0.023*(Re*0.8)*(Pr**0.4)                                                             
-        h_1 = (Nu_1*k)/((D_vess_int - D_shield_ext) + (D_shield_int - D_barr_ext))         
-
+        Pr_cpp = (Cp_cpp*mu_cpp)/k_cpp                                                              #Prandtl number of the containment water
+        
+        Re_int = (rho*v_int*(D_shield_int - D_barr_ext))/mu                                         #Inner hydraulic diameter                                                     
+        Nu_1_int = 0.023*(Re_int*0.8)*(Pr**0.4)                                                             
+        h_1_int = (Nu_1_int*k)/(D_shield_int - D_barr_ext)
+        
+        Re_ext = (rho*v_ext*(D_vess_int - D_shield_ext))/mu                                         #Outer hydraulic diameter                                                     
+        Nu_1_ext = 0.023*(Re_ext*0.8)*(Pr**0.4)                                                             
+        h_1_ext = (Nu_1_ext*k)/(D_vess_int - D_shield_ext)
+                                                                                 
         Gr = (rho_cpp**2)*9.81*beta_cpp*DeltaT*(L**3)/(mu_cpp**2)                                   #Grashof number (Uses the external diameter as characteristic length, might wanna use L though?)
         Nu_2 = 0.13*((Gr*Pr_cpp)**(1/3))                                                            #McAdams correlation for natural convection
         h_2 = (Nu_2*k_cpp)/L                                                                        #W/(m²·K)
@@ -1212,6 +1306,12 @@ elif TS_flag == 1:
         # ======================================
         # T profile constants for the vessel: general and under adiabatic outer wall approximation (dT/dx = 0 at r = R_ext)
         # ======================================
+        if User_D_flag == 2 or User_D_flag == 1:
+            h_1 = min(h_1_int, h_1_ext)                 #Conservative: minimum h means highest thermal stresses
+        elif User_D_flag == 0:
+            if h_1_int - h_1_ext <= eps:
+                h_1 = h_1_int                           #Below the tolerance, they can be considered equal
+            
         if adiab_flag == 0:
             C1 = ((q_0/(k_st*mu_st**2))*(np.exp(-mu_st*t)-1)-(q_0/mu_st)*((1/h_1)+(np.exp(-mu_st*t)/u_2))-(T1-T_cpp))/(t+(k_st/h_1)+(k_st/u_2))
         elif adiab_flag == 1:
@@ -1244,12 +1344,11 @@ elif TS_flag == 1:
         # Thermal power fluxes (kW/m²) on the inner and outer vessel surface
         # ======================================
         DeltaT_1 = T1 - T_vessel(r[0])
-        #         DeltaT_LM1 = ((T1-T_vessel(r[0]))-(T_out_avg-T_vessel(r[0])))/(np.log((T1-T_vessel(r[0]))/(T_out_avg-T_vessel(r[0]))))        #Log Mean Temperature Difference to account for T change along z, instead of just using T1-T_wall
-        q_s1 = h_1*DeltaT_1/1000                                                                                                                                    #kW/m²
-        q_s2 = u_2*(T_vessel(r[-1])-T_cpp)/1000                                                                                                                     #kW/m²
+        q_s1 = h_1*DeltaT_1/1000                                               #kW/m²
+        q_s2 = u_2*(T_vessel(r[-1])-T_cpp)/1000                                #kW/m²
 
         # ======================================
-        # Vessel's Wall Thermal stresses computation
+        # Vessel Thermal stresses computation
         # ======================================
         f_V = lambda r: T_vessel(r)*r
 
@@ -1316,6 +1415,37 @@ elif TS_flag == 1:
         sigma_r_totL = sigma_rL + sigma_r_th_V
         sigma_t_totL = sigma_tL + sigma_t_th_V
         sigma_z_totL = sigma_zL + sigma_z_th_V
+
+        # ======================================
+        # Maximum Hoop Thermal Stress in the vessel via design curves
+        # ======================================
+        for i in range(len(indexes)):
+            if mu_st > mu_values[i] and mu_st < mu_values[i+1]:
+                mu_L = mu_values[i]
+                mu_R = mu_values[i+1]
+                #print("Current mu values: ", mu_values[i], mu_st, mu_values[i+1])
+                current_L_key, current_R_key = keys_list[i], keys_list[i+1]
+                x_points_L, x_points_R = mu_curves[current_L_key][2][:,0], mu_curves[current_R_key][2][:,0]
+                y_points_L, y_points_R = mu_curves[current_L_key][2][:,1], mu_curves[current_R_key][2][:,1]
+
+                p_L = np.polyfit(x_points_L, y_points_L, deg = 3) #len(y_points_L)-1
+                p_R = np.polyfit(x_points_R, y_points_R, deg = 3)
+
+                L_Interpolator = lambda x: np.polyval(p_L, x)
+                R_Interpolator = lambda x: np.polyval(p_R, x)
+
+                sigmaT_L_V = L_Interpolator(R_ext/R_int)                                                                                      #Interpolated sigmaT coefficient on the left ISO-mu 
+                sigmaT_R_V = R_Interpolator(R_ext/R_int)                                                                                      #Interpolated sigmaT coefficient on the right ISO-mu
+                sigmaT_L_S = L_Interpolator(R_shield_ext/R_shield_int)
+                sigmaT_R_S = R_Interpolator(R_shield_ext/R_shield_int)
+
+                sigmaT_eq_V = lambda x: sigmaT_L_V + ((sigmaT_R_V-sigmaT_L_V)/(mu_R-mu_L))*(x - mu_L)
+                sigmaT_eq_S = lambda x: sigmaT_L_S + ((sigmaT_R_S-sigmaT_L_S)/(mu_R-mu_L))*(x - mu_L)
+                sigmaT_V = sigmaT_eq_V(mu_st)                                                                                         #Double-interpolated (linear) sigmaT coefficient
+                sigmaT_S = sigmaT_eq_S(mu_st)
+        
+        sigma_t_th_V_max_DES = sigmaT_V*(alpha_l*E*q_0)/(k_st*(1-nu)*(mu_st**2))
+        sigma_t_th_S_max_DES = sigmaT_S*(alpha_l*E*q_0S)/(k_st*(1-nu)*(mu_st**2))
         
         # ============================ 
         # Vessel Comparison stress - Guest-Tresca Theory - Mariotte/Lamé + Thermal stresses
@@ -1337,14 +1467,6 @@ elif TS_flag == 1:
         T_des_shield = T_shield_avg                                                     #K
         T_des_shield_C = T_des_shield - 273.15                                          #°C
 
-        p_yield = np.polyfit(T_thr, sigma_y, deg = len(T_thr)-1)
-        p_intensity = np.polyfit(T_thr, sigma_in, deg = len(T_thr)-1)
-        
-        Yield_Interpolator = lambda x: np.polyval(p_yield, x)                           #Yield Stress Interpolation Polynomial (n-1)
-        Yield_CubicSpline = interpolate.CubicSpline(T_thr, sigma_y)                     #Yield Stress Cubic Spline Interpolation
-        Intensity_Interpolator = lambda x: np.polyval(p_intensity, x)                   #Stress Intensity Interpolation Polynomial (n-1)
-        Intensity_CubicSpline = interpolate.CubicSpline(T_thr, sigma_in)                #Stress Intenisty Cubic Spline Interpolation
-
         Yield_stress = Yield_CubicSpline(T_des_vessel_C)
         Stress_Intensity = Intensity_CubicSpline(T_des_vessel_C)
     
@@ -1354,37 +1476,32 @@ elif TS_flag == 1:
         # ======================================
         # Thermal Shield Thermomechanical Integrity Verification
         # ======================================
-        if abs(max(sigma_r_totL_S)) > 3*Stress_Intensity_S or abs(max(sigma_t_totL_S)) > 3*Stress_Intensity_S or abs(max(sigma_z_totL_S)) > 3*Stress_Intensity_S:
+        if max(abs(sigma_r_totL_S)) > 3*Stress_Intensity_S or max(abs(sigma_t_totL_S)) > 3*Stress_Intensity_S or max(abs(sigma_z_totL_S)) > 3*Stress_Intensity_S:
             flag_primsec = 1
         else:
             flag_primsec = 0
 
-        if abs(max(sigma_rL_S)) > Stress_Intensity_S or abs(max(sigma_tL_S)) > Stress_Intensity_S or sigma_zL_S > Stress_Intensity_S:
+        if max(abs(sigma_rL_S)) > Stress_Intensity_S or max(abs(sigma_tL_S)) > Stress_Intensity_S or sigma_zL_S > Stress_Intensity_S:
             flag_prim = 1
         else:
             flag_prim = 0
         
         if flag_primsec == 1 or flag_prim == 1:
-            shield_flag = 0
+            print("\nThe current stress state in the thermal shield is not acceptable. \nPrimary + Secondary Stresses flag: %d \nPrimary Stresses flag: %d" %(flag_primsec, flag_prim))
+            print("Absolute value of the maximum radial thermal stress: %.3f MPa\nAbsolute value of the maximum hoop thermal stress: %.3f MPa\nAbsolute value of the maximum axial thermal stress: %.3f MPa" %(abs(max(sigma_r_th_S)),abs(max(sigma_t_th_S)),abs(max(sigma_z_th_S))))
+            continue
         elif flag_primsec == 0 and flag_prim == 0:
-            shield_flag = 1
+            Corradi_flag = 1                                                #Only enters the Corradi procedure if the thermal shield is ok
 
         # ============================ 
         # Corradi Design Procedure
         # ============================
-        Corradi_flag = shield_flag
-
         q_E_fun = lambda Dt: 2 * (E/(1-(nu**2))) * (1/(Dt*((Dt-1)**2)))     #Elastic Instability Limit for Thick Tubes
         q_0_fun = lambda Dt: 2 * Yield_stress * 1/Dt * (1+(1/(2*Dt)))       #Plastic Collapse Limit for Thick Tubes
         Dt_Crit_Ratio = np.sqrt(E/(Yield_stress*(1-(nu**2))))
         Current_Slenderness = (D_vess_int+2*t)/t
-        Dt_ratio_plot = np.linspace(2,50,1000)
 
         if Corradi_flag == 1:
-
-            # ============================ 
-            # Corradi Design Procedure
-            # ============================
             def Corradi(Slenderness):
                 if isinstance(Slenderness, np.ndarray):
                     mu = np.zeros(len(Slenderness))
@@ -1648,6 +1765,36 @@ elif TS_flag == 1:
         plt.grid()
         plt.show()
 
+    # ======================================
+    # Plotting the maximum thermal stress via the design curves
+    # ======================================
+    while True:
+        try:
+            des_pl_flag = int(input("\nDo you want to visualize a plot of the design curves and the maximum thermal stress in the vessel and in the thermal shield? (1: Yes, 0: No): "))
+            if des_pl_flag not in (0, 1):
+                raise RuntimeError("Invalid input! Please enter either 0 or 1.")
+            break  
+        except ValueError:
+            print("Please enter a valid integer.")
+        except RuntimeError as e:
+            print(e)
+
+    if des_pl_flag == 1:
+        plt.figure(figsize=(10,10))
+        plt.plot(ba_ratio_plot, L_Interpolator(ba_ratio_plot), 'k', label=f'Iso-mu = {mu_L} 1/m')
+        plt.plot(ba_ratio_plot, R_Interpolator(ba_ratio_plot), 'k', label=f'Iso-mu = {mu_R} 1/m')
+        plt.plot(R_ext/R_int, sigmaT_V,'or', label=r'Current $\sigma$$_T$ in the vessel')
+        plt.plot(R_shield_ext/R_shield_int, sigmaT_S,'ob', label=r'Current $\sigma$$_T$ in the thermal shield')
+        plt.xlabel('b/a')
+        plt.ylabel(r'$\sigma$$_T$')
+        plt.title('Design curves')
+        plt.legend()
+        plt.grid()
+        plt.show()
+
+    # ======================================
+    # Plotting the yield stress and stress intensity curves
+    # ======================================
     while True:
         try:
             Interp_pl_flag = int(input("\nDo you want to visualize a plot of the Yield Stress and Stress Intensity as given by ASME for both the vessel and the thermal shield? (1: Yes, 0: No): "))
@@ -1667,7 +1814,7 @@ elif TS_flag == 1:
     if Interp_pl_flag == 1:
         
         # ============================ 
-        # Yield Stress and Stress Intensity Data Plots  -   Vessel and thermal shield
+        # Yield Stress
         # ============================
         plt.figure(figsize = (12,10))
         plt.subplot(1,2,1)
@@ -1682,7 +1829,10 @@ elif TS_flag == 1:
         plt.legend()
         plt.grid()
         plt.tight_layout()
-        
+
+        # ============================ 
+        # Stress intensity
+        # ============================
         plt.subplot(1,2,2)
         plt.plot(T_thr, sigma_in, 'sk', label = 'Stress Intensity Data')
         plt.plot(Tplot, Intensity_Interpolator(Tplot), '--', color = 'orange', label = 'Stress Intensity n-1 Interpolation')
@@ -1697,22 +1847,6 @@ elif TS_flag == 1:
         plt.tight_layout()
         plt.show()
 
-    # ======================================
-    # Maximum Hoop Thermal Stress in the vessel via design curves - NB: Requires double interpolation for the tentative thickness used - Manual only: data taken from the given graph
-    # ======================================
-    mu20ba114 = 0.61
-    mu20ba116 = 0.67
-    mu30ba114 = 0.76
-    mu30ba116 = 0.8
-    
-    iso_mu20 = lambda x: mu20ba114 + ((mu20ba116-mu20ba114)/(1.16-1.14))*(x - 1.14)
-    sigmaT_1st = iso_mu20(R_ext/R_int)                                                     #Interpolated sigmaT coefficient on the ISO-mu = 20 between b/a = 1.14 and b/a = 1.16
-    iso_mu30 = lambda x: mu30ba114 + ((mu30ba116-mu30ba114)/(1.16-1.14))*(x - 1.14)
-    sigmaT_2nd = iso_mu30(R_ext/R_int)                                                     #Interpolated sigmaT coefficient on the ISO-mu = 30 between b/a = 1.14 and b/a = 1.16
-    sigmaT_eq = lambda x: sigmaT_1st + ((sigmaT_2nd-sigmaT_1st)/(30-20))*(x - 20)
-    sigmaT = sigmaT_eq(mu_st)                                                              #Double-interpolated (linear) sigmaT coefficient for mu = 24 
-    sigma_t_th_max_DES = sigmaT*(alpha_l*E*q_0)/(k_st*(1-nu)*(mu_st**2))
-
     print("\nVolumetric heat source at the vessel inner surface: %.3f W/m³" %q_iii(r[0]))
     print("Volumetric heat source at the vessel-insulation interface: %.3f W/m³" %q_iii(r[-1]))
 
@@ -1725,18 +1859,14 @@ elif TS_flag == 1:
     
     print("\nMaximum Thermal Hoop Stress in the vessel: %.3f Mpa at r = %.3f m" %(sigma_t_th_V_max, r_sigma_t_th_V_max))
     #print("Maximum Thermal Hoop Stress in the vessel (Simplified formula): %.3f Mpa at r = %.3f m" %(sigma_t_th_V_max_SIMP, r_sigma_t_th_V_max_SIMP))
+    print("Maximum thermal hoop stress in the vessel via design curves: %.3f MPa" %sigma_t_th_V_max_DES)
+
     print("Maximum Thermal Hoop Stress in the thermal shield: %.3f Mpa at r = %.3f m" %(sigma_t_th_S_max, r_sigma_t_th_S_max))
     #print("Maximum Thermal Hoop Stress in the thermal shield (Simplified formula): %.3f Mpa at r = %.3f m" %(sigma_t_th_S_max_SIMP, r_sigma_t_th_S_max_SIMP))
-    print("Maximum Thermal Hoop Stress in the vessel    -   Via design Curves: %.3f MPa" %sigma_t_th_max_DES)
-
-    print("\nGuest-Tresca Equivalent Stress in the thermal shield - Lamé solution: %.3f Mpa" %sigma_cTR_LS)
-    print("Von Mises Equivalent Stress in the thermal shield - Lamé solution: %.3f Mpa" %sigma_cVM_LS)
+    print("Maximum thermal hoop stress in the thermal shield via design curves: %.3f MPa" %sigma_t_th_S_max_DES)
 
     print("\nGuest-Tresca Equivalent Stress in the vessel - Mariotte solution: %.3f Mpa" %sigma_cTR_M)
     print("Guest-Tresca Equivalent Stress in the vessel - Lamé solution: %.3f Mpa" %sigma_cTR_L)
-    
-    print("\nVon Mises Equivalent Stress in the vessel - Mariotte solution: %.3f Mpa" %sigma_cVM_M)
-    print("Von Mises Equivalent Stress in the vessel - Lamé solution: %.3f Mpa" %sigma_cVM_L)
 
     print("\nFor a design vessel temperature of %.3f °C: " %T_des_vessel_C)
     print('Yield Stress: Sy'," = %.3f MPa" %Yield_stress)
@@ -1749,10 +1879,10 @@ elif TS_flag == 1:
     # ============================ 
     # Sizing of a thick cylinder under external pressure
     # ============================
-    if Mar_criterion > 5:
+    if R_int/t > 5:
         while True:
             try:
-                ThinTubes_flag = int(input("\nThe cylinder wall can be considered thin. Are you interested in the thin tube limits for Elastic Instability and Plastic Collapse? (1: Yes, 0: No): "))
+                ThinTubes_flag = int(input("\nWith a thickness value of %.3f m, the vessel can be considered thin. Are you interested in the thin tube limits for Elastic Instability and Plastic Collapse? (1: Yes, 0: No): " %t))
                 if ThinTubes_flag not in (0, 1):
                     raise RuntimeError("Invalid input! Please enter either 0 or 1.")
                 break  
@@ -1783,109 +1913,127 @@ elif TS_flag == 1:
                 print("Please enter a valid integer.")
             except RuntimeError as e:
                 print(e)
+        if Corradi_flag == 0:
+            # ============================ 
+            # Elastic instability and plastic collapse curves
+            # ============================
+            while True:
+                try:
+                    Collapse_pl_flag = int(input("\nDo you want to visualize the buckling and plastic collapse curves for thin and thick tubes? (1: Yes, 0: No): "))
+                    if Collapse_pl_flag not in (0, 1):
+                        raise RuntimeError("Invalid input! Please enter either 0 or 1.")
+                    break  
+                except ValueError:
+                    print("Please enter a valid integer.")
+                except RuntimeError as e:
+                    print(e)
+            
+            if Collapse_pl_flag == 1:
+                # ============================ 
+                # Plastic collapse and buckling plots
+                # ============================
+                plt.figure(figsize = (8, 8))
+                plt.semilogy(Dt_ratio_plot, p_E_fun(Dt_ratio_plot), 'blue', label='p$_E$')
+                plt.semilogy(Dt_ratio_plot, q_E_fun(Dt_ratio_plot), '--b', label='q$_E$')
+                plt.semilogy(Dt_ratio_plot, p_0_fun(Dt_ratio_plot), 'red', label='p$_0$')
+                plt.semilogy(Dt_ratio_plot, q_0_fun(Dt_ratio_plot), '--r', label='q$_0$')
+                plt.axvline(x = Dt_Crit_Ratio, color = 'black', linewidth = '3', label = 'Critical Slenderness')
+                plt.axvline(x = Current_Slenderness, color = 'green', linewidth = '3', label = 'Current Vessel Slenderness')
+                plt.xlabel("Geometrical Slenderness D/t")
+                plt.ylabel("Theoretical Limit Values (MPa)")
+                plt.title("Plastic Collapse and Buckling Curves")
+                plt.legend()
+                plt.grid()
+                plt.show()
+
+        elif Corradi_flag == 1:
+            while True:
+                try:
+                    Collapse_pl_flag = int(input("\nDo you want to visualize the buckling and plastic collapse curves for thin and thick tubes and the Corradi curve? (1: Yes, 0: No): "))
+                    if Collapse_pl_flag not in (0, 1):
+                        raise RuntimeError("Invalid input! Please enter either 0 or 1.")
+                    break  
+                except ValueError:
+                    print("Please enter a valid integer.")
+                except RuntimeError as e:
+                    print(e)
+            
+            if Collapse_pl_flag == 1:
+                # ============================ 
+                # Plastic collapse and buckling plots
+                # ============================
+                plt.figure(figsize = (8, 8))
+                plt.subplot(1,2,1)
+                plt.semilogy(Dt_ratio_plot, p_E_fun(Dt_ratio_plot), 'blue', label='p$_E$')
+                plt.semilogy(Dt_ratio_plot, q_E_fun(Dt_ratio_plot), '--b', label='q$_E$')
+                plt.semilogy(Dt_ratio_plot, p_0_fun(Dt_ratio_plot), 'red', label='p$_0$')
+                plt.semilogy(Dt_ratio_plot, q_0_fun(Dt_ratio_plot), '--r', label='q$_0$')
+                plt.semilogy(Dt_ratio_plot, Corradi(Dt_ratio_plot)[0], 'orange', label='Corradi q$_c$')
+                plt.axvline(x = Dt_Crit_Ratio, color = 'black', linewidth = '3', label = 'Critical Slenderness')
+                plt.axvline(x = Current_Slenderness, color = 'green', linewidth = '3', label = 'Current Vessel Slenderness')
+                plt.xlabel("Geometrical Slenderness D/t")
+                plt.ylabel("Theoretical Limit Values (MPa)")
+                plt.title("Plastic Collapse and Buckling Curves")
+                plt.legend()
+                plt.grid()
+                plt.tight_layout()
+
+                plt.subplot(1,2,2)
+                plt.plot(Dt_ratio_plot, Corradi(Dt_ratio_plot)[3], 'k', label=r'Corradi $\mu$')
+                plt.xlabel("Geometrical Slenderness D/t")
+                plt.ylabel(r"Corradi $\mu$")
+                plt.title(r"$\mu$ coefficient - Corradi Procedure")
+                plt.legend()
+                plt.grid()
+                plt.tight_layout()
+                plt.show()
         
     elif ThinTubes_flag == 0:
         print("Adopting Corradi Design Procedure.")
         Corradi_flag = 1
 
     # ============================ 
-    # Elastic instability and plastic collapse curves
-    # ============================
-    if ThinTubes_flag == 1 and Corradi_flag == 0:
-        while True:
-            try:
-                Collapse_pl_flag = int(input("\nDo you want to visualize the buckling and plastic collapse curves for thin and thick tubes? (1: Yes, 0: No): "))
-                if Collapse_pl_flag not in (0, 1):
-                    raise RuntimeError("Invalid input! Please enter either 0 or 1.")
-                break  
-            except ValueError:
-                print("Please enter a valid integer.")
-            except RuntimeError as e:
-                print(e)
-        
-        if Collapse_pl_flag == 1:
-            
-            # ============================ 
-            # Plastic collapse and buckling Plots
-            # ============================
-            plt.figure(figsize = (8, 8))
-            plt.semilogy(Dt_ratio_plot, p_E_fun(Dt_ratio_plot), 'blue', label='p$_E$')
-            plt.semilogy(Dt_ratio_plot, q_E_fun(Dt_ratio_plot), '--b', label='q$_E$')
-            plt.semilogy(Dt_ratio_plot, p_0_fun(Dt_ratio_plot), 'red', label='p$_0$')
-            plt.semilogy(Dt_ratio_plot, q_0_fun(Dt_ratio_plot), '--r', label='q$_0$')
-            plt.axvline(x = Dt_Crit_Ratio, color = 'black', linewidth = '3', label = 'Critical Slenderness')
-            plt.axvline(x = Current_Slenderness, color = 'green', linewidth = '3', label = 'Current Vessel Slenderness')
-            plt.xlabel("Geometrical Slenderness D/t")
-            plt.ylabel("Theoretical Limit Values (MPa)")
-            plt.title("Plastic Collapse and Buckling Curves")
-            plt.legend()
-            plt.grid()
-            plt.show()
-
-    elif ThinTubes_flag == 1 and Corradi_flag == 1:
-        while True:
-            try:
-                Collapse_pl_flag = int(input("\nDo you want to visualize the buckling and plastic collapse curves for thin and thick tubes and the Corradi curve? (1: Yes, 0: No): "))
-                if Collapse_pl_flag not in (0, 1):
-                    raise RuntimeError("Invalid input! Please enter either 0 or 1.")
-                break  
-            except ValueError:
-                print("Please enter a valid integer.")
-            except RuntimeError as e:
-                print(e)
-        
-        if Collapse_pl_flag == 1:
-            
-            # ============================ 
-            # Plastic collapse and buckling Plots
-            # ============================
-            plt.figure(figsize = (8, 8))
-            plt.subplot(1,2,1)
-            plt.semilogy(Dt_ratio_plot, p_E_fun(Dt_ratio_plot), 'blue', label='p$_E$')
-            plt.semilogy(Dt_ratio_plot, q_E_fun(Dt_ratio_plot), '--b', label='q$_E$')
-            plt.semilogy(Dt_ratio_plot, p_0_fun(Dt_ratio_plot), 'red', label='p$_0$')
-            plt.semilogy(Dt_ratio_plot, q_0_fun(Dt_ratio_plot), '--r', label='q$_0$')
-            plt.semilogy(Dt_ratio_plot, Corradi(Dt_ratio_plot)[0], 'orange', label='Corradi q$_c$')
-            plt.axvline(x = Dt_Crit_Ratio, color = 'black', linewidth = '3', label = 'Critical Slenderness')
-            plt.axvline(x = Current_Slenderness, color = 'green', linewidth = '3', label = 'Current Vessel Slenderness')
-            plt.xlabel("Geometrical Slenderness D/t")
-            plt.ylabel("Theoretical Limit Values (MPa)")
-            plt.title("Plastic Collapse and Buckling Curves")
-            plt.legend()
-            plt.grid()
-            plt.tight_layout()
-
-            plt.subplot(1,2,2)
-            plt.plot(Dt_ratio_plot, Corradi(Dt_ratio_plot)[3], 'k', label=r'Corradi $\mu$')
-            plt.xlabel("Geometrical Slenderness D/t")
-            plt.ylabel(r"Corradi $\mu$")
-            plt.title(r"$\mu$ coefficient - Corradi Procedure")
-            plt.legend()
-            plt.grid()
-            plt.tight_layout()
-            plt.show()
-    
-    # ============================ 
     # Final Results Printing
     # ============================
-    print("\nFinal Results:")
+    print("\n\n\n###################################################### Final  Results ######################################################")
         
     print("\nThe vessel thickness has been increased %d times by 1cm. Computed vessel thickness: %.3f m" %(counter_vessel, t))
     print("Computed thermal shield thickness: %.3f m" %t_shield)
 
+    # ============================ 
+    # Thermal Shield
+    # ============================
+    print("\n###################################################### Thermal Shield ######################################################")
     if flag_primsec == 1 or flag_prim == 1:
         print("\nThe current stress state in the thermal shield is not acceptable. \nPrimary + Secondary Stresses flag: %d \nPrimary Stresses flag: %d" %(flag_primsec, flag_prim))
-        print("Absolute value of the maximum radial thermal stress: %.3f MPa\nAbsolute value of the maximum hoop thermal stress: %.3f MPa\nAbsolute value of the maximum axial thermal stress: %.3f MPa" %(abs(max(sigma_r_th_S)),abs(max(sigma_t_th_S)),abs(max(sigma_z_th_S))))
+        print("Maximum absolute value of the radial thermal stress: %.3f MPa\nMaximum absolute value of the hoop thermal stress: %.3f MPa\nMaximum absolute value of the axial thermal stress: %.3f MPa" %(max(abs(sigma_r_th_S)),max(abs(sigma_t_th_S)),max(abs(sigma_z_th_S))))
+    
     elif flag_primsec == 0 and flag_prim == 0:
-        print("\nThe current stress state in the thermal shield is acceptable.")
-        
+        print("\nThe current stress state in the thermal shield is acceptable:")
+        print("\nMaximum absolute value of the total radial stress: %.3f MPa\nMaximum absolute value of the total hoop stress: %.3f MPa\nMaximum absolute value of the total axial stress: %.3f MPa" %(max(abs(sigma_r_totL_S)),max(abs(sigma_t_totL_S)),max(abs(sigma_z_totL_S))))
+        print("\nAll are lower than 3Sm = %.3f MPa" %(3*Stress_Intensity_S))         
+        print("\nMaximum value of the primary radial stress: %.3f MPa\nMaximum value of the primary hoop stress: %.3f MPa\nPrimary axial stress: %.3f MPa" %(max(sigma_rL_S),max(sigma_tL_S),sigma_zL_S))
+        print("\nAll are lower than Sm = %.3f MPa" %Stress_Intensity_S)
+
+    if (sigma_cTR_LS < sigma_allowable):
+        print("\nThe comparison stress according to Tresca-Lamé Sc = %.3f MPa is lower than the allowable stress Sa = %.3f MPa\nThe thermal shield's integrity is ensured." %(sigma_cTR_LS, sigma_allowable))
+    
+    # ============================ 
+    # Vessel
+    # ============================
+    print("\n########################################################## Vessel ##########################################################")
     Corradi_vessel = Corradi(np.array([Current_Slenderness]))
     print("\nAccording to the Corradi Design Procedure:")
     print("Current slenderness: %.3f    -   Critical slenderness: %.3f" %(Current_Slenderness, Dt_Crit_Ratio))
-    print("The theoretical limit for collapse pressure, accounting for ovality, is: q_c = %.3f MPa = %.3f bar" %(Corradi_vessel[0], 10*Corradi_vessel[0]))
+    print("\nThe theoretical limit for collapse pressure, accounting for ovality, is: q_c = %.3f MPa = %.3f bar" %(Corradi_vessel[0], 10*Corradi_vessel[0]))
     print("A safety factor s = %.3f was assumed. \nThe allowable external pressure is thus: q_a = %.3f MPa = %.3f bar" %(Corradi_vessel[2], Corradi_vessel[1], 10*Corradi_vessel[1]))
 
     if (P_cpp < 10*Corradi_vessel[1] and sigma_cTR_M < sigma_allowable and sigma_cTR_L < sigma_allowable):
-        print("\nThe given external pressure of %.3f bar is lower than the allowable pressure of %.3f bar. \nThe comparison stress according to Tresca-Lamé Sc = %.3f MPa is lower than the allowable stress Sa = %.3f MPa. \nThe thermal shield's integrity is ensured: the design is correct!" %(P_cpp, 10*Corradi_vessel[1], sigma_cTR_L, sigma_allowable))
-    else:
+        print("\nThe given external pressure of %.3f bar is lower than the allowable pressure of %.3f bar" %(P_cpp, 10*Corradi_vessel[1]))
+        print("\nThe comparison stress according to Tresca-Lamé Sc = %.3f MPa is lower than the allowable stress Sa = %.3f MPa\nThe comparison stress according to Tresca-Mariotte Sc = %.3f MPa is also lower than the allowable stress Sa = %.3f MPa" %(sigma_cTR_L, sigma_allowable, sigma_cTR_M, sigma_allowable))
+        print("\nThe thermal shield's integrity is ensured: the design is correct!")
+        print("\n############################################################################################################################")
+    elif (P_cpp > 10*Corradi_vessel[1]):
         print("\nThe given external pressure of %.3f bar is higher than the allowable pressure of %.3f bar: a change in thickness is required!" %(P_cpp, 10*Corradi_vessel[1]))
+    elif (sigma_cTR_M > sigma_allowable or sigma_cTR_L > sigma_allowable):
+        print("\nEither the Tresca-Mariotte comparison stress Sc = %.3f MPa or the Tresca-Lamè comparison stress Sc = %.3f MPa is higher than the allowable stress Sa = %.3f MPa" %(sigma_cTR_M,sigma_cTR_L,sigma_allowable))
