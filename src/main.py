@@ -2124,7 +2124,7 @@ elif TS_flag == 1:
         q_s2 = u_2*(T_vessel(r[-1])-T_cpp)/1000                                #kW/m²
 
         # ======================================
-        # Vessel's Wall Thermal stresses computation
+        # Vessel Thermal stresses computation
         # ======================================
         f_V = lambda r: T_vessel(r)*r
 
@@ -2210,10 +2210,10 @@ elif TS_flag == 1:
                 L_Interpolator = lambda x: np.polyval(p_L, x)
                 R_Interpolator = lambda x: np.polyval(p_R, x)
 
-                sigmaT_L_V = L_Interpolator(t)                                                                                      #Interpolated sigmaT coefficient on the left ISO-mu 
-                sigmaT_R_V = R_Interpolator(t)                                                                                      #Interpolated sigmaT coefficient on the right ISO-mu
-                sigmaT_L_S = L_Interpolator(t_shield)
-                sigmaT_R_S = R_Interpolator(t_shield)
+                sigmaT_L_V = L_Interpolator(R_ext/R_int)                                                                                      #Interpolated sigmaT coefficient on the left ISO-mu 
+                sigmaT_R_V = R_Interpolator(R_ext/R_int)                                                                                      #Interpolated sigmaT coefficient on the right ISO-mu
+                sigmaT_L_S = L_Interpolator(R_shield_ext/R_shield_int)
+                sigmaT_R_S = R_Interpolator(R_shield_ext/R_shield_int)
 
                 sigmaT_eq_V = lambda x: sigmaT_L_V + ((sigmaT_R_V-sigmaT_L_V)/(mu_R-mu_L))*(x - mu_L)
                 sigmaT_eq_S = lambda x: sigmaT_L_S + ((sigmaT_R_S-sigmaT_L_S)/(mu_R-mu_L))*(x - mu_L)
