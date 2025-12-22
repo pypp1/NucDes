@@ -133,7 +133,7 @@ def simpcomp(f, a, b, N):
 # =============================================================================================================================================================
 # PURELY MECHANICAL PROBLEM
 # =============================================================================================================================================================
-dr = 100
+dr = 500
 r = np.linspace(R_int, R_ext, dr)
 
 while True:
@@ -195,7 +195,7 @@ if Mar_criterion > 5:
         plt.axhline(y = sigma_rM_cyl, color='red', label='Radial (r) Stress Mariotte')
         plt.axhline(y = sigma_tM_cyl, color='blue', label=r'Hoop ($\theta$) Stress Mariotte')
         plt.axhline(y = sigma_zM_cyl, color='green', label='Axial (z) Stress Mariotte')
-        plt.axhline(y = 0, color='black', linewidth='1', label='y=0')
+        plt.plot(r, np.zeros(len(r)), color='black', linewidth='1', label='y=0')
         plt.xlabel('Radius (m)')
         plt.ylabel('Stress (MPa)')
         plt.title('Stress Distribution in a thin-walled cylinder - Mariotte Solution')
@@ -216,8 +216,8 @@ def sigmaL_func(r, P_int_MPa, P_cpp_MPa, verbose): #the "verbose" variable is us
     
     A = ((P_int_MPa*(R_int**2))-(P_cpp_MPa*(R_ext**2)))/((R_ext**2)-(R_int**2))
     B = (((R_int**2)*(R_ext**2))/((R_ext**2)-(R_int**2)))*(P_int_MPa-P_cpp_MPa)
-    sigma_rL = lambda r: A + B/(r**2)
-    sigma_tL = lambda r: A - B/(r**2)
+    sigma_rL = lambda r: A - B/(r**2)
+    sigma_tL = lambda r: A + B/(r**2)
 
     if P_int == P_cpp:
         if verbose:
@@ -658,7 +658,7 @@ if TS_flag == 0:
             plt.plot(ba_ratio_plot, L_Interpolator(ba_ratio_plot), 'k', label=f'Iso-mu = {mu_L} 1/m')
             plt.plot(ba_ratio_plot, R_Interpolator(ba_ratio_plot), 'k', label=f'Iso-mu = {mu_R} 1/m')
             plt.plot(R_ext/R_int, sigmaT,'or', label=r'Current $\sigma$$_T$')
-            plt.xlabel('b/a')
+            plt.xlabel('R$_{ext}$/R$_{int}$')
             plt.ylabel(r'$\sigma$$_T$')
             plt.title('Design curves')
             plt.legend()
@@ -930,7 +930,7 @@ if TS_flag == 0:
         # ======================================
         # T discretization along z
         # ======================================
-        dz = 100
+        dz = 500
         T_z = np.linspace(T_in, T_out_avg, dz)
         while True:
             try:
@@ -1075,7 +1075,7 @@ if TS_flag == 0:
         pcm = plt.pcolormesh(R_mesh, T_z_mesh, sigma_r_th, shading='auto', cmap='viridis')
         plt.colorbar(pcm, label=r'$\sigma$ (MPa)')
         plt.xlabel('Radius (m)')
-        plt.ylabel('T (°C)')
+        plt.ylabel('T$_z$ (°C)')
         plt.title('Radial Stress Map (r vs T$_z$)')
         plt.tight_layout()
 
@@ -1083,7 +1083,7 @@ if TS_flag == 0:
         pcm = plt.pcolormesh(R_mesh, T_z_mesh, sigma_t_th, shading='auto', cmap='viridis')
         plt.colorbar(pcm, label=r'$\sigma$ (MPa)')
         plt.xlabel('Radius (m)')
-        plt.ylabel('T (°C)')
+        plt.ylabel('T$_z$ (°C)')
         plt.title('Hoop Stress Map (r vs T$_z$)')
         plt.tight_layout()
 
@@ -1091,7 +1091,7 @@ if TS_flag == 0:
         pcm = plt.pcolormesh(R_mesh, T_z_mesh, sigma_t_th_SIMP, shading='auto', cmap='viridis')
         plt.colorbar(pcm, label=r'$\sigma$ (MPa)')
         plt.xlabel('Radius (m)')
-        plt.ylabel('T (°C)')
+        plt.ylabel('T$_z$ (°C)')
         plt.title('Simplified Hoop Stress Map (r vs T$_z$)')
         plt.tight_layout()
 
@@ -1099,7 +1099,7 @@ if TS_flag == 0:
         pcm = plt.pcolormesh(R_mesh, T_z_mesh, sigma_z_th, shading='auto', cmap='viridis')
         plt.colorbar(pcm, label=r'$\sigma$ (MPa)')
         plt.xlabel('Radius (m)')
-        plt.ylabel('T (°C)')
+        plt.ylabel('T$_z$ (°C)')
         plt.title('Axial Stress Map (r vs T$_z$)')
         plt.tight_layout()
         plt.show()
@@ -1785,7 +1785,7 @@ elif TS_flag == 1:
         plt.plot(ba_ratio_plot, R_Interpolator(ba_ratio_plot), 'k', label=f'Iso-mu = {mu_R} 1/m')
         plt.plot(R_ext/R_int, sigmaT_V,'or', label=r'Current $\sigma$$_T$ in the vessel')
         plt.plot(R_shield_ext/R_shield_int, sigmaT_S,'ob', label=r'Current $\sigma$$_T$ in the thermal shield')
-        plt.xlabel('b/a')
+        plt.xlabel('R$_{ext}$/R$_{int}$')
         plt.ylabel(r'$\sigma$$_T$')
         plt.title('Design curves')
         plt.legend()
