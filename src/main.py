@@ -98,7 +98,7 @@ keys_list = list(mu_curves.keys())
 # ============================
 # Computed additional data
 # ============================
-t = 0.05                                    #m #First guess
+t = 0.16                                    #m #First guess
 R_int = D_vess_int/2                        #m
 R_ext = R_int + t                           #m
 R_barr_ext = D_barr_ext/2                   #m
@@ -351,7 +351,7 @@ if TS_flag == 0:
 
                                        
     Re = (rho*v*(D_vess_int-D_barr_ext))/mu                                                     #Reynolds number
-    Nu_1 = 0.023*(Re*0.8)*(Pr**0.4)                                                             #Dittus-Boelter equation for forced convection
+    Nu_1 = 0.023*(Re**0.8)*(Pr**0.4)                                                             #Dittus-Boelter equation for forced convection
     h_1 = (Nu_1*k)/(D_vess_int-D_barr_ext)                                                      #W/(m²·K)
     print("\nHeat transfer coefficient h1 = %.3f W/(m²·K)" %h_1)
 
@@ -800,9 +800,6 @@ if TS_flag == 0:
                     print(e)
             
             def Corradi(Slenderness):
-                if ThinTubes_flag == 1:
-                    print("Adopting Corradi Design Procedure.")
-
                 if isinstance(Slenderness, np.ndarray):
                     mu = np.zeros(len(Slenderness))
                     Z = lambda Dt: (np.sqrt(3)/4) * (2*Dt + 1) * W                  #Accounts for ovality
@@ -1260,11 +1257,11 @@ elif TS_flag == 1:
         Pr_cpp = (Cp_cpp*mu_cpp)/k_cpp                                                              #Prandtl number of the containment water
         
         Re_int = (rho*v_int*(D_shield_int - D_barr_ext))/mu                                         #Inner hydraulic diameter                                                     
-        Nu_1_int = 0.023*(Re_int*0.8)*(Pr**0.4)                                                             
+        Nu_1_int = 0.023*(Re_int**0.8)*(Pr**0.4)                                                             
         h_1_int = (Nu_1_int*k)/(D_shield_int - D_barr_ext)
         
         Re_ext = (rho*v_ext*(D_vess_int - D_shield_ext))/mu                                         #Outer hydraulic diameter                                                     
-        Nu_1_ext = 0.023*(Re_ext*0.8)*(Pr**0.4)                                                             
+        Nu_1_ext = 0.023*(Re_ext**0.8)*(Pr**0.4)                                                             
         h_1_ext = (Nu_1_ext*k)/(D_vess_int - D_shield_ext)
                                                                                  
         Gr = (rho_cpp**2)*9.81*beta_cpp*DeltaT*(L**3)/(mu_cpp**2)                                   #Grashof number (Uses the external diameter as characteristic length, might wanna use L though?)
