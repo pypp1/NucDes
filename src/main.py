@@ -98,7 +98,7 @@ keys_list = list(mu_curves.keys())
 # ============================
 # Computed additional data
 # ============================
-t = 0.16                                    #m #First guess
+t = 0.05                                    #m #First guess
 R_int = D_vess_int/2                        #m
 R_ext = R_int + t                           #m
 R_barr_ext = D_barr_ext/2                   #m
@@ -340,9 +340,6 @@ if TS_flag == 0:
         plt.grid()
         plt.show()
 
-    print("\nVolumetric heat source at the vessel inner surface: %.3f W/m³" %q_iii(r[0]))
-    print("Volumetric heat source at the vessel-insulation interface: %.3f W/m³" %q_iii(r[-1]))
-
     # ======================================
     # Dimensionless numbers and heat transfer coefficients
     # ======================================
@@ -353,15 +350,12 @@ if TS_flag == 0:
     Re = (rho*v*(D_vess_int-D_barr_ext))/mu                                                     #Reynolds number
     Nu_1 = 0.023*(Re**0.8)*(Pr**0.4)                                                             #Dittus-Boelter equation for forced convection
     h_1 = (Nu_1*k)/(D_vess_int-D_barr_ext)                                                      #W/(m²·K)
-    print("\nHeat transfer coefficient h1 = %.3f W/(m²·K)" %h_1)
 
     Gr = (rho_cpp**2)*9.81*beta_cpp*DeltaT*(L**3)/(mu_cpp**2)                                   #Grashof number (Uses the external diameter as characteristic length, might wanna use L though?)
     Nu_2 = 0.13*((Gr*Pr_cpp)**(1/3))                                                            #McAdams correlation for natural convection
     h_2 = (Nu_2*k_cpp)/L                                                                        #W/(m²·K)
     R_th_2_tot = (1/(2*np.pi*(R_ext + t_th_ins)*L)) * ((((R_ext + t_th_ins)/k_th_ins)*np.log((R_ext + t_th_ins)/R_ext)) + (1/h_2))                          #Thermal Resistance of the insulation layer + natural convection outside the vessel
     u_2 = 1/(2*np.pi*(R_ext + t_th_ins)*L*R_th_2_tot)                                           #W/(m²·K)   -   Overall heat transfer coefficient outside the vessel
-    print("Heat transfer coefficient h2 = %.3f W/(m²·K)" %h_2)
-    print("Overall heat transfer coefficient outside the vessel u2 = %.3f W/(m²·K)" %u_2)
 
     while True:
         try:
@@ -465,14 +459,10 @@ if TS_flag == 0:
                 except RuntimeError as e:
                     print(e)
             if LogDelta_flag == 1:
-                DeltaT_LM1 = ((T1-T_vessel(r[0]))-(T_out_avg-T_vessel(r[0])))/(np.log((T1-T_vessel(r[0]))/(T_out_avg-T_vessel(r[0]))))        #Log Mean Temperature Difference to account for T change along z, instead of just using T1-T_wall
-                q_s1_log = h_1*DeltaT_LM1/1000                                                                                                                      #kW/m²
-                print("\nThermal power flux on the inner vessel surface - Logarithmic Mean DeltaT Approach: %.3f kW/m²" %q_s1_log)
+                DeltaT_LM1 = ((T1-T_vessel(r[0]))-(T_out_avg-T_vessel(r[0])))/(np.log((T1-T_vessel(r[0]))/(T_out_avg-T_vessel(r[0]))))    #Log Mean Temperature Difference to account for T change along z, instead of just using T1-T_wall
+                q_s1_log = h_1*DeltaT_LM1/1000                                                                                            #kW/m²
         q_s1 = h_1*DeltaT_1/1000                                                                                                          #kW/m²
         q_s2 = u_2*(T_vessel(r[-1])-T_cpp)/1000                                                                                           #kW/m²
-
-        print("\nThermal power flux on the inner vessel surface: %.3f kW/m²" %q_s1)
-        print("Thermal power flux on the outer vessel surface: %.3f kW/m²" %q_s2)
 
         # ======================================
         # Plotting the T profiles
@@ -489,11 +479,6 @@ if TS_flag == 0:
                 print(e)
         
         if adiab_flag == 0:
-            print("\nAverage Vessel Temperature (numerical integration): %.3f °C" %(T_vessel_avg - 273.15))
-            #print("Average Vessel Temperature (analytical integration): %.3f °C" %T_vessel_avg_2)
-            print("Maximum Vessel Temperature: %.3f °C at r = %.3f m" %(T_vessel_max - 273.15, r_T_vessel_max))
-            print("Vessel Temperature at the inner surface: %-3f °C at r = %.3f m" %(T_vessel(r)[0] - 273.15, r[0]))
-            print("Vessel Temperature at the outer surface: %-3f °C at r = %.3f m" %(T_vessel(r)[-1] - 273.15, r[-1]))
             if T_pl_flag == 1:
                 plt.figure(figsize=(10,10))
                 plt.axvline(x = R_int, color='black', linewidth='3', label='Vessel Inner Surface')
@@ -509,11 +494,6 @@ if TS_flag == 0:
                 plt.show()
             
         elif adiab_flag == 1:
-            print("\nAverage Vessel Temperature under Adiabatic Outer Wall approximation (numerical integration): %.3f °C" %(T_vessel_avg - 273.15))
-            #print("Average Vessel Temperature under Adiabatic Outer Wall approximation (analytical integration): %.3f °C" %T_vessel_avg_2)
-            print("Maximum Vessel Temperature under Adiabatic Outer Wall approximation: %.3f °C at r = %.3f m" %(T_vessel_max - 273.15, r_T_vessel_max))
-            print("Vessel Temperature at the inner surface under Adiabatic Outer Wall approximation: %-3f °C at r = %.3f m" %(T_vessel(r)[0] - 273.15, r[0]))
-            print("Vessel Temperature at the outer surface under Adiabatic Outer Wall approximation: %-3f °C at r = %.3f m" %(T_vessel(r)[-1] - 273.15, r[-1]))
             if T_pl_flag == 1:
                 
                 # ======================================
@@ -547,10 +527,8 @@ if TS_flag == 0:
 
         sigma_t_th_V_max = max(sigma_t_th_V)
         r_sigma_t_th_V_max = r[np.argmax(sigma_t_th_V)]
-        print("\nMaximum Thermal Hoop Stress in the vessel: %.3f Mpa at r = %.3f m" %(sigma_t_th_V_max, r_sigma_t_th_V_max))
         #sigma_t_th_V_max_SIMP = max(sigma_t_th_V_SIMP(r))
         #r_sigma_t_th_V_max_SIMP = r[np.argmax(sigma_t_th_V_SIMP(r))]
-        #print("Maximum Thermal Hoop Stress (Simplified formula): %.3f Mpa at r = %.3f m" %(sigma_t_th_V_max_SIMP, r_sigma_t_th_V_max_SIMP))
 
         # ======================================
         # Maximum Hoop Thermal Stress in the vessel via design curves
@@ -576,7 +554,6 @@ if TS_flag == 0:
                 sigmaT = sigmaT_eq(mu_st)                                                                  #Double-interpolated (linear) sigmaT coefficient
         
         sigma_t_th_max_DES = sigmaT*(alpha_l*E*q_0)/(k_st*(1-nu)*(mu_st**2))
-        print("Maximum thermal hoop stress via design curves: %.3f MPa" %sigma_t_th_max_DES)
 
         # ======================================
         # Plotting the thermal stress profiles
@@ -628,16 +605,12 @@ if TS_flag == 0:
         # ============================
         sigma_cTR_M = np.max([abs(sigma_t_totM - sigma_r_totM), abs(sigma_z_totM - sigma_r_totM), abs(sigma_t_totM - sigma_z_totM)])
         sigma_cTR_L = np.max([abs(sigma_t_totL - sigma_r_totL), abs(sigma_z_totL - sigma_r_totL), abs(sigma_t_totL - sigma_z_totL)])
-        print("\nGuest-Tresca Equivalent Stress in the vessel - Mariotte solution: %.3f Mpa" %sigma_cTR_M)
-        print("Guest-Tresca Equivalent Stress in the vessel - Lamé solution: %.3f Mpa" %sigma_cTR_L)
 
         # ============================ 
         # Vessel Comparison stress - Von Mises Theory - Mariotte/Lamé + Thermal stresses
         # ============================
         sigma_cVM_M = max(np.sqrt(0.5*((sigma_r_totM - sigma_t_totM)**2 + (sigma_t_totM - sigma_z_totM)**2 + (sigma_z_totM - sigma_r_totM)**2)))
-        sigma_cVM_L = max(np.sqrt(0.5*((sigma_r_totL - sigma_t_totL)**2 + (sigma_t_totL - sigma_z_totL)**2 + (sigma_z_totL - sigma_r_totL)**2))) #The max should be the worst case, in theory
-        print("\nVon Mises Equivalent Stress in the vessel - Mariotte solution: %.3f Mpa" %sigma_cVM_M)
-        print("Von Mises Equivalent Stress in the vessel - Lamé solution: %.3f Mpa" %sigma_cVM_L)
+        sigma_cVM_L = max(np.sqrt(0.5*((sigma_r_totL - sigma_t_totL)**2 + (sigma_t_totL - sigma_z_totL)**2 + (sigma_z_totL - sigma_r_totL)**2)))
 
         # ======================================
         # Plotting the maximum thermal stress via the design curves
@@ -680,9 +653,6 @@ if TS_flag == 0:
         Intensity_Interpolator = lambda x: np.polyval(p_intensity, x)                   #Stress Intensity Interpolation Polynomial (n-1)
         Intensity_CubicSpline = interpolate.CubicSpline(T_thr, sigma_in)                #Stress Intenisty Cubic Spline Interpolation
         Stress_Intensity = Intensity_CubicSpline(T_des_vessel_C)
-        print("\nFor a design vessel temperature of %.3f °C: " %T_des_vessel_C)
-        print('Yield Stress: Sy'," = %.3f MPa" %Yield_stress)
-        print('Stress Intensity: Sm'," = %.3f MPa" %Stress_Intensity)
 
         # ======================================
         # Without thermal shield
@@ -830,14 +800,6 @@ if TS_flag == 0:
             # Corradi Design Procedure Results
             # ============================
             Corradi_vessel = Corradi(np.array([Current_Slenderness]))
-            print("\nAccording to the Corradi Design Procedure:")
-            print("The theoretical limit for collapse pressure, accounting for ovality, is: q_c = %.3f MPa = %.3f bar" %(Corradi_vessel[0], 10*Corradi_vessel[0]))
-            print("A safety factor s = %.3f was assumed. \nThe allowable external pressure is thus: q_a = %.3f MPa = %.3f bar" %(Corradi_vessel[2], Corradi_vessel[1], 10*Corradi_vessel[1]))
-            
-            if (P_cpp < 10*Corradi_vessel[1]):
-                print("The given external pressure of %.3f bar is lower than the allowable pressure of %.3f bar: SUCCESS!" %(P_cpp, 10*Corradi_vessel[1]))
-            else:
-                print("The given external pressure of %.3f bar is higher than the allowable pressure of %.3f bar: a change in thickness is required!" %(P_cpp, 10*Corradi_vessel[1]))
         
         elif Corradi_flag == 0:
             print("Skipping Corradi Design Procedure.")
@@ -918,7 +880,61 @@ if TS_flag == 0:
                 plt.grid()
                 plt.tight_layout()
                 plt.show()
-
+        
+        # ============================ 
+        # Final Results Printing
+        # ============================
+        print("\n\n\n###################################################### Final  Results ######################################################")
+        print("\nCurrent vessel wall thickness: %.3f m" %t)
+        
+        print("\n################################################## Heat transfer results ###################################################")
+        print("\nVolumetric heat source at the vessel inner surface: %.3f W/m³" %q_iii(r[0]))
+        print("Volumetric heat source at the vessel-insulation interface: %.3f W/m³" %q_iii(r[-1]))
+        print("\nHeat transfer coefficient h1 = %.3f W/(m²·K)" %h_1)
+        print("Heat transfer coefficient h2 = %.3f W/(m²·K)" %h_2)
+        print("Overall heat transfer coefficient outside the vessel u2 = %.3f W/(m²·K)" %u_2)
+        if LogDelta_flag == 1:
+            print("\nThermal power flux on the inner vessel surface - Logarithmic Mean DeltaT Approach: %.3f kW/m²" %q_s1_log)
+        print("\nThermal power flux on the inner vessel surface: %.3f kW/m²" %q_s1)
+        print("Thermal power flux on the outer vessel surface: %.3f kW/m²" %q_s2)
+        
+        print("\n####################################################### Temperatures #######################################################")
+        if adiab_flag == 0:
+            print("\nAverage Vessel Temperature (numerical integration): %.3f °C" %(T_vessel_avg - 273.15))
+            #print("Average Vessel Temperature (analytical integration): %.3f °C" %T_vessel_avg_2)
+            print("Maximum Vessel Temperature: %.3f °C at r = %.3f m" %(T_vessel_max - 273.15, r_T_vessel_max))
+            print("Vessel Temperature at the inner surface: %-3f °C at r = %.3f m" %(T_vessel(r)[0] - 273.15, r[0]))
+            print("Vessel Temperature at the outer surface: %-3f °C at r = %.3f m" %(T_vessel(r)[-1] - 273.15, r[-1]))
+        elif adiab_flag == 1:
+            print("\nAverage Vessel Temperature under Adiabatic Outer Wall approximation (numerical integration): %.3f °C" %(T_vessel_avg - 273.15))
+            #print("Average Vessel Temperature under Adiabatic Outer Wall approximation (analytical integration): %.3f °C" %T_vessel_avg_2)
+            print("Maximum Vessel Temperature under Adiabatic Outer Wall approximation: %.3f °C at r = %.3f m" %(T_vessel_max - 273.15, r_T_vessel_max))
+            print("Vessel Temperature at the inner surface under Adiabatic Outer Wall approximation: %-3f °C at r = %.3f m" %(T_vessel(r)[0] - 273.15, r[0]))
+            print("Vessel Temperature at the outer surface under Adiabatic Outer Wall approximation: %-3f °C at r = %.3f m" %(T_vessel(r)[-1] - 273.15, r[-1]))
+        
+        print("\n######################################################### Stresses #########################################################")
+        print("\nMaximum Thermal Hoop Stress in the vessel: %.3f Mpa at r = %.3f m" %(sigma_t_th_V_max, r_sigma_t_th_V_max))
+        #print("Maximum Thermal Hoop Stress (Simplified formula): %.3f Mpa at r = %.3f m" %(sigma_t_th_V_max_SIMP, r_sigma_t_th_V_max_SIMP))
+        print("Maximum thermal hoop stress via design curves: %.3f MPa" %sigma_t_th_max_DES)
+        
+        print("\nGuest-Tresca Equivalent Stress in the vessel - Mariotte solution: %.3f Mpa" %sigma_cTR_M)
+        print("Guest-Tresca Equivalent Stress in the vessel - Lamé solution: %.3f Mpa" %sigma_cTR_L)
+        print("\nVon Mises Equivalent Stress in the vessel - Mariotte solution: %.3f Mpa" %sigma_cVM_M)
+        print("Von Mises Equivalent Stress in the vessel - Lamé solution: %.3f Mpa" %sigma_cVM_L)
+        
+        print("\nFor a design vessel temperature of %.3f °C: " %T_des_vessel_C)
+        print('Yield Stress: Sy'," = %.3f MPa" %Yield_stress)
+        print('Stress Intensity: Sm'," = %.3f MPa" %Stress_Intensity)
+        
+        print("\n######################################################### Buckling #########################################################")
+        print("\nAccording to the Corradi Design Procedure:")
+        print("The theoretical limit for collapse pressure, accounting for ovality, is: q_c = %.3f MPa = %.3f bar" %(Corradi_vessel[0], 10*Corradi_vessel[0]))
+        print("A safety factor s = %.3f was assumed. \nThe allowable external pressure is thus: q_a = %.3f MPa = %.3f bar" %(Corradi_vessel[2], Corradi_vessel[1], 10*Corradi_vessel[1]))
+        if (P_cpp < 10*Corradi_vessel[1]):
+            print("The given external pressure of %.3f bar is lower than the allowable pressure of %.3f bar: SUCCESS!" %(P_cpp, 10*Corradi_vessel[1]))
+        else:
+            print("The given external pressure of %.3f bar is higher than the allowable pressure of %.3f bar: a change in thickness is required!" %(P_cpp, 10*Corradi_vessel[1]))
+        print("\n############################################################################################################################")
     # ======================================
     # Discretization along z
     # ======================================
@@ -2028,7 +2044,7 @@ elif TS_flag == 1:
     if (P_cpp < 10*Corradi_vessel[1] and sigma_cTR_M < sigma_allowable and sigma_cTR_L < sigma_allowable):
         print("\nThe given external pressure of %.3f bar is lower than the allowable pressure of %.3f bar" %(P_cpp, 10*Corradi_vessel[1]))
         print("\nThe comparison stress according to Tresca-Lamé Sc = %.3f MPa is lower than the allowable stress Sa = %.3f MPa\nThe comparison stress according to Tresca-Mariotte Sc = %.3f MPa is also lower than the allowable stress Sa = %.3f MPa" %(sigma_cTR_L, sigma_allowable, sigma_cTR_M, sigma_allowable))
-        print("\nThe thermal shield's integrity is ensured: the design is correct!")
+        print("\nThe vessel's integrity is ensured: the design is correct!")
         print("\n############################################################################################################################")
     elif (P_cpp > 10*Corradi_vessel[1]):
         print("\nThe given external pressure of %.3f bar is higher than the allowable pressure of %.3f bar: a change in thickness is required!" %(P_cpp, 10*Corradi_vessel[1]))
