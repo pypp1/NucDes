@@ -946,11 +946,11 @@ if TS_flag == 0:
         #print("Maximum Thermal Hoop Stress (Simplified formula): %.3f Mpa at r = %.3f m" %(sigma_t_th_V_max_SIMP, r_sigma_t_th_V_max_SIMP))
         print("Maximum thermal hoop stress via design curves: %.3f MPa" %sigma_t_th_max_DES)
         
-        print("\nGuest-Tresca Equivalent Stress in the vessel - Mariotte solution: %.3f Mpa" %sigma_cTR_M)
-        print("Guest-Tresca Equivalent Stress in the vessel - Lamé solution: %.3f Mpa" %sigma_cTR_L)
+        print("\nGuest-Tresca comparison stress in the vessel - Mariotte solution: %.3f Mpa" %sigma_cTR_M)
+        print("Guest-Tresca comparison stress in the vessel - Lamé solution: %.3f Mpa" %sigma_cTR_L)
         
-        print("\nVon Mises Equivalent Stress in the vessel - Mariotte solution: %.3f Mpa" %sigma_cVM_M)
-        print("Von Mises Equivalent Stress in the vessel - Lamé solution: %.3f Mpa" %sigma_cVM_L)
+        #print("\nVon Mises comparison Stress in the vessel - Mariotte solution: %.3f Mpa" %sigma_cVM_M)
+        #print("Von Mises comparison Stress in the vessel - Lamé solution: %.3f Mpa" %sigma_cVM_L)
         
         print("\nFor a design vessel temperature of %.3f °C: " %T_des_vessel_C)
         print('Yield Stress: Sy'," = %.3f MPa" %Yield_stress)
@@ -2176,12 +2176,12 @@ elif TS_flag == 1:
     #print("Maximum Thermal Hoop Stress in the thermal shield (Simplified formula): %.3f Mpa at r = %.3f m" %(sigma_t_th_S_max_SIMP, r_sigma_t_th_S_max_SIMP))
     print("Maximum thermal hoop stress in the thermal shield via design curves: %.3f MPa" %sigma_t_th_S_max_DES)
 
-    print("\nGuest-Tresca Equivalent Stress in the vessel - Mariotte solution: %.3f Mpa" %sigma_cTR_M)
-    print("Guest-Tresca Equivalent Stress in the vessel - Lamé solution: %.3f Mpa" %sigma_cTR_L)
-    
-    print("\nGuest-Tresca Equivalent Stress in the thermal shield - Mariotte solution: %.3f Mpa" %sigma_cTR_MS)
-    print("Guest-Tresca Equivalent Stress in the thermal shield - Lamé solution: %.3f Mpa" %sigma_cTR_LS)
+    print("\nGuest-Tresca comparison stress in the vessel - Mariotte solution: %.3f Mpa" %sigma_cTR_M)
+    print("Guest-Tresca comparison stress in the vessel - Lamé solution: %.3f Mpa" %sigma_cTR_L)
 
+    print("\nGuest-Tresca comparison stress in the thermal shield - Mariotte solution: %.3f Mpa" %sigma_cTR_MS)
+    print("Guest-Tresca comparison stress in the thermal shield - Lamé solution: %.3f Mpa" %sigma_cTR_LS)
+    
     print("\nFor a design vessel temperature of %.3f °C: " %T_des_vessel_C)
     print('Yield Stress: Sy'," = %.3f MPa" %Yield_stress)
     print('Stress Intensity: Sm'," = %.3f MPa" %Stress_Intensity)
@@ -2239,7 +2239,7 @@ elif TS_flag == 1:
     print("\nThe theoretical limit for collapse pressure, accounting for ovality, is: q_c = %.3f MPa = %.3f bar" %(Corradi_vessel[0], 10*Corradi_vessel[0]))
     print("A safety factor s = %.3f was assumed. \nThe allowable external pressure is thus: q_a = %.3f MPa = %.3f bar" %(Corradi_vessel[2], Corradi_vessel[1], 10*Corradi_vessel[1]))
 
-    if (P_cpp < 10*Corradi_vessel[1] and sigma_cTR_L < sigma_allowable):       #sigma_cTR_M < sigma_allowable has been removed to avoid overly conservative results
+    if (buckling_flag == 1 and sigma_cTR_L < sigma_allowable and sigma_cTR_M < sigma_allowable):
         print("The given external pressure of %.3f bar is lower than the allowable pressure of %.3f bar" %(P_cpp, 10*Corradi_vessel[1]))
         print("\nThe comparison stress according to Tresca-Lamé Sc = %.3f MPa is lower than the allowable stress Sa = %.3f MPa" %(sigma_cTR_L, sigma_allowable))
         print("The comparison stress according to Tresca-Mariotte Sc = %.3f MPa is lower than the allowable stress Sa = %.3f MPa" %(sigma_cTR_M, sigma_allowable))
@@ -2252,10 +2252,10 @@ elif TS_flag == 1:
             print("\nThe design is correct!")
         print("\n############################################################################################################################")
         
-    elif (P_cpp > 10*Corradi_vessel[1]):
+    elif buckling_flag == 0:
         print("\nThe given external pressure of %.3f bar is higher than the allowable pressure of %.3f bar: a change in thickness is required!" %(P_cpp, 10*Corradi_vessel[1]))
         print("\n############################################################################################################################")
 
-    elif (sigma_cTR_L > sigma_allowable):                                       #sigma_cTR_M > sigma_allowable has been removed
-        print("\nThe Tresca-Lamè comparison stress Sc = %.3f MPa is higher than the allowable stress Sa = %.3f MPa" %(sigma_cTR_L,sigma_allowable))
+    elif (sigma_cTR_L > sigma_allowable or sigma_cTR_M > sigma_allowable):
+        print("\nEither the Tresca-Lamè comparison stress Sc = %.3f MPa or the Tresca-Mariotte comparison stress Sc = %.3f MPa is higher than the allowable stress Sa = %.3f MPa" %(sigma_cTR_L,sigma_cTR_M,sigma_allowable))
         print("\n############################################################################################################################")
