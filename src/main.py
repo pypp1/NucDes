@@ -100,21 +100,14 @@ keys_list = list(mu_curves.keys())
 # ============================
 # Computed additional data
 # ============================
-t = 0.05                                    #m #First guess
 R_int = D_vess_int/2                        #m
-R_ext = R_int + t                           #m
-D_vess_ext = 2*R_ext                        #m
 R_barr_ext = D_barr_ext/2                   #m
 v_flr = m_flr/rho                           #m³/s
 G = E/(2*(1+nu))                            #MPa
-rho_ii = (R_ext**2)/(R_ext**2 - R_int**2)
-rho_i = (R_int**2)/(R_ext**2 - R_int**2)
 P_int_MPa = P_int/10                        #MPa
 P_cpp_MPa = P_cpp/10                        #MPa
 Phi_0 = Phi_0 * 1e4                         #photons/(m²·s)
-Mar_criterion = R_int/t
 DeltaD_max = min(((D_vess_int*1000)+1270)/200, (D_vess_int*1000)/100)
-W = (DeltaD_max/1000)/((D_vess_int+D_vess_ext)/2)
 
 # ======================================
 # Simpson composite integration function
@@ -135,12 +128,9 @@ def simpcomp(f, a, b, N):
     I = (h/6.0)*(f(xL)+4*f(xM)+f(xR)).sum()         # Approximate integral
     return I
 
-# =============================================================================================================================================================
-# PURELY MECHANICAL PROBLEM
-# =============================================================================================================================================================
-dr = 100
-r = np.linspace(R_int, R_ext, dr)
-
+# ======================================
+# Default Pressures Check
+# ======================================
 while True:
     try:
         Def_P_flag = int(input("\nAssume default pressures (75 bar = 7.5 MPa)? (1: Yes, 0: No): "))
@@ -158,6 +148,9 @@ if Def_P_flag == 0:
     P_cpp = int(input("Set the external pressure (bar): "))
     P_cpp_MPa = P_cpp/10
     
+    # ======================================
+    # Stress/Strain Condition Input
+    # ======================================
     while P_int != P_cpp: #Asks for this here, because asking for it in the sigmaL function would mean having to input the value for every iteration
         try:
             flag_eps = int(input("\nEnter the stress/strain condition (1: Plane Stress, 0: Plane Strain): "))
@@ -168,198 +161,231 @@ if Def_P_flag == 0:
             print("Please enter a valid integer.")
         except RuntimeError as e:
             print(e)
-
-# ============================
-# Mariotte Solution for a thin-walled cylinder and sphere (R_int = R_ext = R)
-# ============================
-def sigmaM_func (R_int, P_int_MPa, t): 
-    sigma_rM_cyl = -P_int_MPa/2                        #Compressive
-    sigma_tM_cyl = R_int*P_int_MPa/t                   
-    sigma_zM_cyl = R_int*P_int_MPa/(2*t)
-    sigma_tM_sph = R_int*P_int_MPa/(2*t)
-    return (sigma_rM_cyl, sigma_tM_cyl, sigma_zM_cyl, sigma_tM_sph)
-
-# ============================
-# Mariotte Solution 
-# ============================
-if Mar_criterion > 5:
-    while True:
-        try:
-            Mariotte_flag = int(input("\nWith an initial thickness value of %.3f m, the vessel can be considered thin. Are you interested in visualizing the Mariotte solution for stress? (1: Yes, 0: No): " %t))
-            if Mariotte_flag not in (0, 1):
-                raise RuntimeError("Invalid input! Please enter either 0 or 1.")
-            break  
-        except ValueError:
-            print("Please enter a valid integer.")
-        except RuntimeError as e:
-            print(e)
-    sigma_M = sigmaM_func(R_int, P_int_MPa, t)
-    sigma_rM_cyl = sigma_M[0]
-    sigma_tM_cyl = sigma_M[1]
-    sigma_zM_cyl = sigma_M[2]
-
-    if Mariotte_flag == 1:
-
-        # ======================================
-        # Plotting the stress profiles: Mariotte
-        # ======================================
-        plt.figure(figsize=(15,10))
-        plt.axvline(x = R_int, color='black', linewidth='3', label='Vessel Inner Surface')
-        plt.axvline(x = R_ext, color='black', linewidth='3', label='Vessel Outer Surface')
-        plt.axhline(y = sigma_rM_cyl, color='red', label='Radial (r) Stress Mariotte')
-        plt.axhline(y = sigma_tM_cyl, color='blue', label=r'Hoop ($\theta$) Stress Mariotte')
-        plt.axhline(y = sigma_zM_cyl, color='green', label='Axial (z) Stress Mariotte')
-        plt.plot(r, np.zeros(len(r)), color='black', linewidth='1', label='y=0')
-        plt.xlabel('Radius (m)')
-        plt.ylabel('Stress (MPa)')
-        plt.title('Stress Distribution in a thin-walled cylinder - Mariotte Solution')
-        plt.legend()
-        plt.grid()
-        plt.show()
-
-    elif Mariotte_flag == 0:
-        print("Skipping Mariotte solution.")
-else:
-    print("\nThe cylinder can't be considered thin. Skipping Mariotte solution.")
-    Mariotte_flag = 0
-
-# ============================ 
-# General Lamé Solution 
-# ============================
-def sigmaL_func(r, P_int_MPa, P_cpp_MPa, verbose): #the "verbose" variable is used to avoid printing the hydrostatic stress condition information for every iteration of the thermal shield loop
-    
-    A = ((P_int_MPa*(R_int**2))-(P_cpp_MPa*(R_ext**2)))/((R_ext**2)-(R_int**2))
-    B = (((R_int**2)*(R_ext**2))/((R_ext**2)-(R_int**2)))*(P_int_MPa-P_cpp_MPa)
-    sigma_rL = lambda r: A - B/(r**2)
-    sigma_tL = lambda r: A + B/(r**2)
-
-    if P_int == P_cpp:
-        if verbose:
-            print("\nInternal and external pressures are equal: hydrostatic stress condition is verified. Skipping.")    #Hydrostatic Stress Condition
-        eps_z_a = (2*nu-1)*rho_ii*P_cpp_MPa/E
-        eps_z_b = (1-2*nu)*rho_i*P_int_MPa/E
-
-    elif P_int != P_cpp:
-        if flag_eps == 1:                                                                                           #Plane Stress
-            eps_z_a = 2*nu*rho_ii*P_cpp_MPa/E
-            eps_z_b = -2*nu*rho_i*P_int_MPa/E
-        elif flag_eps == 0:                                                                                         #Plane Strain
-            eps_z_a = 0
-            eps_z_b = 0 
-
-    sigma_zL_a = E*eps_z_a - 2*nu*rho_ii*P_cpp_MPa  #a) P_int = 0
-    sigma_zL_b = E*eps_z_b + 2*nu*rho_i*P_int_MPa   #b) P_cpp = 0
-    return (sigma_rL(r), sigma_tL(r), sigma_zL_a + sigma_zL_b)              #Superposition Principle
-
-sigma_L = sigmaL_func(r, P_int_MPa, P_cpp_MPa, 1)
-sigma_rL = sigma_L[0]  
-sigma_tL = sigma_L[1]
-sigma_zL = sigma_L[2]
-
-if Mariotte_flag == 1:
-    while True:
-        try:
-            Lame_flag = int(input("\nThe Mariotte solution for a thin cylinder has been visualized. Are you interested in visualizing the more general Lamé solution? (1: Yes, 0: No): "))
-            if Lame_flag not in (0, 1):
-                raise RuntimeError("Invalid input! Please enter either 0 or 1.")
-            break  
-        except ValueError:
-            print("Please enter a valid integer.")
-        except RuntimeError as e:
-            print(e)
-
-elif Mariotte_flag == 0:
-    print("Visualizing general Lamé solution.")
-    Lame_flag = 1
-
-if Lame_flag == 1:
-    # ======================================
-    # Plotting the stress profiles: Lamé
-    # ======================================
-    plt.figure(figsize=(15,10))
-    plt.axvline(x = R_int, color='black', linewidth='3', label='Vessel Inner Surface')
-    plt.axvline(x = R_ext, color='black', linewidth='3', label='Vessel Outer Surface')
-    plt.plot(r, sigma_rL, label='Radial (r) Stress Lamé')
-    plt.plot(r, sigma_tL, label=r'Hoop ($\theta$) Stress Lamé')
-    plt.axhline(y = sigma_zL, color='green', label='Axial (z) Stress Lamé')
-    plt.axhline(y = 0, color='black', linewidth='1', label='y=0')
-    plt.xlabel('Radius (m)')
-    plt.ylabel('Stress (MPa)')
-    plt.title('Stress Distribution in the cylinder wall - Lamé Solution')
-    plt.legend()
-    plt.grid()
-    plt.show()
-
-elif Lame_flag == 0:
-    print("Skipping Lamé solution.")
     
 # ======================================
-# Thermal Shield Check
-# ======================================    
+# Heat Source Check
+# ======================================
 while True:
     try:
-        TS_flag = int(input("\nDo you want to consider the presence of a thermal shield between the barrel and the vessel? (1: Yes, 0: No): "))
-        if TS_flag not in (0, 1):
+        q_0_flag = int(input("\nDo you want to account for the presence of the volumetric heat source q0 inside the vessel's wall? (1: Yes, 0: No): "))
+        if q_0_flag not in (0, 1):
             raise RuntimeError("Invalid input! Please enter either 0 or 1.")
         break  
     except ValueError:
         print("Please enter a valid integer.")
     except RuntimeError as e:
         print(e)
-
-# =============================================================================================================================================================
-# PURELY THERMAL PROBLEM - POWER IMPOSED - NO THERMAL SHIELD
-# =============================================================================================================================================================
-if TS_flag == 0:
-    # ============================
-    # Computed additional data without the thermal shield
-    # ============================
-    v = m_flr/(rho*np.pi*((D_vess_int**2)-(D_barr_ext**2))/4)     #m/s
-    Phi_0V = Phi_0                                                #All gamma rays reach the vessel
-
-    # ======================================
-    # Radiation-induced heating in the vessel
-    # ======================================
-    Phi = lambda r: Phi_0V*np.exp(-mu_st*(r-R_int))    #1/(m²·s)
-    I = lambda r: E_y_J*Phi(r)*B                       #W/(m²)
-    q_0 = B*Phi_0V*E_y_J*mu_st                         #W/(m³)
-    q_iii = lambda r: q_0*np.exp(-mu_st*(r-R_int))     #W/(m³)
-
-    # ======================================
-    # Plotting the volumetric heat source profiles 
-    # ======================================
+        
+# ======================================
+# Thermal Shield Check   -   Only if volumetric heat source is considered
+# ====================================== 
+if q_0_flag == 1:   
     while True:
         try:
-            hs_flag = int(input("\nDo you want to visualize the volumetric heat source q0 inside the vessel's wall? (1: Yes, 0: No): "))
-            if hs_flag not in (0, 1):
+            TS_flag = int(input("\nDo you want to consider the presence of a thermal shield between the barrel and the vessel? (1: Yes, 0: No): "))
+            if TS_flag not in (0, 1):
                 raise RuntimeError("Invalid input! Please enter either 0 or 1.")
             break  
         except ValueError:
             print("Please enter a valid integer.")
         except RuntimeError as e:
             print(e)
+elif q_0_flag == 0:
+    TS_flag = 0
 
-    if hs_flag == 1:
-        plt.figure(figsize=(10,10))
+# =============================================================================================================================================================
+# THERMOMECHANICAL PROBLEM - POWER IMPOSED - NO THERMAL SHIELD
+# =============================================================================================================================================================
+if TS_flag == 0:
+    
+    # ============================
+    # Computed additional data without the thermal shield
+    # ============================
+    v = m_flr/(rho*np.pi*((D_vess_int**2)-(D_barr_ext**2))/4)     #m/s
+    Phi_0V = Phi_0                                                #All gamma rays reach the vessel
+    
+    # =============================================================================================================================================================
+    # PURELY MECHANICAL PROBLEM
+    # =============================================================================================================================================================
+    t = 0.15                                    #m
+    R_ext = R_int + t                           #m
+    D_vess_ext = 2*R_ext                        #m
+    rho_ii = (R_ext**2)/(R_ext**2 - R_int**2)
+    rho_i = (R_int**2)/(R_ext**2 - R_int**2)
+    Mar_criterion = R_int/t
+    W = (DeltaD_max/1000)/((D_vess_int+D_vess_ext)/2)
+    
+    dr = 100
+    r = np.linspace(R_int, R_ext, dr)
+
+    # ============================
+    # Mariotte Solution for a thin-walled cylinder (R_int = R_ext = R)
+    # ============================
+    def sigmaM_func (R_int, P_int_MPa, t): 
+        sigma_rM_cyl = -P_int_MPa/2                        #Compressive
+        sigma_tM_cyl = R_int*P_int_MPa/t                   
+        sigma_zM_cyl = R_int*P_int_MPa/(2*t)
+        sigma_tM_sph = R_int*P_int_MPa/(2*t)
+        return (sigma_rM_cyl, sigma_tM_cyl, sigma_zM_cyl, sigma_tM_sph)
+
+    if Mar_criterion > 5:
+        while True:
+            try:
+                Mariotte_flag = int(input("\nWith an initial thickness value of %.3f m, the vessel can be considered thin. Are you interested in visualizing the Mariotte solution for stress? (1: Yes, 0: No): " %t))
+                if Mariotte_flag not in (0, 1):
+                    raise RuntimeError("Invalid input! Please enter either 0 or 1.")
+                break  
+            except ValueError:
+                print("Please enter a valid integer.")
+            except RuntimeError as e:
+                print(e)
+        sigma_M = sigmaM_func(R_int, P_int_MPa, t)
+        sigma_rM_cyl = sigma_M[0]
+        sigma_tM_cyl = sigma_M[1]
+        sigma_zM_cyl = sigma_M[2]
+
+        if Mariotte_flag == 1:
+
+            # ======================================
+            # Plotting the stress profiles: Mariotte
+            # ======================================
+            plt.figure(figsize=(15,10))
+            plt.axvline(x = R_int, color='black', linewidth='3', label='Vessel Inner Surface')
+            plt.axvline(x = R_ext, color='black', linewidth='3', label='Vessel Outer Surface')
+            plt.axhline(y = sigma_rM_cyl, color='red', label='Radial (r) Stress Mariotte')
+            plt.axhline(y = sigma_tM_cyl, color='blue', label=r'Hoop ($\theta$) Stress Mariotte')
+            plt.axhline(y = sigma_zM_cyl, color='green', label='Axial (z) Stress Mariotte')
+            plt.plot(r, np.zeros(len(r)), color='black', linewidth='1', label='y=0')
+            plt.xlabel('Radius (m)')
+            plt.ylabel('Stress (MPa)')
+            plt.title('Stress Distribution in a thin-walled cylinder - Mariotte Solution')
+            plt.legend()
+            plt.grid()
+            plt.show()
+
+        elif Mariotte_flag == 0:
+            print("Skipping Mariotte solution.")
+    else:
+        print("\nThe cylinder can't be considered thin. Skipping Mariotte solution.")
+        Mariotte_flag = 0
+
+    # ============================ 
+    # General Lamé Solution 
+    # ============================
+    def sigmaL_func(r, P_int_MPa, P_cpp_MPa, verbose): #the "verbose" variable is used to avoid printing the hydrostatic stress condition information for every iteration of the thermal shield loop
+        
+        A = ((P_int_MPa*(R_int**2))-(P_cpp_MPa*(R_ext**2)))/((R_ext**2)-(R_int**2))
+        B = (((R_int**2)*(R_ext**2))/((R_ext**2)-(R_int**2)))*(P_int_MPa-P_cpp_MPa)
+        sigma_rL = lambda r: A - B/(r**2)
+        sigma_tL = lambda r: A + B/(r**2)
+
+        if P_int == P_cpp:
+            if verbose:
+                print("\nInternal and external pressures are equal: hydrostatic stress condition is verified. Skipping.")    #Hydrostatic Stress Condition
+            eps_z_a = (2*nu-1)*rho_ii*P_cpp_MPa/E
+            eps_z_b = (1-2*nu)*rho_i*P_int_MPa/E
+
+        elif P_int != P_cpp:
+            if flag_eps == 1:                                                                                           #Plane Stress
+                eps_z_a = 2*nu*rho_ii*P_cpp_MPa/E
+                eps_z_b = -2*nu*rho_i*P_int_MPa/E
+            elif flag_eps == 0:                                                                                         #Plane Strain
+                eps_z_a = 0
+                eps_z_b = 0 
+
+        sigma_zL_a = E*eps_z_a - 2*nu*rho_ii*P_cpp_MPa  #a) P_int = 0
+        sigma_zL_b = E*eps_z_b + 2*nu*rho_i*P_int_MPa   #b) P_cpp = 0
+        return (sigma_rL(r), sigma_tL(r), sigma_zL_a + sigma_zL_b)              #Superposition Principle
+
+    sigma_L = sigmaL_func(r, P_int_MPa, P_cpp_MPa, 1)
+    sigma_rL = sigma_L[0]  
+    sigma_tL = sigma_L[1]
+    sigma_zL = sigma_L[2]
+
+    if Mariotte_flag == 1:
+        while True:
+            try:
+                Lame_flag = int(input("\nThe Mariotte solution for a thin cylinder has been visualized. Are you interested in visualizing the more general Lamé solution? (1: Yes, 0: No): "))
+                if Lame_flag not in (0, 1):
+                    raise RuntimeError("Invalid input! Please enter either 0 or 1.")
+                break  
+            except ValueError:
+                print("Please enter a valid integer.")
+            except RuntimeError as e:
+                print(e)
+
+    elif Mariotte_flag == 0:
+        print("Visualizing general Lamé solution.")
+        Lame_flag = 1
+
+    if Lame_flag == 1:
+        # ======================================
+        # Plotting the stress profiles: Lamé
+        # ======================================
+        plt.figure(figsize=(15,10))
         plt.axvline(x = R_int, color='black', linewidth='3', label='Vessel Inner Surface')
         plt.axvline(x = R_ext, color='black', linewidth='3', label='Vessel Outer Surface')
-        plt.plot(r, q_iii(r), 'g', label='Radial (r) Volumetric heat source profile')
-        plt.plot(r[0], q_iii(r[0]), 'or', label='Vessel Inner Surface Value')
-        plt.plot(r[-1], q_iii(r[-1]), 'or', label='Vessel-Insulation Interface Value')
+        plt.plot(r, sigma_rL, label='Radial (r) Stress Lamé')
+        plt.plot(r, sigma_tL, label=r'Hoop ($\theta$) Stress Lamé')
+        plt.axhline(y = sigma_zL, color='green', label='Axial (z) Stress Lamé')
         plt.axhline(y = 0, color='black', linewidth='1', label='y=0')
         plt.xlabel('Radius (m)')
-        plt.ylabel(r'$q_0$ (W/m$^3$)')
-        plt.title('Volumetric heat source profile across the vessel wall')
+        plt.ylabel('Stress (MPa)')
+        plt.title('Stress Distribution in the cylinder wall - Lamé Solution')
         plt.legend()
         plt.grid()
         plt.show()
 
+    elif Lame_flag == 0:
+        print("Skipping Lamé solution.")
+    
+    # =============================================================================================================================================================
+    # PURELY THERMAL PROBLEM
+    # =============================================================================================================================================================
+
+    # ======================================
+    # Radiation-induced heating in the vessel
+    # ======================================
+    Phi = lambda r: Phi_0V*np.exp(-mu_st*(r-R_int))    #1/(m²·s)
+    I = lambda r: E_y_J*Phi(r)*B                       #W/(m²)
+    q_0 = B*Phi_0V*E_y_J*mu_st*q_0_flag                #W/(m³)
+    q_iii = lambda r: q_0*np.exp(-mu_st*(r-R_int))     #W/(m³)
+    
+    if q_0_flag == 1:
+        # ======================================
+        # Plotting the volumetric heat source profiles 
+        # ======================================
+        while True:
+            try:
+                hs_flag = int(input("\nDo you want to visualize the volumetric heat source q0 inside the vessel's wall? (1: Yes, 0: No): "))
+                if hs_flag not in (0, 1):
+                    raise RuntimeError("Invalid input! Please enter either 0 or 1.")
+                break  
+            except ValueError:
+                print("Please enter a valid integer.")
+            except RuntimeError as e:
+                print(e)
+
+        if hs_flag == 1:
+            plt.figure(figsize=(10,10))
+            plt.axvline(x = R_int, color='black', linewidth='3', label='Vessel Inner Surface')
+            plt.axvline(x = R_ext, color='black', linewidth='3', label='Vessel Outer Surface')
+            plt.plot(r, q_iii(r), 'g', label='Radial (r) Volumetric heat source profile')
+            plt.plot(r[0], q_iii(r[0]), 'or', label='Vessel Inner Surface Value')
+            plt.plot(r[-1], q_iii(r[-1]), 'or', label='Vessel-Insulation Interface Value')
+            plt.axhline(y = 0, color='black', linewidth='1', label='y=0')
+            plt.xlabel('Radius (m)')
+            plt.ylabel(r'$q_0$ (W/m$^3$)')
+            plt.title('Volumetric heat source profile across the vessel wall')
+            plt.legend()
+            plt.grid()
+            plt.show()
+    
     # ======================================
     # Dimensionless numbers and heat transfer coefficients
     # ======================================
     Pr = (Cp*mu)/k                                                                              #Prandtl number
     Pr_cpp = (Cp_cpp*mu_cpp)/k_cpp                                                              #Prandtl number of the containment water  
-
                                        
     Re = (rho*v*(D_vess_int-D_barr_ext))/mu                                                     #Reynolds number
     Nu_1 = 0.023*(Re**0.8)*(Pr**0.4)                                                             #Dittus-Boelter equation for forced convection
@@ -370,18 +396,6 @@ if TS_flag == 0:
     h_2 = (Nu_2*k_cpp)/L                                                                        #W/(m²·K)
     R_th_2_tot = (1/(2*np.pi*(R_ext + t_th_ins)*L)) * ((((R_ext + t_th_ins)/k_th_ins)*np.log((R_ext + t_th_ins)/R_ext)) + (1/h_2))                          #Thermal Resistance of the insulation layer + natural convection outside the vessel
     u_2 = 1/(2*np.pi*(R_ext + t_th_ins)*L*R_th_2_tot)                                           #W/(m²·K)   -   Overall heat transfer coefficient outside the vessel
-
-    while True:
-        try:
-            q_0_flag = int(input("\nDo you want to account for the presence of the volumetric heat source q0 inside the vessel's wall? (1: Yes, 0: No): "))
-            if q_0_flag not in (0, 1):
-                raise RuntimeError("Invalid input! Please enter either 0 or 1.")
-            break  
-        except ValueError:
-            print("Please enter a valid integer.")
-        except RuntimeError as e:
-            print(e)
-    q_0 = q_0*q_0_flag
 
     # ======================================
     # Discretization Check
@@ -1167,10 +1181,149 @@ if TS_flag == 0:
         plt.show()
 
 # =============================================================================================================================================================
-# PURELY THERMAL PROBLEM - POWER IMPOSED - THERMAL SHIELD
+# THERMOMECHANICAL PROBLEM - POWER IMPOSED - THERMAL SHIELD
 # =============================================================================================================================================================
 elif TS_flag == 1:
+    
+    # =============================================================================================================================================================
+    # PURELY MECHANICAL PROBLEM
+    # =============================================================================================================================================================
+    t = 0.05                                    #m
+    R_ext = R_int + t                           #m
+    D_vess_ext = 2*R_ext                        #m
+    rho_ii = (R_ext**2)/(R_ext**2 - R_int**2)
+    rho_i = (R_int**2)/(R_ext**2 - R_int**2)
+    Mar_criterion = R_int/t
+    W = (DeltaD_max/1000)/((D_vess_int+D_vess_ext)/2)
+    
+    dr = 100
+    r = np.linspace(R_int, R_ext, dr)
 
+    # ============================
+    # Mariotte Solution for a thin-walled cylinder (R_int = R_ext = R)
+    # ============================
+    def sigmaM_func (R_int, P_int_MPa, t): 
+        sigma_rM_cyl = -P_int_MPa/2                        #Compressive
+        sigma_tM_cyl = R_int*P_int_MPa/t                   
+        sigma_zM_cyl = R_int*P_int_MPa/(2*t)
+        sigma_tM_sph = R_int*P_int_MPa/(2*t)
+        return (sigma_rM_cyl, sigma_tM_cyl, sigma_zM_cyl, sigma_tM_sph)
+
+    if Mar_criterion > 5:
+        while True:
+            try:
+                Mariotte_flag = int(input("\nWith an initial thickness value of %.3f m, the vessel can be considered thin. Are you interested in visualizing the Mariotte solution for stress? (1: Yes, 0: No): " %t))
+                if Mariotte_flag not in (0, 1):
+                    raise RuntimeError("Invalid input! Please enter either 0 or 1.")
+                break  
+            except ValueError:
+                print("Please enter a valid integer.")
+            except RuntimeError as e:
+                print(e)
+        sigma_M = sigmaM_func(R_int, P_int_MPa, t)
+        sigma_rM_cyl = sigma_M[0]
+        sigma_tM_cyl = sigma_M[1]
+        sigma_zM_cyl = sigma_M[2]
+
+        if Mariotte_flag == 1:
+
+            # ======================================
+            # Plotting the stress profiles: Mariotte
+            # ======================================
+            plt.figure(figsize=(15,10))
+            plt.axvline(x = R_int, color='black', linewidth='3', label='Vessel Inner Surface')
+            plt.axvline(x = R_ext, color='black', linewidth='3', label='Vessel Outer Surface')
+            plt.axhline(y = sigma_rM_cyl, color='red', label='Radial (r) Stress Mariotte')
+            plt.axhline(y = sigma_tM_cyl, color='blue', label=r'Hoop ($\theta$) Stress Mariotte')
+            plt.axhline(y = sigma_zM_cyl, color='green', label='Axial (z) Stress Mariotte')
+            plt.plot(r, np.zeros(len(r)), color='black', linewidth='1', label='y=0')
+            plt.xlabel('Radius (m)')
+            plt.ylabel('Stress (MPa)')
+            plt.title('Stress Distribution in a thin-walled cylinder - Mariotte Solution')
+            plt.legend()
+            plt.grid()
+            plt.show()
+
+        elif Mariotte_flag == 0:
+            print("Skipping Mariotte solution.")
+    else:
+        print("\nThe cylinder can't be considered thin. Skipping Mariotte solution.")
+        Mariotte_flag = 0
+
+    # ============================ 
+    # General Lamé Solution 
+    # ============================
+    def sigmaL_func(r, P_int_MPa, P_cpp_MPa, verbose): #the "verbose" variable is used to avoid printing the hydrostatic stress condition information for every iteration of the thermal shield loop
+        
+        A = ((P_int_MPa*(R_int**2))-(P_cpp_MPa*(R_ext**2)))/((R_ext**2)-(R_int**2))
+        B = (((R_int**2)*(R_ext**2))/((R_ext**2)-(R_int**2)))*(P_int_MPa-P_cpp_MPa)
+        sigma_rL = lambda r: A - B/(r**2)
+        sigma_tL = lambda r: A + B/(r**2)
+
+        if P_int == P_cpp:
+            if verbose:
+                print("\nInternal and external pressures are equal: hydrostatic stress condition is verified. Skipping.")    #Hydrostatic Stress Condition
+            eps_z_a = (2*nu-1)*rho_ii*P_cpp_MPa/E
+            eps_z_b = (1-2*nu)*rho_i*P_int_MPa/E
+
+        elif P_int != P_cpp:
+            if flag_eps == 1:                                                                                           #Plane Stress
+                eps_z_a = 2*nu*rho_ii*P_cpp_MPa/E
+                eps_z_b = -2*nu*rho_i*P_int_MPa/E
+            elif flag_eps == 0:                                                                                         #Plane Strain
+                eps_z_a = 0
+                eps_z_b = 0 
+
+        sigma_zL_a = E*eps_z_a - 2*nu*rho_ii*P_cpp_MPa  #a) P_int = 0
+        sigma_zL_b = E*eps_z_b + 2*nu*rho_i*P_int_MPa   #b) P_cpp = 0
+        return (sigma_rL(r), sigma_tL(r), sigma_zL_a + sigma_zL_b)              #Superposition Principle
+
+    sigma_L = sigmaL_func(r, P_int_MPa, P_cpp_MPa, 1)
+    sigma_rL = sigma_L[0]  
+    sigma_tL = sigma_L[1]
+    sigma_zL = sigma_L[2]
+
+    if Mariotte_flag == 1:
+        while True:
+            try:
+                Lame_flag = int(input("\nThe Mariotte solution for a thin cylinder has been visualized. Are you interested in visualizing the more general Lamé solution? (1: Yes, 0: No): "))
+                if Lame_flag not in (0, 1):
+                    raise RuntimeError("Invalid input! Please enter either 0 or 1.")
+                break  
+            except ValueError:
+                print("Please enter a valid integer.")
+            except RuntimeError as e:
+                print(e)
+
+    elif Mariotte_flag == 0:
+        print("Visualizing general Lamé solution.")
+        Lame_flag = 1
+
+    if Lame_flag == 1:
+        # ======================================
+        # Plotting the stress profiles: Lamé
+        # ======================================
+        plt.figure(figsize=(15,10))
+        plt.axvline(x = R_int, color='black', linewidth='3', label='Vessel Inner Surface')
+        plt.axvline(x = R_ext, color='black', linewidth='3', label='Vessel Outer Surface')
+        plt.plot(r, sigma_rL, label='Radial (r) Stress Lamé')
+        plt.plot(r, sigma_tL, label=r'Hoop ($\theta$) Stress Lamé')
+        plt.axhline(y = sigma_zL, color='green', label='Axial (z) Stress Lamé')
+        plt.axhline(y = 0, color='black', linewidth='1', label='y=0')
+        plt.xlabel('Radius (m)')
+        plt.ylabel('Stress (MPa)')
+        plt.title('Stress Distribution in the cylinder wall - Lamé Solution')
+        plt.legend()
+        plt.grid()
+        plt.show()
+
+    elif Lame_flag == 0:
+        print("Skipping Lamé solution.")
+    
+    # =============================================================================================================================================================
+    # PURELY THERMAL PROBLEM
+    # =============================================================================================================================================================
+    
     t_shield_user = 0.001           #Initial guess for the thermal shield thickness
 
     while True:
