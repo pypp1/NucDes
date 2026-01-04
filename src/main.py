@@ -11,7 +11,6 @@ D_vess_int = 3.0       #m
 t_th_ins = 0.05        #m 
 k_th_ins = 1.4         #W/mK
 L = 7                  #m
-#W = 0.01              #Assumed - Later computed via NB-4221.1 and NB-4221.2
 
 # ============================
 # Primary fluid
@@ -681,7 +680,7 @@ if TS_flag == 0:
         Intensity_Interpolator = lambda x: np.polyval(p_intensity, x)                   #Stress Intensity Interpolation Polynomial (n-1)
         Intensity_CubicSpline = interpolate.CubicSpline(T_thr, sigma_in)                #Stress Intenisty Cubic Spline Interpolation
         Stress_Intensity = Intensity_CubicSpline(T_des_vessel_C)
-        sigma_allowable = 1.5 * Stress_Intensity  #MPa
+        sigma_allowable = Stress_Intensity                                              #MPa
 
         # ======================================
         # Without thermal shield
@@ -1710,11 +1709,11 @@ elif TS_flag == 1:
 
         Yield_stress = Yield_CubicSpline(T_des_vessel_C)
         Stress_Intensity = Intensity_CubicSpline(T_des_vessel_C)
-        sigma_allowable = 1.5 * Stress_Intensity  #MPa
+        sigma_allowable = Stress_Intensity                                              #MPa
     
         Yield_stress_S = Yield_CubicSpline(T_des_shield_C)
         Stress_Intensity_S = Intensity_CubicSpline(T_des_shield_C)
-        sigma_allowable_S = 1.5 * Stress_Intensity_S  #MPa
+        sigma_allowable_S = Stress_Intensity_S                                          #MPa
         """
         # ======================================
         # Thermal Shield Thermomechanical Integrity Verification    -   Lamé + Thermal stresses
@@ -1844,10 +1843,10 @@ elif TS_flag == 1:
         # ======================================
         # Final Verification: buckling + vessel stress state to exit the loop
         # ======================================
-        if buckling_flag == 1 and vessel_flag == 1:
-            final_flag = 1
-        else:
-            final_flag = 0
+        if buckling_flag == 1 and vessel_flag == 1: #and sigma_cTR_M < sigma_allowable and sigma_cTR_MS < sigma_allowable_S:     
+            final_flag = 1                          # ======================================
+        else:                                       # Tested, but the Tresca-Mariotte comparison stress is never lower than the allowable stress intensity Sm
+            final_flag = 0                          # ======================================
     
     # ======================================
     # Plotting the volumetric heat source profiles 
