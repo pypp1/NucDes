@@ -106,7 +106,7 @@ G = E/(2*(1+nu))                            #MPa
 P_int_MPa = P_int/10                        #MPa
 P_cpp_MPa = P_cpp/10                        #MPa
 Phi_0 = Phi_0 * 1e4                         #photons/(m²·s)
-DeltaD_max = min(((D_vess_int*1000)+1270)/200, (D_vess_int*1000)/100)
+DeltaD_max = min(((D_vess_int*1000)+1270)/200, (D_vess_int*1000)/100)   #mm instead of in. - ASME gives 1250, but 1 inch = 25.4 mm
 
 # ======================================
 # Simpson composite integration function
@@ -387,7 +387,7 @@ if TS_flag == 0:
     Pr_cpp = (Cp_cpp*mu_cpp)/k_cpp                                                              #Prandtl number of the containment water  
                                        
     Re = (rho*v*(D_vess_int-D_barr_ext))/mu                                                     #Reynolds number
-    Nu_1 = 0.023*(Re**0.8)*(Pr**0.4)                                                             #Dittus-Boelter equation for forced convection
+    Nu_1 = 0.023*(Re**0.8)*(Pr**0.4)                                                            #Dittus-Boelter equation for forced convection
     h_1 = (Nu_1*k)/(D_vess_int-D_barr_ext)                                                      #W/(m²·K)
 
     Gr = (rho_cpp**2)*9.81*beta_cpp*DeltaT*(L**3)/(mu_cpp**2)                                   #Grashof number (Uses the external diameter as characteristic length, might wanna use L though?)
@@ -1523,14 +1523,17 @@ elif TS_flag == 1:
         q_iii = lambda r: q_0*np.exp(-mu_st*(r-R_int))                 #W/(m³) 
         
         # ======================================
-        # T profile constants for the vessel: general and under adiabatic outer wall approximation (dT/dx = 0 at r = R_ext)
+        # Convective heat transfer coefficient choice
         # ======================================
         if User_D_flag == 2 or User_D_flag == 1:
             h_1 = min(h_1_int, h_1_ext)                 #Conservative: minimum h means highest thermal stresses
         elif User_D_flag == 0:
             if h_1_int - h_1_ext <= eps:
                 h_1 = h_1_int                           #Below the tolerance, they can be considered equal
-            
+        
+        # ======================================
+        # T profile constants for the vessel: general and under adiabatic outer wall approximation (dT/dx = 0 at r = R_ext)
+        # ======================================    
         if adiab_flag == 0:
             C1 = ((q_0/(k_st*mu_st**2))*(np.exp(-mu_st*t)-1)-(q_0/mu_st)*((1/h_1)+(np.exp(-mu_st*t)/u_2))-(T1-T_cpp))/(t+(k_st/h_1)+(k_st/u_2))
         elif adiab_flag == 1:
@@ -2282,8 +2285,15 @@ elif TS_flag == 1:
     print("\n################################################## Heat transfer results ###################################################")
     print("\nVolumetric heat source at the vessel inner surface: %.3f W/m³" %q_iii(r[0]))
     print("Volumetric heat source at the vessel-insulation interface: %.3f W/m³" %q_iii(r[-1]))
-
-    print("\nHeat transfer coefficient h1 = %.3f W/(m²·K)" %h_1)
+    if User_D_flag == 2 or User_D_flag == 1:
+        print("\nInner heat transfer coefficient h1_int = %.3f W/(m²·K)" %h_1_int)
+        print("\nOuter heat transfer coefficient h1_ext = %.3f W/(m²·K)" %h_1_ext)
+        print("\nChosen heat transfer coefficient h1 = %.3f W/(m²·K)    -    Conservative: minimum h means highest thermal stresses" %h_1)
+    elif User_D_flag == 0:
+        if h_1_int - h_1_ext <= eps:
+            print("\nInner heat transfer coefficient h1_int = %.3f W/(m²·K)" %h_1_int)
+            print("\nOuter heat transfer coefficient h1_ext = %.3f W/(m²·K)" %h_1_ext)
+            print("\nChosen heat transfer coefficient h1 = %.3f W/(m²·K)    -    Essentially equal: the difference is of the order of %.3e" %(h_1, h_1_int - h_1_ext))
     print("Heat transfer coefficient h2 = %.3f W/(m²·K)" %h_2)
     print("Overall heat transfer coefficient outside the vessel u2 = %.3f W/(m²·K)" %u_2)
     
