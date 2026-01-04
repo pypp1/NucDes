@@ -1327,16 +1327,16 @@ elif TS_flag == 1:
 
     while True:
         try:
-            User_D_flag = float(input("\nWhat position of the thermal shield do you want to consider? (2: Arbitrary, 1: Middle, 0: Equal areas): "))
-            if User_D_flag not in (0, 1, 2):
-                raise RuntimeError("Invalid input! Please enter either 0, 1 or 2.")
+            User_D_flag = float(input("\nWhat position of the thermal shield do you want to consider? (3: Arbitrary, 2: Middle, 1: Equal areas, 0: Equal h_1): "))
+            if User_D_flag not in (0, 1, 2, 3):
+                raise RuntimeError("Invalid input! Please enter either 0, 1, 2 or 3.")
             break  
         except ValueError:
             print("Please enter a valid integer.")
         except RuntimeError as e:
             print(e)
 
-    if User_D_flag == 2:            #Allows the user to assume the default, middle position for the thermal shield, position it himself or choose the position granting equal areas
+    if User_D_flag == 3:            #Allows the user to assume the default, middle position for the thermal shield, position it himself or choose the position granting equal areas
         while True:
             try:
                 D_shield_int = float(input("\nPlease enter the initial thermal shield inner diameter (m) to choose its position: "))
@@ -1349,17 +1349,65 @@ elif TS_flag == 1:
                 print(e)
         R_shield_int = D_shield_int/2
         
-    elif User_D_flag == 1:
+    elif User_D_flag == 2:
         print("Assuming middle thermal shield position.")
         R_shield_int = D_barr_ext/2 + (D_vess_int - D_barr_ext)/4 - t_shield_user/2
          
-    elif User_D_flag == 0:
+    elif User_D_flag == 1:
         A_eq = 1
         B_eq = t_shield_user
         C_eq = (t_shield_user**2)/2 - (R_int**2)/2 - (R_barr_ext**2)/2
         Delta_eq = B_eq**2 - 4*A_eq*C_eq
         R_shield_int = (-B_eq + np.sqrt(Delta_eq))/(2*A_eq)
         D_shield_int = 2*R_shield_int
+        
+    elif User_D_flag == 0:      #Loop required both here, to initialize the correct position, and later, to update it at every iteration
+        counter = 0
+        N_max = 10000
+        eps = 1e-7
+        R_shield_int = R_barr_ext + 0.01 #To avoid float division by zero
+        D_shield_int = 2*R_shield_int
+        R_shield_ext = R_shield_int + t_shield_user
+        D_shield_ext = 2*R_shield_ext
+        R_ext = R_int + t
+        D_vess_ext = 2*R_ext
+        h_1_int = 1 #Dummy entry
+        h_1_ext = 0 #Dummy entry
+        while abs(h_1_int - h_1_ext) > eps:
+            counter += 1
+            print("Iteration no. %d" %counter)
+            R_shield_int += 0.01
+            D_shield_int = 2*R_shield_int
+            R_shield_ext = R_shield_int + t_shield_user
+            D_shield_ext = 2*R_shield_ext
+            A_int_S = np.pi*((R_shield_int**2) - (R_barr_ext**2))                                       #Inner area crossed by the primary fluid
+            A_ext_S = np.pi*((R_int**2) - (R_shield_ext**2))                                            #Outer area crossed by the primary fluid
+            v_int = v_flr/A_int_S                                                                       #Inner coolant velocity
+            v_ext = v_flr/A_ext_S                                                                       #Outer coolant velocity
+            
+            Pr = (Cp*mu)/k                                                                              #Prandtl number
+            Pr_cpp = (Cp_cpp*mu_cpp)/k_cpp                                                              #Prandtl number of the containment water
+            
+            Re_int = (rho*v_int*(D_shield_int - D_barr_ext))/mu                                         #Inner hydraulic diameter                                                     
+            Nu_1_int = 0.023*(Re_int**0.8)*(Pr**0.4)                                                             
+            h_1_int = (Nu_1_int*k)/(D_shield_int - D_barr_ext)
+            
+            Re_ext = (rho*v_ext*(D_vess_int - D_shield_ext))/mu                                         #Outer hydraulic diameter                                                     
+            Nu_1_ext = 0.023*(Re_ext**0.8)*(Pr**0.4)                                                             
+            h_1_ext = (Nu_1_ext*k)/(D_vess_int - D_shield_ext)
+            
+            print("Inner area A_int_S: %.3f m²" %A_int_S)
+            print("Outer area A_ext_S: %.3f m²" %A_ext_S)
+            print("Inner coolant velocity v_int: %.3f m/s" %v_int)
+            print("Outer coolant velocity v_ext: %.3f m/s" %v_ext)
+            print("Inner Reynolds number Re_int: %.3e" %Re_int)
+            print("Outer Reynolds number Re_ext: %.3e" %Re_ext) 
+            print("Inner Nusselt number Nu_1_int: %.3f" %Nu_1_int)
+            print("Outer Nusselt number Nu_1_ext: %.3f" %Nu_1_ext)
+            print("\nInner convective coefficient h_1_int: %.3f W/m²K" %h_1_int)
+            print("Outer convective coefficient h_1_ext: %.3f W/m²K" %h_1_ext)
+            
+        print("Heat transfer coefficients equalized. Difference: %.3e W/m²K" %abs(h_1_int - h_1_ext))
 
     print("No discretization along z. Assuming constant temperature of the primary fluid T1.")
     while True:
@@ -1426,14 +1474,14 @@ elif TS_flag == 1:
         if t > t_vessel_max:
             print("Vessel thickness exceeds feasibility margin. Exiting the loop.")
             break
-        if User_D_flag == 2 or User_D_flag == 0:        #If the thermal shield is not in the middle, geometrical constraints are present: the thermal shield must not bump into the vessel
+        if User_D_flag == 3 or User_D_flag == 1:        #If the thermal shield is not in the middle, geometrical constraints are present: the thermal shield must not bump into the vessel
             if t_shield > t_shield_max or (D_shield_int/2 + t_shield) > D_vess_int/2:
                 print("Ran into excessive thermal shield thickness or bumped into the vessel. Adding 1cm to the vessel thickness instead. Restarting...")
                 t += 0.01
                 t_shield = t_shield_user - 0.001
                 counter_vessel += 1
                 continue
-        elif User_D_flag == 1:      #If the thermal shield is in the middle, only its thickness must be checked: no geometrical constraints
+        elif User_D_flag == 2:      #If the thermal shield is in the middle, only its thickness must be checked: no geometrical constraints
             if t_shield > t_shield_max:
                 print("Ran into excessive thermal shield thickness. Adding 1cm to the vessel thickness instead. Restarting...")
                 t += 0.01
@@ -1441,14 +1489,14 @@ elif TS_flag == 1:
                 counter_vessel += 1
                 continue
 
-        if User_D_flag == 2:
+        if User_D_flag == 3:
             R_shield_int = D_shield_int/2
             
-        elif User_D_flag == 1:
+        elif User_D_flag == 2:
             R_shield_int = D_barr_ext/2 + (D_vess_int - D_barr_ext)/4 - t_shield/2
             D_shield_int = 2*R_shield_int
             
-        elif User_D_flag == 0:
+        elif User_D_flag == 1:
             A_eq = 1
             B_eq = t_shield
             C_eq = (t_shield**2)/2 - (R_int**2)/2 - (R_barr_ext**2)/2
@@ -1456,6 +1504,35 @@ elif TS_flag == 1:
             R_shield_int = (-B_eq + np.sqrt(Delta_eq))/(2*A_eq)
             D_shield_int = 2*R_shield_int
             
+        elif User_D_flag == 0:
+            R_shield_int = R_barr_ext
+            D_shield_int = 2*R_shield_int
+            R_shield_ext = R_shield_int + t_shield_user
+            D_shield_ext = 2*R_shield_ext
+            R_ext = R_int + t
+            D_vess_ext = 2*R_ext
+            W = (DeltaD_max/1000)/((D_vess_int+D_vess_ext)/2)
+            while abs(h_1_int - h_1_ext) > 1e-7:
+                R_shield_int += 0.001
+                D_shield_int = 2*R_shield_int
+                R_shield_ext = R_shield_int + t_shield
+                D_shield_ext = 2*R_shield_ext
+                A_int_S = np.pi*((R_shield_int**2) - (R_barr_ext**2))                                       #Inner area crossed by the primary fluid
+                A_ext_S = np.pi*((R_int**2) - (R_shield_ext**2))                                            #Outer area crossed by the primary fluid
+                v_int = v_flr/A_int_S                                                                       #Inner coolant velocity
+                v_ext = v_flr/A_ext_S                                                                       #Outer coolant velocity
+                
+                Pr = (Cp*mu)/k                                                                              #Prandtl number
+                Pr_cpp = (Cp_cpp*mu_cpp)/k_cpp                                                              #Prandtl number of the containment water
+                
+                Re_int = (rho*v_int*(D_shield_int - D_barr_ext))/mu                                         #Inner hydraulic diameter                                                     
+                Nu_1_int = 0.023*(Re_int**0.8)*(Pr**0.4)                                                             
+                h_1_int = (Nu_1_int*k)/(D_shield_int - D_barr_ext)
+                
+                Re_ext = (rho*v_ext*(D_vess_int - D_shield_ext))/mu                                         #Outer hydraulic diameter                                                     
+                Nu_1_ext = 0.023*(Re_ext**0.8)*(Pr**0.4)                                                             
+                h_1_ext = (Nu_1_ext*k)/(D_vess_int - D_shield_ext)
+        
         R_shield_ext = R_shield_int + t_shield
         D_shield_ext = 2*R_shield_ext
         
@@ -1463,7 +1540,7 @@ elif TS_flag == 1:
         D_vess_ext = 2*R_ext                        #m
         W = (DeltaD_max/1000)/((D_vess_int+D_vess_ext)/2)  #The denominator is the average diameter of the vessel wall  
                                                            #No need to compute these for the thermal shield, which is not subject to buckling
-        
+                
         r_S = np.linspace(R_shield_int, R_shield_ext, dr)
         Phi_0S = Phi_0                                                #All gamma rays reach the shield, not the vessel
 
@@ -1473,7 +1550,7 @@ elif TS_flag == 1:
         A_int_S = np.pi*((R_shield_int**2) - (R_barr_ext**2))                                       #Inner area crossed by the primary fluid
         A_ext_S = np.pi*((R_int**2) - (R_shield_ext**2))                                            #Outer area crossed by the primary fluid
         v_int = v_flr/A_int_S                                                                       #Inner coolant velocity
-        v_ext = v_flr/A_ext_S
+        v_ext = v_flr/A_ext_S                                                                       #Outer coolant velocity
         
         Pr = (Cp*mu)/k                                                                              #Prandtl number
         Pr_cpp = (Cp_cpp*mu_cpp)/k_cpp                                                              #Prandtl number of the containment water
@@ -1525,10 +1602,11 @@ elif TS_flag == 1:
         # ======================================
         # Convective heat transfer coefficient choice
         # ======================================
-        if User_D_flag == 2 or User_D_flag == 1:
+        if User_D_flag == 3 or User_D_flag == 2:
             h_1 = min(h_1_int, h_1_ext)                 #Conservative: minimum h means highest thermal stresses
-        elif User_D_flag == 0:
-            if h_1_int - h_1_ext <= eps:
+        elif User_D_flag == 1:
+            h_1 = min(h_1_int, h_1_ext)
+            if abs(h_1_int - h_1_ext) <= eps:
                 h_1 = h_1_int                           #Below the tolerance, they can be considered equal
         
         # ======================================
@@ -2285,15 +2363,17 @@ elif TS_flag == 1:
     print("\n################################################## Heat transfer results ###################################################")
     print("\nVolumetric heat source at the vessel inner surface: %.3f W/m³" %q_iii(r[0]))
     print("Volumetric heat source at the vessel-insulation interface: %.3f W/m³" %q_iii(r[-1]))
-    if User_D_flag == 2 or User_D_flag == 1:
+    if User_D_flag == 3 or User_D_flag == 2:
         print("\nInner heat transfer coefficient h1_int = %.3f W/(m²·K)" %h_1_int)
-        print("\nOuter heat transfer coefficient h1_ext = %.3f W/(m²·K)" %h_1_ext)
-        print("\nChosen heat transfer coefficient h1 = %.3f W/(m²·K)    -    Conservative: minimum h means highest thermal stresses" %h_1)
-    elif User_D_flag == 0:
-        if h_1_int - h_1_ext <= eps:
-            print("\nInner heat transfer coefficient h1_int = %.3f W/(m²·K)" %h_1_int)
-            print("\nOuter heat transfer coefficient h1_ext = %.3f W/(m²·K)" %h_1_ext)
-            print("\nChosen heat transfer coefficient h1 = %.3f W/(m²·K)    -    Essentially equal: the difference is of the order of %.3e" %(h_1, h_1_int - h_1_ext))
+        print("Outer heat transfer coefficient h1_ext = %.3f W/(m²·K)" %h_1_ext)
+        print("Chosen heat transfer coefficient h1 = %.3f W/(m²·K)    -    Conservative: minimum h means highest thermal stresses" %h_1)
+    elif User_D_flag == 1:
+        print("\nInner heat transfer coefficient h1_int = %.3f W/(m²·K)" %h_1_int)
+        print("Outer heat transfer coefficient h1_ext = %.3f W/(m²·K)" %h_1_ext)
+        if abs(h_1_int - h_1_ext) <= eps:
+            print("Chosen heat transfer coefficient h1 = %.3f W/(m²·K)    -    Essentially equal: the difference is of the order of %.3e" %(h_1, abs(h_1_int - h_1_ext)))
+        else:
+            print("Chosen heat transfer coefficient h1 = %.3f W/(m²·K)    -    Conservative: minimum h means highest thermal stresses" %h_1)
     print("Heat transfer coefficient h2 = %.3f W/(m²·K)" %h_2)
     print("Overall heat transfer coefficient outside the vessel u2 = %.3f W/(m²·K)" %u_2)
     
