@@ -1505,6 +1505,9 @@ elif TS_flag == 1:
             D_shield_int = 2*R_shield_int
             
         elif User_D_flag == 0:
+            counter_h1 = 0
+            N_max_h1 = 10000
+            eps_h1 = 1e-7
             R_shield_int = R_barr_ext
             D_shield_int = 2*R_shield_int
             R_shield_ext = R_shield_int + t_shield_user
@@ -1512,8 +1515,10 @@ elif TS_flag == 1:
             R_ext = R_int + t
             D_vess_ext = 2*R_ext
             W = (DeltaD_max/1000)/((D_vess_int+D_vess_ext)/2)
-            while abs(h_1_int - h_1_ext) > 1e-7:
-                R_shield_int += 0.001
+            while abs(h_1_int - h_1_ext) > eps_h1:
+                counter_h1 += 1
+                print("Iteration no. %d" %counter_h1)
+                R_shield_int += 0.01
                 D_shield_int = 2*R_shield_int
                 R_shield_ext = R_shield_int + t_shield
                 D_shield_ext = 2*R_shield_ext
@@ -1532,6 +1537,17 @@ elif TS_flag == 1:
                 Re_ext = (rho*v_ext*(D_vess_int - D_shield_ext))/mu                                         #Outer hydraulic diameter                                                     
                 Nu_1_ext = 0.023*(Re_ext**0.8)*(Pr**0.4)                                                             
                 h_1_ext = (Nu_1_ext*k)/(D_vess_int - D_shield_ext)
+                
+                print("Inner area A_int_S: %.3f m²" %A_int_S)
+                print("Outer area A_ext_S: %.3f m²" %A_ext_S)
+                print("Inner coolant velocity v_int: %.3f m/s" %v_int)
+                print("Outer coolant velocity v_ext: %.3f m/s" %v_ext)
+                print("Inner Reynolds number Re_int: %.3e" %Re_int)
+                print("Outer Reynolds number Re_ext: %.3e" %Re_ext) 
+                print("Inner Nusselt number Nu_1_int: %.3f" %Nu_1_int)
+                print("Outer Nusselt number Nu_1_ext: %.3f" %Nu_1_ext)
+                print("\nInner convective coefficient h_1_int: %.3f W/m²K" %h_1_int)
+                print("Outer convective coefficient h_1_ext: %.3f W/m²K" %h_1_ext)
         
         R_shield_ext = R_shield_int + t_shield
         D_shield_ext = 2*R_shield_ext
