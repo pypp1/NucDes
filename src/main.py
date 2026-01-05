@@ -1362,31 +1362,44 @@ elif TS_flag == 1:
         D_shield_int = 2*R_shield_int
         
     elif User_D_flag == 0:      #Loop required both here, to initialize the correct position, and later, to update it at every iteration
-        counter = 0
-        N_max = 10000
-        eps = 1e-7
-        R_shield_int = R_barr_ext + 0.01 #To avoid float division by zero
+        counter_h1 = 0
+        N_max_h1 = 1000
+        eps = 1e-8
+        
+        R_shield_int = R_barr_ext + 0.001 #To avoid float division by zero
         D_shield_int = 2*R_shield_int
         R_shield_ext = R_shield_int + t_shield_user
         D_shield_ext = 2*R_shield_ext
         R_ext = R_int + t
         D_vess_ext = 2*R_ext
-        h_1_int = 1 #Dummy entry
-        h_1_ext = 0 #Dummy entry
+        
+        #Dummy entries to enter the loop
+        h_1_int = 0 
+        h_1_ext = 1
+        
+        #Bisection method bounds
+        l_bound = R_barr_ext
+        r_bound = R_int - t_shield_user
+        
         while abs(h_1_int - h_1_ext) > eps:
-            counter += 1
-            print("Iteration no. %d" %counter)
-            R_shield_int += 0.01
+            counter_h1 += 1
+            print("\nIteration no. %d" %counter_h1)
+            if counter_h1 > N_max_h1:
+                print("Exceeded maximum number of iterations: %d. Exiting the loop." %N_max_h1)
+                break
+            if R_shield_int > R_int - t_shield_user:
+                print("Inner thermal shield radius violates geometric constraints. Exiting the loop.")
+                break
+            
             D_shield_int = 2*R_shield_int
-            R_shield_ext = R_shield_int + t_shield_user
             D_shield_ext = 2*R_shield_ext
+            
             A_int_S = np.pi*((R_shield_int**2) - (R_barr_ext**2))                                       #Inner area crossed by the primary fluid
             A_ext_S = np.pi*((R_int**2) - (R_shield_ext**2))                                            #Outer area crossed by the primary fluid
             v_int = v_flr/A_int_S                                                                       #Inner coolant velocity
             v_ext = v_flr/A_ext_S                                                                       #Outer coolant velocity
             
             Pr = (Cp*mu)/k                                                                              #Prandtl number
-            Pr_cpp = (Cp_cpp*mu_cpp)/k_cpp                                                              #Prandtl number of the containment water
             
             Re_int = (rho*v_int*(D_shield_int - D_barr_ext))/mu                                         #Inner hydraulic diameter                                                     
             Nu_1_int = 0.023*(Re_int**0.8)*(Pr**0.4)                                                             
@@ -1396,18 +1409,19 @@ elif TS_flag == 1:
             Nu_1_ext = 0.023*(Re_ext**0.8)*(Pr**0.4)                                                             
             h_1_ext = (Nu_1_ext*k)/(D_vess_int - D_shield_ext)
             
-            print("Inner area A_int_S: %.3f m²" %A_int_S)
-            print("Outer area A_ext_S: %.3f m²" %A_ext_S)
-            print("Inner coolant velocity v_int: %.3f m/s" %v_int)
-            print("Outer coolant velocity v_ext: %.3f m/s" %v_ext)
-            print("Inner Reynolds number Re_int: %.3e" %Re_int)
-            print("Outer Reynolds number Re_ext: %.3e" %Re_ext) 
-            print("Inner Nusselt number Nu_1_int: %.3f" %Nu_1_int)
-            print("Outer Nusselt number Nu_1_ext: %.3f" %Nu_1_ext)
-            print("\nInner convective coefficient h_1_int: %.3f W/m²K" %h_1_int)
-            print("Outer convective coefficient h_1_ext: %.3f W/m²K" %h_1_ext)
-            
-        print("Heat transfer coefficients equalized. Difference: %.3e W/m²K" %abs(h_1_int - h_1_ext))
+            # Bisection method
+            if h_1_int < h_1_ext:
+                r_bound = R_shield_int
+                R_shield_int = (r_bound + l_bound)/2
+                R_shield_ext = R_shield_int + t_shield_user
+            else:
+                l_bound = R_shield_int
+                R_shield_int = (l_bound + r_bound)/2
+                R_shield_ext = R_shield_int + t_shield_user
+        
+        print("\n############################################################################################################################")
+        print("\nHeat transfer coefficients equalized in %d iterations. Difference: %.9e W/m²K\n" %(counter_h1, abs(h_1_int - h_1_ext)))
+        print("\n############################################################################################################################")
 
     print("No discretization along z. Assuming constant temperature of the primary fluid T1.")
     while True:
@@ -1507,28 +1521,42 @@ elif TS_flag == 1:
         elif User_D_flag == 0:
             counter_h1 = 0
             N_max_h1 = 10000
-            eps_h1 = 1e-7
-            R_shield_int = R_barr_ext
+            eps = 1e-8
+            
+            R_shield_int = R_barr_ext + 0.001 #To avoid float division by zero
             D_shield_int = 2*R_shield_int
-            R_shield_ext = R_shield_int + t_shield_user
+            R_shield_ext = R_shield_int + t_shield
             D_shield_ext = 2*R_shield_ext
             R_ext = R_int + t
             D_vess_ext = 2*R_ext
-            W = (DeltaD_max/1000)/((D_vess_int+D_vess_ext)/2)
-            while abs(h_1_int - h_1_ext) > eps_h1:
+            
+            #Dummy entries to enter the loop
+            h_1_int = 0 
+            h_1_ext = 1
+            
+            #Bisection method bounds
+            l_bound = R_barr_ext
+            r_bound = R_int - t_shield_user
+            
+            while abs(h_1_int - h_1_ext) > eps:
                 counter_h1 += 1
-                print("Iteration no. %d" %counter_h1)
-                R_shield_int += 0.01
+                print("\nIteration no. %d" %counter_h1)
+                if counter_h1 > N_max_h1:
+                    print("Exceeded maximum number of iterations: %d. Exiting the loop." %N_max_h1)
+                    break
+                if R_shield_int > R_int - t_shield:
+                    print("Inner thermal shield radius violates geometric constraints. Exiting the loop.")
+                    break
+                
                 D_shield_int = 2*R_shield_int
-                R_shield_ext = R_shield_int + t_shield
                 D_shield_ext = 2*R_shield_ext
+                
                 A_int_S = np.pi*((R_shield_int**2) - (R_barr_ext**2))                                       #Inner area crossed by the primary fluid
                 A_ext_S = np.pi*((R_int**2) - (R_shield_ext**2))                                            #Outer area crossed by the primary fluid
                 v_int = v_flr/A_int_S                                                                       #Inner coolant velocity
                 v_ext = v_flr/A_ext_S                                                                       #Outer coolant velocity
                 
                 Pr = (Cp*mu)/k                                                                              #Prandtl number
-                Pr_cpp = (Cp_cpp*mu_cpp)/k_cpp                                                              #Prandtl number of the containment water
                 
                 Re_int = (rho*v_int*(D_shield_int - D_barr_ext))/mu                                         #Inner hydraulic diameter                                                     
                 Nu_1_int = 0.023*(Re_int**0.8)*(Pr**0.4)                                                             
@@ -1538,16 +1566,15 @@ elif TS_flag == 1:
                 Nu_1_ext = 0.023*(Re_ext**0.8)*(Pr**0.4)                                                             
                 h_1_ext = (Nu_1_ext*k)/(D_vess_int - D_shield_ext)
                 
-                print("Inner area A_int_S: %.3f m²" %A_int_S)
-                print("Outer area A_ext_S: %.3f m²" %A_ext_S)
-                print("Inner coolant velocity v_int: %.3f m/s" %v_int)
-                print("Outer coolant velocity v_ext: %.3f m/s" %v_ext)
-                print("Inner Reynolds number Re_int: %.3e" %Re_int)
-                print("Outer Reynolds number Re_ext: %.3e" %Re_ext) 
-                print("Inner Nusselt number Nu_1_int: %.3f" %Nu_1_int)
-                print("Outer Nusselt number Nu_1_ext: %.3f" %Nu_1_ext)
-                print("\nInner convective coefficient h_1_int: %.3f W/m²K" %h_1_int)
-                print("Outer convective coefficient h_1_ext: %.3f W/m²K" %h_1_ext)
+                # Bisection method
+                if h_1_int < h_1_ext:
+                    r_bound = R_shield_int
+                    R_shield_int = (r_bound + l_bound)/2
+                    R_shield_ext = R_shield_int + t_shield_user
+                else:
+                    l_bound = R_shield_int
+                    R_shield_int = (l_bound + r_bound)/2
+                    R_shield_ext = R_shield_int + t_shield_user
         
         R_shield_ext = R_shield_int + t_shield
         D_shield_ext = 2*R_shield_ext
@@ -1563,21 +1590,22 @@ elif TS_flag == 1:
         # ======================================
         # Dimensionless numbers and heat transfer coefficients
         # ======================================
-        A_int_S = np.pi*((R_shield_int**2) - (R_barr_ext**2))                                       #Inner area crossed by the primary fluid
-        A_ext_S = np.pi*((R_int**2) - (R_shield_ext**2))                                            #Outer area crossed by the primary fluid
-        v_int = v_flr/A_int_S                                                                       #Inner coolant velocity
-        v_ext = v_flr/A_ext_S                                                                       #Outer coolant velocity
-        
-        Pr = (Cp*mu)/k                                                                              #Prandtl number
-        Pr_cpp = (Cp_cpp*mu_cpp)/k_cpp                                                              #Prandtl number of the containment water
-        
-        Re_int = (rho*v_int*(D_shield_int - D_barr_ext))/mu                                         #Inner hydraulic diameter                                                     
-        Nu_1_int = 0.023*(Re_int**0.8)*(Pr**0.4)                                                             
-        h_1_int = (Nu_1_int*k)/(D_shield_int - D_barr_ext)
-        
-        Re_ext = (rho*v_ext*(D_vess_int - D_shield_ext))/mu                                         #Outer hydraulic diameter                                                     
-        Nu_1_ext = 0.023*(Re_ext**0.8)*(Pr**0.4)                                                             
-        h_1_ext = (Nu_1_ext*k)/(D_vess_int - D_shield_ext)
+        if User_D_flag != 0:
+            A_int_S = np.pi*((R_shield_int**2) - (R_barr_ext**2))                                       #Inner area crossed by the primary fluid
+            A_ext_S = np.pi*((R_int**2) - (R_shield_ext**2))                                            #Outer area crossed by the primary fluid
+            v_int = v_flr/A_int_S                                                                       #Inner coolant velocity
+            v_ext = v_flr/A_ext_S                                                                       #Outer coolant velocity
+            
+            Pr = (Cp*mu)/k                                                                              #Prandtl number
+            Pr_cpp = (Cp_cpp*mu_cpp)/k_cpp                                                              #Prandtl number of the containment water
+            
+            Re_int = (rho*v_int*(D_shield_int - D_barr_ext))/mu                                         #Inner hydraulic diameter                                                     
+            Nu_1_int = 0.023*(Re_int**0.8)*(Pr**0.4)                                                             
+            h_1_int = (Nu_1_int*k)/(D_shield_int - D_barr_ext)
+            
+            Re_ext = (rho*v_ext*(D_vess_int - D_shield_ext))/mu                                         #Outer hydraulic diameter                                                     
+            Nu_1_ext = 0.023*(Re_ext**0.8)*(Pr**0.4)                                                             
+            h_1_ext = (Nu_1_ext*k)/(D_vess_int - D_shield_ext)
                                                                                  
         Gr = (rho_cpp**2)*9.81*beta_cpp*DeltaT*(L**3)/(mu_cpp**2)                                   #Grashof number (Uses the external diameter as characteristic length, might wanna use L though?)
         Nu_2 = 0.13*((Gr*Pr_cpp)**(1/3))                                                            #McAdams correlation for natural convection
@@ -2390,6 +2418,12 @@ elif TS_flag == 1:
             print("Chosen heat transfer coefficient h1 = %.3f W/(m²·K)    -    Essentially equal: the difference is of the order of %.3e" %(h_1, abs(h_1_int - h_1_ext)))
         else:
             print("Chosen heat transfer coefficient h1 = %.3f W/(m²·K)    -    Conservative: minimum h means highest thermal stresses" %h_1)
+    elif User_D_flag == 0:
+        print("\nInner heat transfer coefficient h1_int = %.3f W/(m²·K)" %h_1_int)
+        print("Outer heat transfer coefficient h1_ext = %.3f W/(m²·K)" %h_1_ext)
+        print("\n############################################################################################################################")
+        print("\nHeat transfer coefficients equalized in %d iterations. Difference: %.9e W/m²K\n" %(counter_h1, abs(h_1_int - h_1_ext)))
+        print("\n############################################################################################################################")
     print("Heat transfer coefficient h2 = %.3f W/(m²·K)" %h_2)
     print("Overall heat transfer coefficient outside the vessel u2 = %.3f W/(m²·K)" %u_2)
     
