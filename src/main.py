@@ -2510,6 +2510,7 @@ elif TS_flag == 1:
         print("\nAll are lower than 3Sm = %.3f MPa" %(3*Stress_Intensity_S))         
         print("\nPrimary radial stress: %.3f MPa\nPrimary hoop stress: %.3f MPa\nPrimary axial stress: %.3f MPa" %(sigma_rM_S,sigma_tM_S,sigma_zM_S))
         print("\nAll are lower than Sm = %.3f MPa" %Stress_Intensity_S)
+        print("\n############################################################################################################################")
 
     if (sigma_cTR_LS < sigma_allowable_S):
         print("\nThe comparison stress according to Tresca-Lamé Sc = %.3f MPa is lower than the allowable stress Sa = %.3f MPa" %(sigma_cTR_LS, sigma_allowable_S))
@@ -2545,6 +2546,7 @@ elif TS_flag == 1:
         print("\nPrimary radial stress: %.3f MPa\nPrimary hoop stress: %.3f MPa\nPrimary axial stress: %.3f MPa" %(sigma_rM,sigma_tM,sigma_zM))
         print("\nAll are lower than Sm = %.3f MPa" %Stress_Intensity)
 
+    print("\n######################################################### Buckling #########################################################")
     print("\nAccording to the Corradi Design Procedure:")
     print("Current slenderness: %.3f    -   Critical slenderness: %.3f" %(Current_Slenderness, Dt_Crit_Ratio))
     print("\nThe theoretical limit for collapse pressure, accounting for ovality, is: q_c = %.3f MPa = %.3f bar" %(Corradi_vessel[0], 10*Corradi_vessel[0]))
@@ -2552,6 +2554,7 @@ elif TS_flag == 1:
 
     if (buckling_flag == 1 and sigma_cTR_L < sigma_allowable and sigma_cTR_M < sigma_allowable):
         print("The given external pressure of %.3f bar is lower than the allowable pressure of %.3f bar" %(P_cpp, 10*Corradi_vessel[1]))
+        print("\n############################################################################################################################")
         print("\nThe comparison stress according to Tresca-Lamé Sc = %.3f MPa is lower than the allowable stress Sa = %.3f MPa" %(sigma_cTR_L, sigma_allowable))
         print("The comparison stress according to Tresca-Mariotte Sc = %.3f MPa is lower than the allowable stress Sa = %.3f MPa" %(sigma_cTR_M, sigma_allowable))
         if creep_flag_V == 1:
