@@ -1383,7 +1383,7 @@ elif TS_flag == 1:
         
         while abs(h_1_int - h_1_ext) > eps:
             counter_h1 += 1
-            print("\nIteration no. %d" %counter_h1)
+            print("Iteration no. %d" %counter_h1)
             if counter_h1 > N_max_h1:
                 print("Exceeded maximum number of iterations: %d. Exiting the loop." %N_max_h1)
                 break
@@ -1420,7 +1420,7 @@ elif TS_flag == 1:
                 R_shield_ext = R_shield_int + t_shield_user
         
         print("\n############################################################################################################################")
-        print("\nHeat transfer coefficients equalized in %d iterations. Difference: %.9e W/m²K\n" %(counter_h1, abs(h_1_int - h_1_ext)))
+        print("\nHeat transfer coefficients equalized in %d iterations. Difference: %.9e W/m²K" %(counter_h1, abs(h_1_int - h_1_ext)))
         print("\n############################################################################################################################")
 
     print("No discretization along z. Assuming constant temperature of the primary fluid T1.")
@@ -1518,10 +1518,13 @@ elif TS_flag == 1:
             R_shield_int = (-B_eq + np.sqrt(Delta_eq))/(2*A_eq)
             D_shield_int = 2*R_shield_int
             
+    # =============================================================================================================================================================
+    # Thermal Shield Position Iterative Computation
+    # =============================================================================================================================================================
         elif User_D_flag == 0:
             counter_h1 = 0
             N_max_h1 = 10000
-            eps = 1e-8
+            eps = 1e-6
             
             R_shield_int = R_barr_ext + 0.001 #To avoid float division by zero
             D_shield_int = 2*R_shield_int
@@ -1545,6 +1548,7 @@ elif TS_flag == 1:
                     print("Exceeded maximum number of iterations: %d. Exiting the loop." %N_max_h1)
                     break
                 if R_shield_int > R_int - t_shield:
+                    print("Inner thermal shield radius: %.6f m" %R_shield_int)
                     print("Inner thermal shield radius violates geometric constraints. Exiting the loop.")
                     break
                 
@@ -1576,6 +1580,7 @@ elif TS_flag == 1:
                     R_shield_int = (l_bound + r_bound)/2
                     R_shield_ext = R_shield_int + t_shield_user
         
+        print("Thermal shield thickness: %.6f m" %t_shield)
         R_shield_ext = R_shield_int + t_shield
         D_shield_ext = 2*R_shield_ext
         
@@ -1597,7 +1602,6 @@ elif TS_flag == 1:
             v_ext = v_flr/A_ext_S                                                                       #Outer coolant velocity
             
             Pr = (Cp*mu)/k                                                                              #Prandtl number
-            Pr_cpp = (Cp_cpp*mu_cpp)/k_cpp                                                              #Prandtl number of the containment water
             
             Re_int = (rho*v_int*(D_shield_int - D_barr_ext))/mu                                         #Inner hydraulic diameter                                                     
             Nu_1_int = 0.023*(Re_int**0.8)*(Pr**0.4)                                                             
@@ -1606,7 +1610,8 @@ elif TS_flag == 1:
             Re_ext = (rho*v_ext*(D_vess_int - D_shield_ext))/mu                                         #Outer hydraulic diameter                                                     
             Nu_1_ext = 0.023*(Re_ext**0.8)*(Pr**0.4)                                                             
             h_1_ext = (Nu_1_ext*k)/(D_vess_int - D_shield_ext)
-                                                                                 
+            
+        Pr_cpp = (Cp_cpp*mu_cpp)/k_cpp                                                              #Prandtl number of the containment water                                 
         Gr = (rho_cpp**2)*9.81*beta_cpp*DeltaT*(L**3)/(mu_cpp**2)                                   #Grashof number (Uses the external diameter as characteristic length, might wanna use L though?)
         Nu_2 = 0.13*((Gr*Pr_cpp)**(1/3))                                                            #McAdams correlation for natural convection
         h_2 = (Nu_2*k_cpp)/L                                                                        #W/(m²·K)
@@ -1652,6 +1657,8 @@ elif TS_flag == 1:
             h_1 = min(h_1_int, h_1_ext)
             if abs(h_1_int - h_1_ext) <= eps:
                 h_1 = h_1_int                           #Below the tolerance, they can be considered equal
+        elif User_D_flag == 0:
+            h_1 = h_1_int                               #By construction, h_1_int = h_1_ext = h_1
         
         # ======================================
         # T profile constants for the vessel: general and under adiabatic outer wall approximation (dT/dx = 0 at r = R_ext)
@@ -2423,6 +2430,10 @@ elif TS_flag == 1:
         print("Outer heat transfer coefficient h1_ext = %.3f W/(m²·K)" %h_1_ext)
         print("\n############################################################################################################################")
         print("\nHeat transfer coefficients equalized in %d iterations. Difference: %.9e W/m²K\n" %(counter_h1, abs(h_1_int - h_1_ext)))
+        print("Inner thermal shield radius: %.3f m" %R_shield_int)
+        print("Outer thermal shield radius: %.3f m" %R_shield_ext)
+        print("Lower bound: %.3f m" %l_bound)
+        print("Upper bound: %.3f m" %u_bound)
         print("\n############################################################################################################################")
     print("Heat transfer coefficient h2 = %.3f W/(m²·K)" %h_2)
     print("Overall heat transfer coefficient outside the vessel u2 = %.3f W/(m²·K)" %u_2)
