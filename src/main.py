@@ -1420,8 +1420,8 @@ elif TS_flag == 1:
                 R_shield_ext = R_shield_int + t_shield_user
         
         print("\n############################################################################################################################")
-        print("\nHeat transfer coefficients equalized in %d iterations. Difference: %.9e W/m²K" %(counter_h1, abs(h_1_int - h_1_ext)))
-        print("\n############################################################################################################################")
+        print("\nInitial heat transfer coefficients equalized in %d iterations. Thermal shield initial inner radius: %.3f m" %(counter_h1, R_shield_int))
+        print("\n############################################################################################################################\n")
 
     print("No discretization along z. Assuming constant temperature of the primary fluid T1.")
     while True:
@@ -1495,7 +1495,7 @@ elif TS_flag == 1:
                 t_shield = t_shield_user - 0.001
                 counter_vessel += 1
                 continue
-        elif User_D_flag == 2:      #If the thermal shield is in the middle, only its thickness must be checked: no geometrical constraints
+        elif User_D_flag == 2 or User_D_flag == 0:      #If the thermal shield is in the middle, only its thickness must be checked: no geometrical constraints.The same goes for the equal h1 case, as the geometrical constraints are verified elsewhere.
             if t_shield > t_shield_max:
                 print("Ran into excessive thermal shield thickness. Adding 1cm to the vessel thickness instead. Restarting...")
                 t += 0.01
@@ -1539,16 +1539,15 @@ elif TS_flag == 1:
             
             #Bisection method bounds
             l_bound = R_barr_ext
-            r_bound = R_int - t_shield_user
+            r_bound = R_int - t_shield
             
             while abs(h_1_int - h_1_ext) > eps:
                 counter_h1 += 1
-                print("\nIteration no. %d" %counter_h1)
+                #print("Sub-iteration no. %d" %counter_h1)
                 if counter_h1 > N_max_h1:
-                    print("Exceeded maximum number of iterations: %d. Exiting the loop." %N_max_h1)
+                    print("Exceeded maximum number of sub-iterations: %d. Exiting the loop." %N_max_h1)
                     break
                 if R_shield_int > R_int - t_shield:
-                    print("Inner thermal shield radius: %.6f m" %R_shield_int)
                     print("Inner thermal shield radius violates geometric constraints. Exiting the loop.")
                     break
                 
@@ -1574,13 +1573,12 @@ elif TS_flag == 1:
                 if h_1_int < h_1_ext:
                     r_bound = R_shield_int
                     R_shield_int = (r_bound + l_bound)/2
-                    R_shield_ext = R_shield_int + t_shield_user
+                    R_shield_ext = R_shield_int + t_shield
                 else:
                     l_bound = R_shield_int
                     R_shield_int = (l_bound + r_bound)/2
-                    R_shield_ext = R_shield_int + t_shield_user
+                    R_shield_ext = R_shield_int + t_shield
         
-        print("Thermal shield thickness: %.6f m" %t_shield)
         R_shield_ext = R_shield_int + t_shield
         D_shield_ext = 2*R_shield_ext
         
@@ -2404,6 +2402,7 @@ elif TS_flag == 1:
         
     print("\nThe vessel thickness has been increased %d times by 1cm. Computed vessel thickness: %.3f m" %(counter_vessel, t))
     print("Computed thermal shield thickness: %.3f m" %t_shield)
+    print("Inner thermal shield radius: %.3f m" %R_shield_int)
     print("\nVessel max ovality W: %.5f = %.3f%%" %(W,W*100))
     print("Maximum permissible deviation from theoretical form for the vessel according to NB-4221.2: e = %.3f m" %(0.3*t))
     print("Maximum difference in cross-sectional diameters: %.3f mm" %DeltaD_max)
@@ -2428,13 +2427,8 @@ elif TS_flag == 1:
     elif User_D_flag == 0:
         print("\nInner heat transfer coefficient h1_int = %.3f W/(m²·K)" %h_1_int)
         print("Outer heat transfer coefficient h1_ext = %.3f W/(m²·K)" %h_1_ext)
-        print("\n############################################################################################################################")
-        print("\nHeat transfer coefficients equalized in %d iterations. Difference: %.9e W/m²K\n" %(counter_h1, abs(h_1_int - h_1_ext)))
-        print("Inner thermal shield radius: %.3f m" %R_shield_int)
-        print("Outer thermal shield radius: %.3f m" %R_shield_ext)
-        print("Lower bound: %.3f m" %l_bound)
-        print("Upper bound: %.3f m" %u_bound)
-        print("\n############################################################################################################################")
+        print("\nHeat transfer coefficients equalized in %d sub-iterations. Difference: %.9e W/m²K" %(counter_h1, abs(h_1_int - h_1_ext)))
+
     print("Heat transfer coefficient h2 = %.3f W/(m²·K)" %h_2)
     print("Overall heat transfer coefficient outside the vessel u2 = %.3f W/(m²·K)" %u_2)
     
