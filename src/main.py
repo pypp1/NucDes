@@ -927,11 +927,13 @@ if TS_flag == 0:
         print("============================================================================================================================")
         print("\nVolumetric heat source at the vessel inner surface: %.3f W/m³" %q_iii(r[0]))
         print("Volumetric heat source at the vessel-insulation interface: %.3f W/m³" %q_iii(r[-1]))
+        print("\n============================================================================================================================")
         print("\nHeat transfer coefficient h1 = %.3f W/(m²·K)" %h_1)
         print("Heat transfer coefficient h2 = %.3f W/(m²·K)" %h_2)
         print("Overall heat transfer coefficient outside the vessel u2 = %.3f W/(m²·K)" %u_2)
         if LogDelta_flag == 1:
             print("\nThermal power flux on the inner vessel surface - Logarithmic Mean DeltaT Approach: %.3f kW/m²" %q_s1_log)
+        print("\n============================================================================================================================")
         print("\nThermal power flux on the inner vessel surface: %.3f kW/m²" %q_s1)
         print("Thermal power flux on the outer vessel surface: %.3f kW/m²" %q_s2)
         print("\n============================================================================================================================")
@@ -956,8 +958,8 @@ if TS_flag == 0:
             print("Vessel Temperature at the outer surface under Adiabatic Outer Wall approximation: %-3f °C at r = %.3f m" %(T_vessel(r)[-1] - 273.15, r[-1]))
             print("\n============================================================================================================================")
         if (T_vessel_max - 273.15) > T_creep:
-            print("\nWARNING: The maximum vessel temperature T = %.3f °C exceeds the creep threshold temperature of %d °C!" %(T_vessel_max - 273.15, T_creep))
-            print("\n============================================================================================================================")
+            print("WARNING: The maximum vessel temperature T = %.3f °C exceeds the creep threshold temperature of %d °C!" %(T_vessel_max - 273.15, T_creep))
+            print("============================================================================================================================")
         
         # ============================ 
         # Stress Results
@@ -1005,11 +1007,13 @@ if TS_flag == 0:
             print("\n############################################################################################################################")
             
         elif (P_cpp > 10*Corradi_vessel[1]):
-            print("\nThe given external pressure of %.3f bar is higher than the allowable pressure of %.3f bar: a change in thickness is required!" %(P_cpp, 10*Corradi_vessel[1]))
+            print("\n============================================================================================================================")
+            print("The given external pressure of %.3f bar is higher than the allowable pressure of %.3f bar: a change in thickness is required!" %(P_cpp, 10*Corradi_vessel[1]))
             print("============================================================================================================================")
             
         elif (sigma_cTR_M > sigma_allowable or sigma_cTR_L > sigma_allowable):
-            print("\nEither the Tresca-Mariotte comparison stress Sc = %.3f MPa or the Tresca-Lamè comparison stress Sc = %.3f MPa is higher than the allowable stress Sa = %.3f MPa" %(sigma_cTR_M,sigma_cTR_L,sigma_allowable))
+            print("\n============================================================================================================================")
+            print("Either the Tresca-Mariotte comparison stress Sc = %.3f MPa or the Tresca-Lamè comparison stress Sc = %.3f MPa is higher than the allowable stress Sa = %.3f MPa" %(sigma_cTR_M,sigma_cTR_L,sigma_allowable))
             print("============================================================================================================================")
             
     # ======================================
@@ -2582,19 +2586,18 @@ elif TS_flag == 1:
         print("\nThe comparison stress according to Tresca-Lamé Sc = %.3f MPa is lower than the allowable stress Sa = %.3f MPa" %(sigma_cTR_L, sigma_allowable))
         print("The comparison stress according to Tresca-Mariotte Sc = %.3f MPa is lower than the allowable stress Sa = %.3f MPa" %(sigma_cTR_M, sigma_allowable))
         if creep_flag_V == 1:
+            print("\n============================================================================================================================")
             print("Creep might occur in the vessel due to high temperatures. Either an additional thermal shield, a reduced thickness or both are required.")
+            print("============================================================================================================================")
         elif creep_flag_V == 0:
             print("There is no risk of thermal creep occurring in the vessel.")
             print("The vessel's integrity is ensured.")
             print("\n============================================================================================================================")
-        
-    elif buckling_flag == 0:
-        print("\nThe given external pressure of %.3f bar is higher than the allowable pressure of %.3f bar: a change in thickness is required!" %(P_cpp, 10*Corradi_vessel[1]))
-        print("\n============================================================================================================================")
 
     elif (sigma_cTR_L > sigma_allowable or sigma_cTR_M > sigma_allowable):
-        print("\nEither the Tresca-Lamè comparison stress Sc = %.3f MPa or the Tresca-Mariotte comparison stress Sc = %.3f MPa is higher than the allowable stress Sa = %.3f MPa" %(sigma_cTR_L,sigma_cTR_M,sigma_allowable))
         print("\n============================================================================================================================")
+        print("Either the Tresca-Lamè comparison stress Sc = %.3f MPa or the Tresca-Mariotte comparison stress Sc = %.3f MPa is higher than the allowable stress Sa = %.3f MPa" %(sigma_cTR_L,sigma_cTR_M,sigma_allowable))
+        print("============================================================================================================================")
     
     print("\n\n\n\n######################################################### Buckling #########################################################")
     print("============================================================================================================================")
@@ -2605,6 +2608,11 @@ elif TS_flag == 1:
     if (buckling_flag == 1):
         print("The given external pressure of %.3f bar is lower than the allowable pressure of %.3f bar" %(P_cpp, 10*Corradi_vessel[1]))
         print("\n============================================================================================================================")
+    elif buckling_flag == 0:
+        print("\n============================================================================================================================")
+        print("The given external pressure of %.3f bar is higher than the allowable pressure of %.3f bar: a change in thickness is required!" %(P_cpp, 10*Corradi_vessel[1]))
+        print("============================================================================================================================")
+        
     if buckling_flag == 1 and sigma_cTR_L < sigma_allowable and sigma_cTR_M < sigma_allowable and creep_flag_V == 0:
         print("\n\n\n\n############################################################################################################################")
         print("\nThe design is correct!")
