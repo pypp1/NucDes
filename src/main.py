@@ -2499,14 +2499,14 @@ elif TS_flag == 1:
     
     elif flag_primsec_S == 0 and flag_prim_S == 0:
         print("\nThe current stress state in the thermal shield is acceptable.")
-        print("According to Lamé:")
-        print("\nMaximum absolute value of the total radial stress: %.3f MPa\nMaximum absolute value of the total hoop stress: %.3f MPa\nMaximum absolute value of the total axial stress: %.3f MPa" %(max(abs(sigma_r_totL_S)),max(abs(sigma_t_totL_S)),max(abs(sigma_z_totL_S))))
+        print("\nAccording to Lamé:")
+        print("Maximum absolute value of the total radial stress: %.3f MPa\nMaximum absolute value of the total hoop stress: %.3f MPa\nMaximum absolute value of the total axial stress: %.3f MPa" %(max(abs(sigma_r_totL_S)),max(abs(sigma_t_totL_S)),max(abs(sigma_z_totL_S))))
         print("\nAll are lower than 3Sm = %.3f MPa" %(3*Stress_Intensity_S))         
         print("\nMaximum value of the primary radial stress: %.3f MPa\nMaximum value of the primary hoop stress: %.3f MPa\nPrimary axial stress: %.3f MPa" %(max(sigma_rL_S),max(sigma_tL_S),sigma_zL_S))
         print("\nAll are lower than Sm = %.3f MPa" %Stress_Intensity_S)
         
         print("\nAccording to Mariotte:")
-        print("\nMaximum absolute value of the total radial stress: %.3f MPa\nMaximum absolute value of the total hoop stress: %.3f MPa\nMaximum absolute value of the total axial stress: %.3f MPa" %(max(abs(sigma_r_totM_S)),max(abs(sigma_t_totM_S)),max(abs(sigma_z_totM_S))))
+        print("Maximum absolute value of the total radial stress: %.3f MPa\nMaximum absolute value of the total hoop stress: %.3f MPa\nMaximum absolute value of the total axial stress: %.3f MPa" %(max(abs(sigma_r_totM_S)),max(abs(sigma_t_totM_S)),max(abs(sigma_z_totM_S))))
         print("\nAll are lower than 3Sm = %.3f MPa" %(3*Stress_Intensity_S))         
         print("\nPrimary radial stress: %.3f MPa\nPrimary hoop stress: %.3f MPa\nPrimary axial stress: %.3f MPa" %(sigma_rM_S,sigma_tM_S,sigma_zM_S))
         print("\nAll are lower than Sm = %.3f MPa" %Stress_Intensity_S)
@@ -2533,14 +2533,14 @@ elif TS_flag == 1:
     
     elif flag_primsec == 0 and flag_prim == 0:
         print("\nThe current stress state in the vessel is acceptable.")
-        print("According to Lamé:")
-        print("\nMaximum absolute value of the total radial stress: %.3f MPa\nMaximum absolute value of the total hoop stress: %.3f MPa\nMaximum absolute value of the total axial stress: %.3f MPa" %(max(abs(sigma_r_totL)),max(abs(sigma_t_totL)),max(abs(sigma_z_totL))))
+        print("\nAccording to Lamé:")
+        print("Maximum absolute value of the total radial stress: %.3f MPa\nMaximum absolute value of the total hoop stress: %.3f MPa\nMaximum absolute value of the total axial stress: %.3f MPa" %(max(abs(sigma_r_totL)),max(abs(sigma_t_totL)),max(abs(sigma_z_totL))))
         print("\nAll are lower than 3Sm = %.3f MPa" %(3*Stress_Intensity))         
         print("\nMaximum value of the primary radial stress: %.3f MPa\nMaximum value of the primary hoop stress: %.3f MPa\nPrimary axial stress: %.3f MPa" %(max(sigma_rL),max(sigma_tL),sigma_zL))
         print("\nAll are lower than Sm = %.3f MPa" %Stress_Intensity)
         
-        print("According to Mariotte:")
-        print("\nMaximum absolute value of the total radial stress: %.3f MPa\nMaximum absolute value of the total hoop stress: %.3f MPa\nMaximum absolute value of the total axial stress: %.3f MPa" %(max(abs(sigma_r_totM)),max(abs(sigma_t_totM)),max(abs(sigma_z_totM))))
+        print("\nAccording to Mariotte:")
+        print("Maximum absolute value of the total radial stress: %.3f MPa\nMaximum absolute value of the total hoop stress: %.3f MPa\nMaximum absolute value of the total axial stress: %.3f MPa" %(max(abs(sigma_r_totM)),max(abs(sigma_t_totM)),max(abs(sigma_z_totM))))
         print("\nAll are lower than 3Sm = %.3f MPa" %(3*Stress_Intensity)) 
         print("\nPrimary radial stress: %.3f MPa\nPrimary hoop stress: %.3f MPa\nPrimary axial stress: %.3f MPa" %(sigma_rM,sigma_tM,sigma_zM))
         print("\nAll are lower than Sm = %.3f MPa" %Stress_Intensity)
