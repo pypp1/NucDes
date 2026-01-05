@@ -142,9 +142,9 @@ while True:
         print(e)
 
 if Def_P_flag == 0:
-    P_int = int(input("\nSet the internal pressure (bar): "))
+    P_int = float(input("\nSet the internal pressure (bar): "))
     P_int_MPa = P_int/10
-    P_cpp = int(input("Set the external pressure (bar): "))
+    P_cpp = float(input("Set the external pressure (bar): "))
     P_cpp_MPa = P_cpp/10
     
     # ======================================
