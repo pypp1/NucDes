@@ -529,7 +529,9 @@ if TS_flag == 0:
                 print("Please enter a valid integer.")
             except RuntimeError as e:
                 print(e)
-        
+                
+        if (T_vessel_max - 273.15) > T_creep:
+            creep_flag_V = 1
         if adiab_flag == 0:
             if T_pl_flag == 1:
                 os.makedirs(NTS_plots_directory, exist_ok=True)
@@ -1127,8 +1129,40 @@ if TS_flag == 0:
             output_lines.append("============================================================================================================================")
             #Corradi_vessel = Corradi(np.array([Current_Slenderness]))
             if flag_primsec == 1 or flag_prim == 1:
-                output_lines.append("The current stress state in the vessel is not acceptable. \nPrimary + Secondary Stresses flag: %d \nPrimary Stresses flag: %d" %(flag_primsec, flag_prim))
-                output_lines.append("Maximum absolute value of the radial thermal stress: %.3f MPa\nMaximum absolute value of the hoop thermal stress: %.3f MPa\nMaximum absolute value of the axial thermal stress: %.3f MPa" %(max(abs(sigma_r_th_V)),max(abs(sigma_t_th_V)),max(abs(sigma_z_th_V))))
+                output_lines.append("\nAccording to Lamé:")
+                output_lines.append("Maximum absolute value of the total radial stress: %.3f MPa\nMaximum absolute value of the total hoop stress: %.3f MPa\nMaximum absolute value of the total axial stress: %.3f MPa" %(max(abs(sigma_r_totL)),max(abs(sigma_t_totL)),max(abs(sigma_z_totL))))
+                output_lines.append("Maximum value of the primary radial stress: %.3f MPa\nMaximum value of the primary hoop stress: %.3f MPa\nPrimary axial stress: %.3f MPa" %(max(sigma_rL),max(sigma_tL),sigma_zL))
+                if max(abs(sigma_r_totL)) > 3*Stress_Intensity:
+                    output_lines.append("\nThe maximum value of the total radial stress exceeds allowable stress.")
+                if max(abs(sigma_t_totL)) > 3*Stress_Intensity:
+                    output_lines.append("\nThe maximum value of the total hoop stress exceeds allowable stress.")
+                if max(abs(sigma_z_totL)) > 3*Stress_Intensity:
+                    output_lines.append("\nThe maximum value of the total axial stress exceeds allowable stress.")
+                if max(sigma_rL) > Stress_Intensity:
+                    output_lines.append("\nThe maximum value of the primary radial stress exceeds allowable stress.")
+                if max(sigma_tL) > Stress_Intensity:
+                    output_lines.append("\nThe maximum value of the primary hoop stress exceeds allowable stress.")
+                if sigma_zL > Stress_Intensity:
+                    output_lines.append("\nThe primary axial stress exceeds allowable stress.")
+                    
+                output_lines.append("\n============================================================================================================================")
+                output_lines.append("\nAccording to Mariotte:")
+                output_lines.append("Maximum absolute value of the total radial stress: %.3f MPa\nMaximum absolute value of the total hoop stress: %.3f MPa\nMaximum absolute value of the total axial stress: %.3f MPa" %(max(abs(sigma_r_totM)),max(abs(sigma_t_totM)),max(abs(sigma_z_totM))))
+                output_lines.append("Primary radial stress: %.3f MPa\nPrimary hoop stress: %.3f MPa\nPrimary axial stress: %.3f MPa" %(sigma_rM,sigma_tM,sigma_zM))
+                if max(abs(sigma_r_totM)) > 3*Stress_Intensity:
+                    output_lines.append("\nThe maximum value of the total radial stress exceeds allowable stress.")
+                if max(abs(sigma_t_totM)) > 3*Stress_Intensity:
+                    output_lines.append("\nThe maximum value of the total hoop stress exceeds allowable stress.")
+                if max(abs(sigma_z_totM)) > 3*Stress_Intensity:
+                    output_lines.append("\nThe maximum value of the total axial stress exceeds allowable stress.")
+                if sigma_rM > Stress_Intensity:
+                    output_lines.append("\nThe primary radial stress exceeds allowable stress.")
+                if sigma_tM > Stress_Intensity:
+                    output_lines.append("\nThe primary hoop stress exceeds allowable stress.")
+                if sigma_zM > Stress_Intensity:
+                    output_lines.append("\nThe primary axial stress exceeds allowable stress.")
+                output_lines.append("\n============================================================================================================================")
+                output_lines.append("The current stress state in the vessel is not acceptable.")
                 output_lines.append("============================================================================================================================")
             
             elif flag_primsec == 0 and flag_prim == 0:
@@ -2810,8 +2844,40 @@ elif TS_flag == 1:
         output_lines.append("\n\n\n\n###################################################### Thermal Shield ######################################################")
         output_lines.append("============================================================================================================================")
         if flag_primsec_S == 1 or flag_prim_S == 1:
-            output_lines.append("The current stress state in the thermal shield is not acceptable. \nPrimary + Secondary Stresses flag: %d \nPrimary Stresses flag: %d" %(flag_primsec_S, flag_prim_S))
-            output_lines.append("Maximum absolute value of the radial thermal stress: %.3f MPa\nMaximum absolute value of the hoop thermal stress: %.3f MPa\nMaximum absolute value of the axial thermal stress: %.3f MPa" %(max(abs(sigma_r_th_S)),max(abs(sigma_t_th_S)),max(abs(sigma_z_th_S))))
+            output_lines.append("\nAccording to Lamé:")
+            output_lines.append("Maximum absolute value of the total radial stress: %.3f MPa\nMaximum absolute value of the total hoop stress: %.3f MPa\nMaximum absolute value of the total axial stress: %.3f MPa" %(max(abs(sigma_r_totL_S)),max(abs(sigma_t_totL_S)),max(abs(sigma_z_totL_S))))
+            output_lines.append("Maximum value of the primary radial stress: %.3f MPa\nMaximum value of the primary hoop stress: %.3f MPa\nPrimary axial stress: %.3f MPa" %(max(sigma_rL_S),max(sigma_tL_S),sigma_zL_S))
+            if max(abs(sigma_r_totL_S)) > 3*Stress_Intensity_S:
+                output_lines.append("\nThe maximum value of the total radial stress exceeds allowable stress.")
+            if max(abs(sigma_t_totL_S)) > 3*Stress_Intensity_S:
+                output_lines.append("\nThe maximum value of the total hoop stress exceeds allowable stress.")
+            if max(abs(sigma_z_totL_S)) > 3*Stress_Intensity_S:
+                output_lines.append("\nThe maximum value of the total axial stress exceeds allowable stress.")
+            if max(sigma_rL_S) > Stress_Intensity_S:
+                output_lines.append("\nThe maximum value of the primary radial stress exceeds allowable stress.")
+            if max(sigma_tL_S) > Stress_Intensity_S:
+                output_lines.append("\nThe maximum value of the primary hoop stress exceeds allowable stress.")
+            if sigma_zL_S > Stress_Intensity_S:
+                output_lines.append("\nThe primary axial stress exceeds allowable stress.")
+                
+            output_lines.append("\n============================================================================================================================")
+            output_lines.append("\nAccording to Mariotte:")
+            output_lines.append("Maximum absolute value of the total radial stress: %.3f MPa\nMaximum absolute value of the total hoop stress: %.3f MPa\nMaximum absolute value of the total axial stress: %.3f MPa" %(max(abs(sigma_r_totM_S)),max(abs(sigma_t_totM_S)),max(abs(sigma_z_totM_S))))
+            output_lines.append("Primary radial stress: %.3f MPa\nPrimary hoop stress: %.3f MPa\nPrimary axial stress: %.3f MPa" %(sigma_rM_S,sigma_tM_S,sigma_zM_S))
+            if max(abs(sigma_r_totM_S)) > 3*Stress_Intensity_S:
+                output_lines.append("\nThe maximum value of the total radial stress exceeds allowable stress.")
+            if max(abs(sigma_t_totM_S)) > 3*Stress_Intensity_S:
+                output_lines.append("\nThe maximum value of the total hoop stress exceeds allowable stress.")
+            if max(abs(sigma_z_totM_S)) > 3*Stress_Intensity_S:
+                output_lines.append("\nThe maximum value of the total axial stress exceeds allowable stress.")
+            if sigma_rM_S > Stress_Intensity_S:
+                output_lines.append("\nThe primary radial stress exceeds allowable stress.")
+            if sigma_tM_S > Stress_Intensity_S:
+                output_lines.append("\nThe primary hoop stress exceeds allowable stress.")
+            if sigma_zM_S > Stress_Intensity_S:
+                output_lines.append("\nThe primary axial stress exceeds allowable stress.")
+            output_lines.append("\n============================================================================================================================")
+            output_lines.append("The current stress state in the thermal shield is not acceptable.")
             output_lines.append("============================================================================================================================")
         
         elif flag_primsec_S == 0 and flag_prim_S == 0:
@@ -2853,9 +2919,42 @@ elif TS_flag == 1:
         output_lines.append("============================================================================================================================")
         #Corradi_vessel = Corradi(np.array([Current_Slenderness]))
         if flag_primsec == 1 or flag_prim == 1:
-            output_lines.append("The current stress state in the vessel is not acceptable. \nPrimary + Secondary Stresses flag: %d \nPrimary Stresses flag: %d" %(flag_primsec, flag_prim))
-            output_lines.append("Maximum absolute value of the radial thermal stress: %.3f MPa\nMaximum absolute value of the hoop thermal stress: %.3f MPa\nMaximum absolute value of the axial thermal stress: %.3f MPa" %(max(abs(sigma_r_th_V)),max(abs(sigma_t_th_V)),max(abs(sigma_z_th_V))))
-            output_lines.append("============================================================================================================================")
+            if flag_primsec == 1 or flag_prim == 1:
+                output_lines.append("\nAccording to Lamé:")
+                output_lines.append("Maximum absolute value of the total radial stress: %.3f MPa\nMaximum absolute value of the total hoop stress: %.3f MPa\nMaximum absolute value of the total axial stress: %.3f MPa" %(max(abs(sigma_r_totL)),max(abs(sigma_t_totL)),max(abs(sigma_z_totL))))
+                output_lines.append("Maximum value of the primary radial stress: %.3f MPa\nMaximum value of the primary hoop stress: %.3f MPa\nPrimary axial stress: %.3f MPa" %(max(sigma_rL),max(sigma_tL),sigma_zL))
+                if max(abs(sigma_r_totL)) > 3*Stress_Intensity:
+                    output_lines.append("\nThe maximum value of the total radial stress exceeds allowable stress.")
+                if max(abs(sigma_t_totL)) > 3*Stress_Intensity:
+                    output_lines.append("\nThe maximum value of the total hoop stress exceeds allowable stress.")
+                if max(abs(sigma_z_totL)) > 3*Stress_Intensity:
+                    output_lines.append("\nThe maximum value of the total axial stress exceeds allowable stress.")
+                if max(sigma_rL) > Stress_Intensity:
+                    output_lines.append("\nThe maximum value of the primary radial stress exceeds allowable stress.")
+                if max(sigma_tL) > Stress_Intensity:
+                    output_lines.append("\nThe maximum value of the primary hoop stress exceeds allowable stress.")
+                if sigma_zL > Stress_Intensity:
+                    output_lines.append("\nThe primary axial stress exceeds allowable stress.")
+                    
+                output_lines.append("\n============================================================================================================================")
+                output_lines.append("\nAccording to Mariotte:")
+                output_lines.append("Maximum absolute value of the total radial stress: %.3f MPa\nMaximum absolute value of the total hoop stress: %.3f MPa\nMaximum absolute value of the total axial stress: %.3f MPa" %(max(abs(sigma_r_totM)),max(abs(sigma_t_totM)),max(abs(sigma_z_totM))))
+                output_lines.append("Primary radial stress: %.3f MPa\nPrimary hoop stress: %.3f MPa\nPrimary axial stress: %.3f MPa" %(sigma_rM,sigma_tM,sigma_zM))
+                if max(abs(sigma_r_totM)) > 3*Stress_Intensity:
+                    output_lines.append("\nThe maximum value of the total radial stress exceeds allowable stress.")
+                if max(abs(sigma_t_totM)) > 3*Stress_Intensity:
+                    output_lines.append("\nThe maximum value of the total hoop stress exceeds allowable stress.")
+                if max(abs(sigma_z_totM)) > 3*Stress_Intensity:
+                    output_lines.append("\nThe maximum value of the total axial stress exceeds allowable stress.")
+                if sigma_rM > Stress_Intensity:
+                    output_lines.append("\nThe primary radial stress exceeds allowable stress.")
+                if sigma_tM > Stress_Intensity:
+                    output_lines.append("\nThe primary hoop stress exceeds allowable stress.")
+                if sigma_zM > Stress_Intensity:
+                    output_lines.append("\nThe primary axial stress exceeds allowable stress.")
+                output_lines.append("\n============================================================================================================================")
+                output_lines.append("The current stress state in the vessel is not acceptable. \nPrimary + Secondary Stresses flag: %d \nPrimary Stresses flag: %d" %(flag_primsec, flag_prim))
+                output_lines.append("============================================================================================================================")
         
         elif flag_primsec == 0 and flag_prim == 0:
             output_lines.append("\nAccording to Lamé:")
