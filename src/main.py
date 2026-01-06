@@ -266,9 +266,9 @@ if TS_flag == 0:
             plt.figure(figsize=(15,10))
             plt.axvline(x = R_int, color='black', linewidth='3', label='Vessel Inner Surface')
             plt.axvline(x = R_ext, color='black', linewidth='3', label='Vessel Outer Surface')
-            plt.axhline(y = sigma_rM_cyl, color='red', label='Radial (r) Stress Mariotte')
-            plt.axhline(y = sigma_tM_cyl, color='blue', label=r'Hoop ($\theta$) Stress Mariotte')
-            plt.axhline(y = sigma_zM_cyl, color='green', label='Axial (z) Stress Mariotte')
+            plt.axhline(y = sigma_rM, color='red', label='Radial (r) Stress Mariotte')
+            plt.axhline(y = sigma_tM, color='blue', label=r'Hoop ($\theta$) Stress Mariotte')
+            plt.axhline(y = sigma_zM, color='green', label='Axial (z) Stress Mariotte')
             plt.plot(r, np.zeros(len(r)), color='black', linewidth='1', label='y=0')
             plt.xlabel('Radius (m)')
             plt.ylabel('Stress (MPa)')
@@ -1413,9 +1413,9 @@ elif TS_flag == 1:
             except RuntimeError as e:
                 print(e)
         sigma_M = sigmaM_func(R_int, P_int_MPa, t)
-        sigma_rM_cyl = sigma_M[0]
-        sigma_tM_cyl = sigma_M[1]
-        sigma_zM_cyl = sigma_M[2]
+        sigma_rM = sigma_M[0]
+        sigma_tM = sigma_M[1]
+        sigma_zM = sigma_M[2]
 
         if Mariotte_flag == 1:
 
@@ -1427,9 +1427,9 @@ elif TS_flag == 1:
             plt.figure(figsize=(15,10))
             plt.axvline(x = R_int, color='black', linewidth='3', label='Vessel Inner Surface')
             plt.axvline(x = R_ext, color='black', linewidth='3', label='Vessel Outer Surface')
-            plt.axhline(y = sigma_rM_cyl, color='red', label='Radial (r) Stress Mariotte')
-            plt.axhline(y = sigma_tM_cyl, color='blue', label=r'Hoop ($\theta$) Stress Mariotte')
-            plt.axhline(y = sigma_zM_cyl, color='green', label='Axial (z) Stress Mariotte')
+            plt.axhline(y = sigma_rM, color='red', label='Radial (r) Stress Mariotte')
+            plt.axhline(y = sigma_tM, color='blue', label=r'Hoop ($\theta$) Stress Mariotte')
+            plt.axhline(y = sigma_zM, color='green', label='Axial (z) Stress Mariotte')
             plt.plot(r, np.zeros(len(r)), color='black', linewidth='1', label='y=0')
             plt.xlabel('Radius (m)')
             plt.ylabel('Stress (MPa)')
