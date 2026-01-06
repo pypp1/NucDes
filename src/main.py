@@ -2,6 +2,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 import scipy.linalg as lng 
 from scipy import integrate, interpolate
+import os
 
 # ============================
 # Geometrical data
@@ -11,7 +12,6 @@ D_vess_int = 3.0       #m
 t_th_ins = 0.05        #m 
 k_th_ins = 1.4         #W/mK
 L = 7                  #m
-#W = 0.01              #Assumed - Later computed via NB-4221.1 and NB-4221.2
 
 # ============================
 # Primary fluid
@@ -100,21 +100,26 @@ keys_list = list(mu_curves.keys())
 # ============================
 # Computed additional data
 # ============================
-t = 0.05                                    #m #First guess
 R_int = D_vess_int/2                        #m
-R_ext = R_int + t                           #m
-D_vess_ext = 2*R_ext                        #m
 R_barr_ext = D_barr_ext/2                   #m
 v_flr = m_flr/rho                           #m³/s
 G = E/(2*(1+nu))                            #MPa
-rho_ii = (R_ext**2)/(R_ext**2 - R_int**2)
-rho_i = (R_int**2)/(R_ext**2 - R_int**2)
 P_int_MPa = P_int/10                        #MPa
 P_cpp_MPa = P_cpp/10                        #MPa
 Phi_0 = Phi_0 * 1e4                         #photons/(m²·s)
-Mar_criterion = R_int/t
-DeltaD_max = min(((D_vess_int*1000)+1270)/200, (D_vess_int*1000)/100)
-W = (DeltaD_max/1000)/((D_vess_int+D_vess_ext)/2)
+DeltaD_max = min(((D_vess_int*1000)+1270)/200, (D_vess_int*1000)/100)   #mm instead of in. - ASME gives 1250, but 1 inch = 25.4 mm
+
+# ======================================
+# Other necessary variables for file saving
+# =====================================
+current_directory = os.getcwd()                                     # Get the current working directory
+NTS_directory_name = "Results_No_Thermal_Shield"
+TS_directory_name = "Results_Thermal_Shield"
+
+NTS_directory_path = os.path.join(current_directory, NTS_directory_name)    # Create the full path for the new directory
+TS_directory_path = os.path.join(current_directory, TS_directory_name)
+NTS_plots_directory = os.path.join(NTS_directory_name, "Plots")
+TS_plots_directory = os.path.join(TS_directory_name, "Plots")
 
 # ======================================
 # Simpson composite integration function
@@ -135,12 +140,9 @@ def simpcomp(f, a, b, N):
     I = (h/6.0)*(f(xL)+4*f(xM)+f(xR)).sum()         # Approximate integral
     return I
 
-# =============================================================================================================================================================
-# PURELY MECHANICAL PROBLEM
-# =============================================================================================================================================================
-dr = 100
-r = np.linspace(R_int, R_ext, dr)
-
+# ======================================
+# Default Pressures Check
+# ======================================
 while True:
     try:
         Def_P_flag = int(input("\nAssume default pressures (75 bar = 7.5 MPa)? (1: Yes, 0: No): "))
@@ -153,11 +155,14 @@ while True:
         print(e)
 
 if Def_P_flag == 0:
-    P_int = int(input("\nSet the internal pressure (bar): "))
+    P_int = float(input("\nSet the internal pressure (bar): "))
     P_int_MPa = P_int/10
-    P_cpp = int(input("Set the external pressure (bar): "))
+    P_cpp = float(input("Set the external pressure (bar): "))
     P_cpp_MPa = P_cpp/10
     
+    # ======================================
+    # Stress/Strain Condition Input
+    # ======================================
     while P_int != P_cpp: #Asks for this here, because asking for it in the sigmaL function would mean having to input the value for every iteration
         try:
             flag_eps = int(input("\nEnter the stress/strain condition (1: Plane Stress, 0: Plane Strain): "))
@@ -168,201 +173,246 @@ if Def_P_flag == 0:
             print("Please enter a valid integer.")
         except RuntimeError as e:
             print(e)
-
-# ============================
-# Mariotte Solution for a thin-walled cylinder and sphere (R_int = R_ext = R)
-# ============================
-def sigmaM_func (R_int, P_int_MPa, t): 
-    sigma_rM_cyl = -P_int_MPa/2                        #Compressive
-    sigma_tM_cyl = R_int*P_int_MPa/t                   
-    sigma_zM_cyl = R_int*P_int_MPa/(2*t)
-    sigma_tM_sph = R_int*P_int_MPa/(2*t)
-    return (sigma_rM_cyl, sigma_tM_cyl, sigma_zM_cyl, sigma_tM_sph)
-
-# ============================
-# Mariotte Solution 
-# ============================
-if Mar_criterion > 5:
-    while True:
-        try:
-            Mariotte_flag = int(input("\nWith an initial thickness value of %.3f m, the vessel can be considered thin. Are you interested in visualizing the Mariotte solution for stress? (1: Yes, 0: No): " %t))
-            if Mariotte_flag not in (0, 1):
-                raise RuntimeError("Invalid input! Please enter either 0 or 1.")
-            break  
-        except ValueError:
-            print("Please enter a valid integer.")
-        except RuntimeError as e:
-            print(e)
-    sigma_M = sigmaM_func(R_int, P_int_MPa, t)
-    sigma_rM_cyl = sigma_M[0]
-    sigma_tM_cyl = sigma_M[1]
-    sigma_zM_cyl = sigma_M[2]
-
-    if Mariotte_flag == 1:
-
-        # ======================================
-        # Plotting the stress profiles: Mariotte
-        # ======================================
-        plt.figure(figsize=(15,10))
-        plt.axvline(x = R_int, color='black', linewidth='3', label='Vessel Inner Surface')
-        plt.axvline(x = R_ext, color='black', linewidth='3', label='Vessel Outer Surface')
-        plt.axhline(y = sigma_rM_cyl, color='red', label='Radial (r) Stress Mariotte')
-        plt.axhline(y = sigma_tM_cyl, color='blue', label=r'Hoop ($\theta$) Stress Mariotte')
-        plt.axhline(y = sigma_zM_cyl, color='green', label='Axial (z) Stress Mariotte')
-        plt.plot(r, np.zeros(len(r)), color='black', linewidth='1', label='y=0')
-        plt.xlabel('Radius (m)')
-        plt.ylabel('Stress (MPa)')
-        plt.title('Stress Distribution in a thin-walled cylinder - Mariotte Solution')
-        plt.legend()
-        plt.grid()
-        plt.show()
-
-    elif Mariotte_flag == 0:
-        print("Skipping Mariotte solution.")
-else:
-    print("\nThe cylinder can't be considered thin. Skipping Mariotte solution.")
-    Mariotte_flag = 0
-
-# ============================ 
-# General Lamé Solution 
-# ============================
-def sigmaL_func(r, P_int_MPa, P_cpp_MPa, verbose): #the "verbose" variable is used to avoid printing the hydrostatic stress condition information for every iteration of the thermal shield loop
-    
-    A = ((P_int_MPa*(R_int**2))-(P_cpp_MPa*(R_ext**2)))/((R_ext**2)-(R_int**2))
-    B = (((R_int**2)*(R_ext**2))/((R_ext**2)-(R_int**2)))*(P_int_MPa-P_cpp_MPa)
-    sigma_rL = lambda r: A - B/(r**2)
-    sigma_tL = lambda r: A + B/(r**2)
-
-    if P_int == P_cpp:
-        if verbose:
-            print("\nInternal and external pressures are equal: hydrostatic stress condition is verified. Skipping.")    #Hydrostatic Stress Condition
-        eps_z_a = (2*nu-1)*rho_ii*P_cpp_MPa/E
-        eps_z_b = (1-2*nu)*rho_i*P_int_MPa/E
-
-    elif P_int != P_cpp:
-        if flag_eps == 1:                                                                                           #Plane Stress
-            eps_z_a = 2*nu*rho_ii*P_cpp_MPa/E
-            eps_z_b = -2*nu*rho_i*P_int_MPa/E
-        elif flag_eps == 0:                                                                                         #Plane Strain
-            eps_z_a = 0
-            eps_z_b = 0 
-
-    sigma_zL_a = E*eps_z_a - 2*nu*rho_ii*P_cpp_MPa  #a) P_int = 0
-    sigma_zL_b = E*eps_z_b + 2*nu*rho_i*P_int_MPa   #b) P_cpp = 0
-    return (sigma_rL(r), sigma_tL(r), sigma_zL_a + sigma_zL_b)              #Superposition Principle
-
-sigma_L = sigmaL_func(r, P_int_MPa, P_cpp_MPa, 1)
-sigma_rL = sigma_L[0]  
-sigma_tL = sigma_L[1]
-sigma_zL = sigma_L[2]
-
-if Mariotte_flag == 1:
-    while True:
-        try:
-            Lame_flag = int(input("\nThe Mariotte solution for a thin cylinder has been visualized. Are you interested in visualizing the more general Lamé solution? (1: Yes, 0: No): "))
-            if Lame_flag not in (0, 1):
-                raise RuntimeError("Invalid input! Please enter either 0 or 1.")
-            break  
-        except ValueError:
-            print("Please enter a valid integer.")
-        except RuntimeError as e:
-            print(e)
-
-elif Mariotte_flag == 0:
-    print("Visualizing general Lamé solution.")
-    Lame_flag = 1
-
-if Lame_flag == 1:
-    # ======================================
-    # Plotting the stress profiles: Lamé
-    # ======================================
-    plt.figure(figsize=(15,10))
-    plt.axvline(x = R_int, color='black', linewidth='3', label='Vessel Inner Surface')
-    plt.axvline(x = R_ext, color='black', linewidth='3', label='Vessel Outer Surface')
-    plt.plot(r, sigma_rL, label='Radial (r) Stress Lamé')
-    plt.plot(r, sigma_tL, label=r'Hoop ($\theta$) Stress Lamé')
-    plt.axhline(y = sigma_zL, color='green', label='Axial (z) Stress Lamé')
-    plt.axhline(y = 0, color='black', linewidth='1', label='y=0')
-    plt.xlabel('Radius (m)')
-    plt.ylabel('Stress (MPa)')
-    plt.title('Stress Distribution in the cylinder wall - Lamé Solution')
-    plt.legend()
-    plt.grid()
-    plt.show()
-
-elif Lame_flag == 0:
-    print("Skipping Lamé solution.")
     
 # ======================================
-# Thermal Shield Check
-# ======================================    
+# Heat Source Check
+# ======================================
 while True:
     try:
-        TS_flag = int(input("\nDo you want to consider the presence of a thermal shield between the barrel and the vessel? (1: Yes, 0: No): "))
-        if TS_flag not in (0, 1):
+        q_0_flag = int(input("\nDo you want to account for the presence of the volumetric heat source q0 inside the vessel's wall? (1: Yes, 0: No): "))
+        if q_0_flag not in (0, 1):
             raise RuntimeError("Invalid input! Please enter either 0 or 1.")
         break  
     except ValueError:
         print("Please enter a valid integer.")
     except RuntimeError as e:
         print(e)
-
-# =============================================================================================================================================================
-# PURELY THERMAL PROBLEM - POWER IMPOSED - NO THERMAL SHIELD
-# =============================================================================================================================================================
-if TS_flag == 0:
-    # ============================
-    # Computed additional data without the thermal shield
-    # ============================
-    v = m_flr/(rho*np.pi*((D_vess_int**2)-(D_barr_ext**2))/4)     #m/s
-    Phi_0V = Phi_0                                                #All gamma rays reach the vessel
-
-    # ======================================
-    # Radiation-induced heating in the vessel
-    # ======================================
-    Phi = lambda r: Phi_0V*np.exp(-mu_st*(r-R_int))    #1/(m²·s)
-    I = lambda r: E_y_J*Phi(r)*B                       #W/(m²)
-    q_0 = B*Phi_0V*E_y_J*mu_st                         #W/(m³)
-    q_iii = lambda r: q_0*np.exp(-mu_st*(r-R_int))     #W/(m³)
-
-    # ======================================
-    # Plotting the volumetric heat source profiles 
-    # ======================================
+        
+# ======================================
+# Thermal Shield Check   -   Only if volumetric heat source is considered
+# ====================================== 
+if q_0_flag == 1:   
     while True:
         try:
-            hs_flag = int(input("\nDo you want to visualize the volumetric heat source q0 inside the vessel's wall? (1: Yes, 0: No): "))
-            if hs_flag not in (0, 1):
+            TS_flag = int(input("\nDo you want to consider the presence of a thermal shield between the barrel and the vessel? (1: Yes, 0: No): "))
+            if TS_flag not in (0, 1):
                 raise RuntimeError("Invalid input! Please enter either 0 or 1.")
             break  
         except ValueError:
             print("Please enter a valid integer.")
         except RuntimeError as e:
             print(e)
+elif q_0_flag == 0:
+    TS_flag = 0
 
-    if hs_flag == 1:
-        plt.figure(figsize=(10,10))
+# =============================================================================================================================================================
+# THERMOMECHANICAL PROBLEM - POWER IMPOSED - NO THERMAL SHIELD
+# =============================================================================================================================================================
+if TS_flag == 0:
+    
+    # ============================
+    # Computed additional data without the thermal shield
+    # ============================
+    v = m_flr/(rho*np.pi*((D_vess_int**2)-(D_barr_ext**2))/4)     #m/s
+    Phi_0V = Phi_0                                                #All gamma rays reach the vessel
+    
+    # =============================================================================================================================================================
+    # PURELY MECHANICAL PROBLEM
+    # =============================================================================================================================================================
+    t = 0.15                                    #m
+    R_ext = R_int + t                           #m
+    D_vess_ext = 2*R_ext                        #m
+    rho_ii = (R_ext**2)/(R_ext**2 - R_int**2)
+    rho_i = (R_int**2)/(R_ext**2 - R_int**2)
+    Mar_criterion = R_int/t
+    W = (DeltaD_max/1000)/((D_vess_int+D_vess_ext)/2)
+    
+    dr = 100
+    r = np.linspace(R_int, R_ext, dr)
+
+    # ============================
+    # Mariotte Solution for a thin-walled cylinder (R_int = R_ext = R)
+    # ============================
+    def sigmaM_func (R_int, P_int_MPa, t): 
+        sigma_rM_cyl = -P_int_MPa/2                        #Compressive
+        sigma_tM_cyl = R_int*P_int_MPa/t                   
+        sigma_zM_cyl = R_int*P_int_MPa/(2*t)
+        sigma_tM_sph = R_int*P_int_MPa/(2*t)
+        return (sigma_rM_cyl, sigma_tM_cyl, sigma_zM_cyl, sigma_tM_sph)
+
+    if Mar_criterion > 5:
+        while True:
+            try:
+                Mariotte_flag = int(input("\nWith an initial thickness value of %.3f m, the vessel can be considered thin. Are you interested in visualizing the Mariotte solution for stress? (1: Yes, 0: No): " %t))
+                if Mariotte_flag not in (0, 1):
+                    raise RuntimeError("Invalid input! Please enter either 0 or 1.")
+                break  
+            except ValueError:
+                print("Please enter a valid integer.")
+            except RuntimeError as e:
+                print(e)
+        sigma_M = sigmaM_func(R_int, P_int_MPa, t)
+        sigma_rM = sigma_M[0]
+        sigma_tM = sigma_M[1]
+        sigma_zM = sigma_M[2]
+
+        if Mariotte_flag == 1:
+
+            # ======================================
+            # Plotting the stress profiles: Mariotte
+            # ======================================
+            os.makedirs(NTS_plots_directory, exist_ok=True)
+            plot_file_path = os.path.join(NTS_plots_directory, "Stress Distribution in a thin-walled cylinder - Mariotte Solution.png")
+            plt.figure(figsize=(15,10))
+            plt.axvline(x = R_int, color='black', linewidth='3', label='Vessel Inner Surface')
+            plt.axvline(x = R_ext, color='black', linewidth='3', label='Vessel Outer Surface')
+            plt.axhline(y = sigma_rM, color='red', label='Radial (r) Stress Mariotte')
+            plt.axhline(y = sigma_tM, color='blue', label=r'Hoop ($\theta$) Stress Mariotte')
+            plt.axhline(y = sigma_zM, color='green', label='Axial (z) Stress Mariotte')
+            plt.plot(r, np.zeros(len(r)), color='black', linewidth='1', label='y=0')
+            plt.xlabel('Radius (m)')
+            plt.ylabel('Stress (MPa)')
+            plt.title('Stress Distribution in a thin-walled cylinder - Mariotte Solution')
+            plt.legend()
+            plt.grid()
+            plt.savefig(plot_file_path)
+            plt.show()
+            plt.close()
+
+        elif Mariotte_flag == 0:
+            print("Skipping Mariotte solution.")
+    else:
+        print("\nThe cylinder can't be considered thin. Skipping Mariotte solution.")
+        Mariotte_flag = 0
+
+    # ============================ 
+    # General Lamé Solution 
+    # ============================
+    def sigmaL_func(r, P_int_MPa, P_cpp_MPa, verbose): #the "verbose" variable is used to avoid printing the hydrostatic stress condition information for every iteration of the thermal shield loop
+        
+        A = ((P_int_MPa*(R_int**2))-(P_cpp_MPa*(R_ext**2)))/((R_ext**2)-(R_int**2))
+        B = (((R_int**2)*(R_ext**2))/((R_ext**2)-(R_int**2)))*(P_int_MPa-P_cpp_MPa)
+        sigma_rL = lambda r: A - B/(r**2)
+        sigma_tL = lambda r: A + B/(r**2)
+
+        if P_int == P_cpp:
+            if verbose:
+                print("\nInternal and external pressures are equal: hydrostatic stress condition is verified. Skipping.")    #Hydrostatic Stress Condition
+            eps_z_a = (2*nu-1)*rho_ii*P_cpp_MPa/E
+            eps_z_b = (1-2*nu)*rho_i*P_int_MPa/E
+
+        elif P_int != P_cpp:
+            if flag_eps == 1:                                                                                           #Plane Stress
+                eps_z_a = 2*nu*rho_ii*P_cpp_MPa/E
+                eps_z_b = -2*nu*rho_i*P_int_MPa/E
+            elif flag_eps == 0:                                                                                         #Plane Strain
+                eps_z_a = 0
+                eps_z_b = 0 
+
+        sigma_zL_a = E*eps_z_a - 2*nu*rho_ii*P_cpp_MPa  #a) P_int = 0
+        sigma_zL_b = E*eps_z_b + 2*nu*rho_i*P_int_MPa   #b) P_cpp = 0
+        return (sigma_rL(r), sigma_tL(r), sigma_zL_a + sigma_zL_b)              #Superposition Principle
+
+    sigma_L = sigmaL_func(r, P_int_MPa, P_cpp_MPa, 1)
+    sigma_rL = sigma_L[0]  
+    sigma_tL = sigma_L[1]
+    sigma_zL = sigma_L[2]
+
+    if Mariotte_flag == 1:
+        while True:
+            try:
+                Lame_flag = int(input("\nThe Mariotte solution for a thin cylinder has been visualized. Are you interested in visualizing the more general Lamé solution? (1: Yes, 0: No): "))
+                if Lame_flag not in (0, 1):
+                    raise RuntimeError("Invalid input! Please enter either 0 or 1.")
+                break  
+            except ValueError:
+                print("Please enter a valid integer.")
+            except RuntimeError as e:
+                print(e)
+
+    elif Mariotte_flag == 0:
+        print("Visualizing general Lamé solution.")
+        Lame_flag = 1
+
+    if Lame_flag == 1:
+        # ======================================
+        # Plotting the stress profiles: Lamé
+        # ======================================
+        os.makedirs(NTS_plots_directory, exist_ok=True)
+        plot_file_path = os.path.join(NTS_plots_directory, "Stress Distribution in the cylinder wall - Lamé Solution.png")
+        plt.figure(figsize=(15,10))
         plt.axvline(x = R_int, color='black', linewidth='3', label='Vessel Inner Surface')
         plt.axvline(x = R_ext, color='black', linewidth='3', label='Vessel Outer Surface')
-        plt.plot(r, q_iii(r), 'g', label='Radial (r) Volumetric heat source profile')
-        plt.plot(r[0], q_iii(r[0]), 'or', label='Vessel Inner Surface Value')
-        plt.plot(r[-1], q_iii(r[-1]), 'or', label='Vessel-Insulation Interface Value')
+        plt.plot(r, sigma_rL, label='Radial (r) Stress Lamé')
+        plt.plot(r, sigma_tL, label=r'Hoop ($\theta$) Stress Lamé')
+        plt.axhline(y = sigma_zL, color='green', label='Axial (z) Stress Lamé')
         plt.axhline(y = 0, color='black', linewidth='1', label='y=0')
         plt.xlabel('Radius (m)')
-        plt.ylabel(r'$q_0$ (W/m$^3$)')
-        plt.title('Volumetric heat source profile across the vessel wall')
+        plt.ylabel('Stress (MPa)')
+        plt.title('Stress Distribution in the cylinder wall - Lamé Solution')
         plt.legend()
         plt.grid()
+        plt.savefig(plot_file_path)
         plt.show()
+        plt.close()
 
+    elif Lame_flag == 0:
+        print("Skipping Lamé solution.")
+    
+    # =============================================================================================================================================================
+    # PURELY THERMAL PROBLEM
+    # =============================================================================================================================================================
+
+    # ======================================
+    # Radiation-induced heating in the vessel
+    # ======================================
+    Phi = lambda r: Phi_0V*np.exp(-mu_st*(r-R_int))    #1/(m²·s)
+    I = lambda r: E_y_J*Phi(r)*B                       #W/(m²)
+    q_0 = B*Phi_0V*E_y_J*mu_st*q_0_flag                #W/(m³)
+    q_iii = lambda r: q_0*np.exp(-mu_st*(r-R_int))     #W/(m³)
+    
+    if q_0_flag == 1:
+        # ======================================
+        # Plotting the volumetric heat source profiles 
+        # ======================================
+        while True:
+            try:
+                hs_flag = int(input("\nDo you want to visualize the volumetric heat source q0 inside the vessel's wall? (1: Yes, 0: No): "))
+                if hs_flag not in (0, 1):
+                    raise RuntimeError("Invalid input! Please enter either 0 or 1.")
+                break  
+            except ValueError:
+                print("Please enter a valid integer.")
+            except RuntimeError as e:
+                print(e)
+
+        if hs_flag == 1:
+            os.makedirs(NTS_plots_directory, exist_ok=True)
+            plot_file_path = os.path.join(NTS_plots_directory, "Volumetric heat source profile across the vessel wall.png")
+            plt.figure(figsize=(10,10))
+            plt.axvline(x = R_int, color='black', linewidth='3', label='Vessel Inner Surface')
+            plt.axvline(x = R_ext, color='black', linewidth='3', label='Vessel Outer Surface')
+            plt.plot(r, q_iii(r)/1e6, 'g', label='Radial (r) Volumetric heat source profile')
+            plt.plot(r[0], q_iii(r[0])/1e6, 'or', label='Vessel Inner Surface Value')
+            plt.plot(r[-1], q_iii(r[-1])/1e6, 'or', label='Vessel-Insulation Interface Value')
+            plt.axhline(y = 0, color='black', linewidth='1', label='y=0')
+            plt.xlabel('Radius (m)')
+            plt.ylabel(r'$q_0$ (MW/m$^3$)')
+            plt.title('Volumetric heat source profile across the vessel wall')
+            plt.legend()
+            plt.grid()
+            plt.savefig(plot_file_path)
+            plt.show()
+            plt.close()
+    
     # ======================================
     # Dimensionless numbers and heat transfer coefficients
     # ======================================
     Pr = (Cp*mu)/k                                                                              #Prandtl number
     Pr_cpp = (Cp_cpp*mu_cpp)/k_cpp                                                              #Prandtl number of the containment water  
-
                                        
     Re = (rho*v*(D_vess_int-D_barr_ext))/mu                                                     #Reynolds number
-    Nu_1 = 0.023*(Re**0.8)*(Pr**0.4)                                                             #Dittus-Boelter equation for forced convection
+    Nu_1 = 0.023*(Re**0.8)*(Pr**0.4)                                                            #Dittus-Boelter equation for forced convection
     h_1 = (Nu_1*k)/(D_vess_int-D_barr_ext)                                                      #W/(m²·K)
 
     Gr = (rho_cpp**2)*9.81*beta_cpp*DeltaT*(L**3)/(mu_cpp**2)                                   #Grashof number (Uses the external diameter as characteristic length, might wanna use L though?)
@@ -371,24 +421,12 @@ if TS_flag == 0:
     R_th_2_tot = (1/(2*np.pi*(R_ext + t_th_ins)*L)) * ((((R_ext + t_th_ins)/k_th_ins)*np.log((R_ext + t_th_ins)/R_ext)) + (1/h_2))                          #Thermal Resistance of the insulation layer + natural convection outside the vessel
     u_2 = 1/(2*np.pi*(R_ext + t_th_ins)*L*R_th_2_tot)                                           #W/(m²·K)   -   Overall heat transfer coefficient outside the vessel
 
-    while True:
-        try:
-            q_0_flag = int(input("\nDo you want to account for the presence of the volumetric heat source q0 inside the vessel's wall? (1: Yes, 0: No): "))
-            if q_0_flag not in (0, 1):
-                raise RuntimeError("Invalid input! Please enter either 0 or 1.")
-            break  
-        except ValueError:
-            print("Please enter a valid integer.")
-        except RuntimeError as e:
-            print(e)
-    q_0 = q_0*q_0_flag
-
     # ======================================
     # Discretization Check
     # ======================================
     while True:
         try:
-            Disc_flag = int(input("Do you want to use a discretization approach along z? (1: Yes, 0: No): "))
+            Disc_flag = int(input("Do you want to adopt a discretization approach along z? (1: Yes, 0: No): "))
             if Disc_flag not in (0, 1):
                 raise RuntimeError("Invalid input! Please enter either 0 or 1.")
             break  
@@ -491,9 +529,13 @@ if TS_flag == 0:
                 print("Please enter a valid integer.")
             except RuntimeError as e:
                 print(e)
-        
+                
+        if (T_vessel_max - 273.15) > T_creep:
+            creep_flag_V = 1
         if adiab_flag == 0:
             if T_pl_flag == 1:
+                os.makedirs(NTS_plots_directory, exist_ok=True)
+                plot_file_path = os.path.join(NTS_plots_directory, "Wall Temperature Profile, Average and Maximum.png")
                 plt.figure(figsize=(10,10))
                 plt.axvline(x = R_int, color='black', linewidth='3', label='Vessel Inner Surface')
                 plt.axvline(x = R_ext, color='black', linewidth='3', label='Vessel Outer Surface')
@@ -502,10 +544,12 @@ if TS_flag == 0:
                 plt.axhline(y = T_vessel_avg - 273.15, color='green', label='Wall Average T')
                 plt.xlabel('Radius (m)')
                 plt.ylabel('T (°C)')
-                plt.title('Wall Temperature Profile, Average and Maximum ')
+                plt.title('Wall Temperature Profile, Average and Maximum')
                 plt.legend()
                 plt.grid()
+                plt.savefig(plot_file_path)
                 plt.show()
+                plt.close()
             
         elif adiab_flag == 1:
             if T_pl_flag == 1:
@@ -513,6 +557,8 @@ if TS_flag == 0:
                 # ======================================
                 # Under Adiabatic Outer Wall Approximation
                 # ======================================
+                os.makedirs(NTS_plots_directory, exist_ok=True)
+                plot_file_path = os.path.join(NTS_plots_directory, "Wall Temperature Profile, Average and Maximum under AOW Approximation.png")
                 plt.figure(figsize=(10,10))
                 plt.axvline(x = R_int, color='black', linewidth='3', label='Vessel Inner Surface')
                 plt.axvline(x = R_ext, color='black', linewidth='3', label='Vessel Outer Surface')
@@ -521,10 +567,12 @@ if TS_flag == 0:
                 plt.axhline(y = T_vessel_avg - 273.15, color='green', label='Wall Average T')
                 plt.xlabel('Radius (m)')
                 plt.ylabel('T (°C)')
-                plt.title('Wall Temperature Profile, Average and Maximum under AOW Approximation ')
+                plt.title('Wall Temperature Profile, Average and Maximum under AOW Approximation')
                 plt.legend()
                 plt.grid()
+                plt.savefig(plot_file_path)
                 plt.show()
+                plt.close()
     
         # ======================================
         # Vessel's Wall Thermal stresses computation
@@ -584,6 +632,8 @@ if TS_flag == 0:
                 print(e)
 
         if sigma_th_pl_flag == 1:
+            os.makedirs(NTS_plots_directory, exist_ok=True)
+            plot_file_path = os.path.join(NTS_plots_directory, "Wall Thermal Stress Profiles and Maximum Hoop Stress.png")
             plt.figure(figsize=(10,10))
             plt.axvline(x = R_int, color='black', linewidth='3', label='Vessel Inner Surface')
             plt.axvline(x = R_ext, color='black', linewidth='3', label='Vessel Outer Surface')
@@ -601,14 +651,16 @@ if TS_flag == 0:
             plt.title('Wall Thermal Stress Profiles and Maximum Hoop Stress')
             plt.legend()
             plt.grid()
+            plt.savefig(plot_file_path)
             plt.show()
+            plt.close()
 
         # ======================================
         # Principal stresses sum and elastic regime verification in the vessel
         # ======================================
-        sigma_r_totM = sigma_rM_cyl + sigma_r_th_V
-        sigma_t_totM = sigma_tM_cyl + sigma_t_th_V
-        sigma_z_totM = sigma_zM_cyl + sigma_z_th_V
+        sigma_r_totM = sigma_rM + sigma_r_th_V
+        sigma_t_totM = sigma_tM + sigma_t_th_V
+        sigma_z_totM = sigma_zM + sigma_z_th_V
         
         sigma_r_totL = sigma_rL + sigma_r_th_V
         sigma_t_totL = sigma_tL + sigma_t_th_V
@@ -641,16 +693,23 @@ if TS_flag == 0:
                 print(e)
 
         if des_pl_flag == 1:
+            os.makedirs(NTS_plots_directory, exist_ok=True)
+            plot_file_path = os.path.join(NTS_plots_directory, "Design Curves.png")
             plt.figure(figsize=(10,10))
+            plt.xlim(ba_ratio_plot[0], ba_ratio_plot[-1])
             plt.plot(ba_ratio_plot, L_Interpolator(ba_ratio_plot), 'k', label=f'Iso-mu = {mu_L} 1/m')
             plt.plot(ba_ratio_plot, R_Interpolator(ba_ratio_plot), 'k', label=f'Iso-mu = {mu_R} 1/m')
+            plt.text(ba_ratio_plot[-1]+0.001, L_Interpolator(ba_ratio_plot)[-1], f'Iso-mu = {mu_L}', color='black', fontsize=10)
+            plt.text(ba_ratio_plot[-1]+0.001, R_Interpolator(ba_ratio_plot)[-1], f'Iso-mu = {mu_R}', color='black', fontsize=10)
             plt.plot(R_ext/R_int, sigmaT,'or', label=r'Current $\sigma$$_T$')
             plt.xlabel('R$_{ext}$/R$_{int}$')
             plt.ylabel(r'$\sigma$$_T$')
             plt.title('Design curves')
             plt.legend()
             plt.grid()
+            plt.savefig(plot_file_path)
             plt.show()
+            plt.close()
         
         # ============================ 
         # Yield Stress and Stress Intensity Data Interpolation
@@ -667,8 +726,42 @@ if TS_flag == 0:
         Intensity_Interpolator = lambda x: np.polyval(p_intensity, x)                   #Stress Intensity Interpolation Polynomial (n-1)
         Intensity_CubicSpline = interpolate.CubicSpline(T_thr, sigma_in)                #Stress Intenisty Cubic Spline Interpolation
         Stress_Intensity = Intensity_CubicSpline(T_des_vessel_C)
-        sigma_allowable = 1.5 * Stress_Intensity  #MPa
+        sigma_allowable = Stress_Intensity                                              #MPa
 
+        """
+        # ======================================
+        # Vessel Thermomechanical Integrity Verification    -   Lamé + Thermal stresses
+        # ======================================
+        if max(abs(sigma_r_totL)) > 3*Stress_Intensity or max(abs(sigma_t_totL)) > 3*Stress_Intensity or max(abs(sigma_z_totL)) > 3*Stress_Intensity:
+            flag_primsec = 1
+        else:
+            flag_primsec = 0
+
+        if max(abs(sigma_rL)) > Stress_Intensity or max(abs(sigma_tL)) > Stress_Intensity or sigma_zL > Stress_Intensity:
+            flag_prim = 1
+        else:
+            flag_prim = 0
+        
+        if flag_primsec == 1 or flag_prim == 1:
+            print("\nThe current stress state in the vessel is not acceptable. \nPrimary + Secondary Stresses flag: %d \nPrimary Stresses flag: %d" %(flag_primsec, flag_prim))
+            print("Absolute value of the maximum radial thermal stress: %.3f MPa\nAbsolute value of the maximum hoop thermal stress: %.3f MPa\nAbsolute value of the maximum axial thermal stress: %.3f MPa" %(abs(max(sigma_r_th_S)),abs(max(sigma_t_th_S)),abs(max(sigma_z_th_S))))
+            continue
+        elif flag_primsec == 0 and flag_prim == 0:
+            vessel_flag = 1
+        """ 
+        # ======================================
+        # Vessel Thermomechanical Integrity Verification    -   Mariotte + Thermal stresses
+        # ======================================
+        if max(abs(sigma_r_totM)) > 3*Stress_Intensity or max(abs(sigma_t_totM)) > 3*Stress_Intensity or max(abs(sigma_z_totM)) > 3*Stress_Intensity:
+            flag_primsec = 1
+        else:
+            flag_primsec = 0
+
+        if sigma_rM > Stress_Intensity or sigma_tM > Stress_Intensity or sigma_zM > Stress_Intensity:
+            flag_prim = 1
+        else:
+            flag_prim = 0
+            
         # ======================================
         # Without thermal shield
         # ======================================
@@ -693,6 +786,8 @@ if TS_flag == 0:
             # ============================ 
             # Yield Stress and Stress Intensity Data Plots  -   Vessel
             # ============================
+            os.makedirs(NTS_plots_directory, exist_ok=True)
+            plot_file_path = os.path.join(NTS_plots_directory, "Yield Stress and Stress Intensity Data.png")
             plt.figure(figsize = (12,10))
             plt.subplot(1,2,1)
             plt.plot(T_thr, sigma_y, 'sk', label = 'Yield Stress Data')
@@ -704,7 +799,6 @@ if TS_flag == 0:
             plt.title("Yield Stress Data and Interpolation VS Temperature", fontsize = 10)
             plt.legend()
             plt.grid()
-            plt.tight_layout()
             
             plt.subplot(1,2,2)
             plt.plot(T_thr, sigma_in, 'sk', label = 'Stress Intensity Data')
@@ -717,7 +811,9 @@ if TS_flag == 0:
             plt.legend()
             plt.grid()
             plt.tight_layout()
+            plt.savefig(plot_file_path)
             plt.show()
+            plt.close()
     
         # ============================ 
         # Sizing of a thick cylinder under external pressure
@@ -839,6 +935,8 @@ if TS_flag == 0:
                 # ============================ 
                 # Plastic collapse and buckling Plots
                 # ============================
+                os.makedirs(NTS_plots_directory, exist_ok=True)
+                plot_file_path = os.path.join(NTS_plots_directory, "Plastic Collapse and Buckling Curves.png")
                 plt.figure(figsize = (8, 8))
                 plt.semilogy(Dt_ratio_plot, p_E_fun(Dt_ratio_plot), 'blue', label='p$_E$')
                 plt.semilogy(Dt_ratio_plot, q_E_fun(Dt_ratio_plot), '--b', label='q$_E$')
@@ -851,7 +949,9 @@ if TS_flag == 0:
                 plt.title("Plastic Collapse and Buckling Curves")
                 plt.legend()
                 plt.grid()
+                plt.savefig(plot_file_path)
                 plt.show()
+                plt.close()
 
         elif ThinTubes_flag == 1 and Corradi_flag == 1:
             while True:
@@ -870,6 +970,8 @@ if TS_flag == 0:
                 # ============================ 
                 # Plastic collapse and buckling Plots
                 # ============================
+                os.makedirs(NTS_plots_directory, exist_ok=True)
+                plot_file_path = os.path.join(NTS_plots_directory, "Plastic Collapse and Buckling Curves - With Corradi.png")
                 plt.figure(figsize = (8, 8))
                 plt.subplot(1,2,1)
                 plt.semilogy(Dt_ratio_plot, p_E_fun(Dt_ratio_plot), 'blue', label='p$_E$')
@@ -884,7 +986,6 @@ if TS_flag == 0:
                 plt.title("Plastic Collapse and Buckling Curves")
                 plt.legend()
                 plt.grid()
-                plt.tight_layout()
 
                 plt.subplot(1,2,2)
                 plt.plot(Dt_ratio_plot, Corradi(Dt_ratio_plot)[3], 'k', label=r'Corradi $\mu$')
@@ -894,96 +995,225 @@ if TS_flag == 0:
                 plt.legend()
                 plt.grid()
                 plt.tight_layout()
+                plt.savefig(plot_file_path)
                 plt.show()
+                plt.close()
         
         # ============================ 
-        # Final Results
+        # Final results printing and saving
         # ============================
-        print("\n\n\n###################################################### Final  Results ######################################################")
-        print("\nCurrent vessel wall thickness: %.3f m" %t)
-        print("Vessel max ovality W: %.5f = %.3f%%" %(W,W*100))
-        print("Maximum permissible deviation from theoretical form for the vessel according to NB-4221.2: e = %.3f m" %(0.3*t))
-        print("Maximum difference in cross-sectional diameters: %.3f mm" %DeltaD_max)
+        if not os.path.exists(NTS_directory_path):                                  # Create the directory if it doesn't exist
+            os.makedirs(NTS_directory_path, exist_ok=True)                          # Exist_ok=True avoids error if directory already exists
+        file_path = os.path.join(NTS_directory_path, "Final_Results.txt")           # Specify the file path inside the newly created directory
+        
+        with open(file_path, "w") as file:
+            output_lines = []                                                       # Create a list to hold the printed messages
+            
+            # ============================
+            # Hypothesis and data: not printed, saved only
+            # ============================
+            output_lines.append("\n\n\n\n################################################### Hypothesis and data ####################################################")
+            output_lines.append("============================================================================================================================")
+            output_lines.append("\nDefault pressures assumed: %d" %Def_P_flag)
+            if Def_P_flag == 0:
+                output_lines.append("Internal pressure: %.3f MPa" %P_int)
+                output_lines.append("External pressure: %.3f MPa" %P_cpp)
+            if P_int != P_cpp:
+                output_lines.append("\nAssumed stress/strain condition (1: Plane Stress, 0: Plane Strain): %d" %flag_eps)
+            output_lines.append("\n============================================================================================================================")
+            output_lines.append("\nPresence of the volumetric heat source q0: %d" %q_0_flag)
+            if q_0_flag == 1:
+                output_lines.append("Presence of the thermal shield: %d" %TS_flag)
+            output_lines.append("\n============================================================================================================================")
+            output_lines.append("\nDiscretization along z: %d" %Disc_flag)
+            output_lines.append("Chosen temperature T1 to compute C1, C2 (0: T_in, 1: T_in + 10%%, 2: T_in + 20%%, 3: T_avg, 4: T_out_avg): %d" %T1_flag)
+            output_lines.append("Adiabatic Outer Wall approximation adopted: %d" %adiab_flag)
+            output_lines.append("Logarithmic Mean DeltaT approach adopted for inner heat flux computation: %d" %LogDelta_flag)
+            output_lines.append("\n============================================================================================================================")
+            output_lines.append("\nThin tube limits for Elastic Instability and Plastic Collapse adopted: %d" %ThinTubes_flag)
+            output_lines.append("Corradi Design Procedure adopted: %d" %Corradi_flag)
+            if Corradi_flag == 1:
+                output_lines.append("Safety coefficient adopted for the Corradi Design Procedure: %.3f" %s)
+            output_lines.append("\n============================================================================================================================")
+            
+            # ============================
+            # Actual Results
+            # ============================
+            output_lines.append("\n\n\n\n###################################################### Final  Results ######################################################")
+            output_lines.append("============================================================================================================================")
+            output_lines.append("\nCurrent vessel wall thickness: %.3f m" %t)
+            output_lines.append("Vessel max ovality W: %.5f = %.3f%%" %(W,W*100))
+            output_lines.append("Maximum permissible deviation from theoretical form for the vessel according to NB-4221.2: e = %.3f m" %(0.3*t))
+            output_lines.append("Maximum difference in cross-sectional diameters: %.3f mm" %DeltaD_max)
+            output_lines.append("\n============================================================================================================================")
 
-        # ============================ 
-        # Heat Transfer Results
-        # ============================
-        print("\n################################################## Heat transfer results ###################################################")
-        print("\nVolumetric heat source at the vessel inner surface: %.3f W/m³" %q_iii(r[0]))
-        print("Volumetric heat source at the vessel-insulation interface: %.3f W/m³" %q_iii(r[-1]))
-        print("\nHeat transfer coefficient h1 = %.3f W/(m²·K)" %h_1)
-        print("Heat transfer coefficient h2 = %.3f W/(m²·K)" %h_2)
-        print("Overall heat transfer coefficient outside the vessel u2 = %.3f W/(m²·K)" %u_2)
-        if LogDelta_flag == 1:
-            print("\nThermal power flux on the inner vessel surface - Logarithmic Mean DeltaT Approach: %.3f kW/m²" %q_s1_log)
-        print("\nThermal power flux on the inner vessel surface: %.3f kW/m²" %q_s1)
-        print("Thermal power flux on the outer vessel surface: %.3f kW/m²" %q_s2)
-        
-        # ============================ 
-        # Temperature Results
-        # ============================
-        print("\n####################################################### Temperatures #######################################################")
-        if adiab_flag == 0:
-            print("\nAverage Vessel Temperature (numerical integration): %.3f °C" %(T_vessel_avg - 273.15))
-            #print("Average Vessel Temperature (analytical integration): %.3f °C" %T_vessel_avg_2)
-            print("Maximum Vessel Temperature: %.3f °C at r = %.3f m" %(T_vessel_max - 273.15, r_T_vessel_max))
-            print("Vessel Temperature at the inner surface: %-3f °C at r = %.3f m" %(T_vessel(r)[0] - 273.15, r[0]))
-            print("Vessel Temperature at the outer surface: %-3f °C at r = %.3f m" %(T_vessel(r)[-1] - 273.15, r[-1]))
-        elif adiab_flag == 1:
-            print("\nAverage Vessel Temperature under Adiabatic Outer Wall approximation (numerical integration): %.3f °C" %(T_vessel_avg - 273.15))
-            #print("Average Vessel Temperature under Adiabatic Outer Wall approximation (analytical integration): %.3f °C" %T_vessel_avg_2)
-            print("Maximum Vessel Temperature under Adiabatic Outer Wall approximation: %.3f °C at r = %.3f m" %(T_vessel_max - 273.15, r_T_vessel_max))
-            print("Vessel Temperature at the inner surface under Adiabatic Outer Wall approximation: %-3f °C at r = %.3f m" %(T_vessel(r)[0] - 273.15, r[0]))
-            print("Vessel Temperature at the outer surface under Adiabatic Outer Wall approximation: %-3f °C at r = %.3f m" %(T_vessel(r)[-1] - 273.15, r[-1]))
-        if (T_vessel_max - 273.15) > T_creep:
-            print("\nWARNING: The maximum vessel temperature T = %.3f °C exceeds the creep threshold temperature of %d °C!" %(T_vessel_max - 273.15, T_creep))
-        
-        # ============================ 
-        # Stress Results
-        # ============================
-        print("\n######################################################### Stresses #########################################################")
-        print("\nMaximum Thermal Hoop Stress in the vessel: %.3f Mpa at r = %.3f m" %(sigma_t_th_V_max, r_sigma_t_th_V_max))
-        #print("Maximum Thermal Hoop Stress (Simplified formula): %.3f Mpa at r = %.3f m" %(sigma_t_th_V_max_SIMP, r_sigma_t_th_V_max_SIMP))
-        print("Maximum thermal hoop stress via design curves: %.3f MPa" %sigma_t_th_max_DES)
-        
-        print("\nGuest-Tresca comparison stress in the vessel - Mariotte solution: %.3f Mpa" %sigma_cTR_M)
-        print("Guest-Tresca comparison stress in the vessel - Lamé solution: %.3f Mpa" %sigma_cTR_L)
-        
-        #print("\nVon Mises comparison Stress in the vessel - Mariotte solution: %.3f Mpa" %sigma_cVM_M)
-        #print("Von Mises comparison Stress in the vessel - Lamé solution: %.3f Mpa" %sigma_cVM_L)
-        
-        print("\nFor a design vessel temperature of %.3f °C: " %T_des_vessel_C)
-        print('Yield Stress: Sy'," = %.3f MPa" %Yield_stress)
-        print('Stress Intensity: Sm'," = %.3f MPa" %Stress_Intensity)
-        print("Allowable Stress: %.3f MPa" %sigma_allowable)
-        
-        # ============================ 
-        # Buckling Results
-        # ============================
-        print("\n######################################################### Buckling #########################################################")
-        print("\nAccording to the Corradi Design Procedure:")
-        print("The theoretical limit for collapse pressure, accounting for ovality, is: q_c = %.3f MPa = %.3f bar" %(Corradi_vessel[0], 10*Corradi_vessel[0]))
-        print("A safety factor s = %.3f was assumed. \nThe allowable external pressure is thus: q_a = %.3f MPa = %.3f bar" %(Corradi_vessel[2], Corradi_vessel[1], 10*Corradi_vessel[1]))
-        print("\n############################################################################################################################")
-        
-        if (P_cpp < 10*Corradi_vessel[1] and sigma_cTR_M < sigma_allowable and sigma_cTR_L < sigma_allowable):
-            print("\nThe given external pressure of %.3f bar is lower than the allowable pressure of %.3f bar" %(P_cpp, 10*Corradi_vessel[1]))
-            print("The comparison stress according to Tresca-Lamé Sc = %.3f MPa is lower than the allowable stress Sa = %.3f MPa\nThe comparison stress according to Tresca-Mariotte Sc = %.3f MPa is also lower than the allowable stress Sa = %.3f MPa" %(sigma_cTR_L, sigma_allowable, sigma_cTR_M, sigma_allowable))
-            if creep_flag_V == 1:
-                print("\nCreep might occur in the vessel due to high temperatures. Either an additional thermal shield, an increased thickness or both are required.")
-            elif creep_flag_V == 0:
-                print("There is no risk of thermal creep occurring in the vessel.")
-                print("The vessel's integrity is ensured: the design is correct!")
-            print("\n############################################################################################################################")
+            # ============================ 
+            # Heat Transfer Results
+            # ============================
+            output_lines.append("\n\n\n\n################################################## Heat transfer results ###################################################")
+            output_lines.append("============================================================================================================================")
+            output_lines.append("\nVolumetric heat source at the vessel inner surface: %.3f W/m³" %q_iii(r[0]))
+            output_lines.append("Volumetric heat source at the vessel-insulation interface: %.3f W/m³" %q_iii(r[-1]))
+            output_lines.append("\n============================================================================================================================")
+            output_lines.append("\nHeat transfer coefficient h1 = %.3f W/(m²·K)" %h_1)
+            output_lines.append("Heat transfer coefficient h2 = %.3f W/(m²·K)" %h_2)
+            output_lines.append("Overall heat transfer coefficient outside the vessel u2 = %.3f W/(m²·K)" %u_2)
+            if LogDelta_flag == 1:
+                output_lines.append("\nThermal power flux on the inner vessel surface - Logarithmic Mean DeltaT Approach: %.3f kW/m²" %q_s1_log)
+            output_lines.append("\n============================================================================================================================")
+            output_lines.append("\nThermal power flux on the inner vessel surface: %.3f kW/m²" %q_s1)
+            output_lines.append("Thermal power flux on the outer vessel surface: %.3f kW/m²" %q_s2)
+            output_lines.append("\n============================================================================================================================")
             
-        elif (P_cpp > 10*Corradi_vessel[1]):
-            print("\nThe given external pressure of %.3f bar is higher than the allowable pressure of %.3f bar: a change in thickness is required!" %(P_cpp, 10*Corradi_vessel[1]))
-            print("\n############################################################################################################################")
+            # ============================ 
+            # Temperature Results
+            # ============================
+            output_lines.append("\n\n\n\n####################################################### Temperatures #######################################################")
+            output_lines.append("============================================================================================================================")
+            if adiab_flag == 0:
+                output_lines.append("\nAverage Vessel Temperature (numerical integration): %.3f °C" %(T_vessel_avg - 273.15))
+                #output_lines.append("Average Vessel Temperature (analytical integration): %.3f °C" %T_vessel_avg_2)
+                output_lines.append("Maximum Vessel Temperature: %.3f °C at r = %.3f m" %(T_vessel_max - 273.15, r_T_vessel_max))
+                output_lines.append("Vessel Temperature at the inner surface: %-3f °C at r = %.3f m" %(T_vessel(r)[0] - 273.15, r[0]))
+                output_lines.append("Vessel Temperature at the outer surface: %-3f °C at r = %.3f m" %(T_vessel(r)[-1] - 273.15, r[-1]))
+                if creep_flag_V == 1:
+                    output_lines.append("\n============================================================================================================================")
+                    output_lines.append("WARNING: The maximum vessel temperature T = %.3f °C exceeds the creep threshold temperature of %d °C!" %(T_vessel_max - 273.15, T_creep))
+                    output_lines.append("============================================================================================================================")
+                elif creep_flag_V == 0:
+                    output_lines.append("\nThere is no risk of thermal creep occurring in the vessel.")
+                    output_lines.append("\n============================================================================================================================")
+                    
+            elif adiab_flag == 1:
+                output_lines.append("\nAverage Vessel Temperature under Adiabatic Outer Wall approximation (numerical integration): %.3f °C" %(T_vessel_avg - 273.15))
+                #output_lines.append("Average Vessel Temperature under Adiabatic Outer Wall approximation (analytical integration): %.3f °C" %T_vessel_avg_2)
+                output_lines.append("Maximum Vessel Temperature under Adiabatic Outer Wall approximation: %.3f °C at r = %.3f m" %(T_vessel_max - 273.15, r_T_vessel_max))
+                output_lines.append("Vessel Temperature at the inner surface under Adiabatic Outer Wall approximation: %-3f °C at r = %.3f m" %(T_vessel(r)[0] - 273.15, r[0]))
+                output_lines.append("Vessel Temperature at the outer surface under Adiabatic Outer Wall approximation: %-3f °C at r = %.3f m" %(T_vessel(r)[-1] - 273.15, r[-1]))
+                if creep_flag_V == 1:
+                    output_lines.append("\n============================================================================================================================")
+                    output_lines.append("WARNING: The maximum vessel temperature T = %.3f °C exceeds the creep threshold temperature of %d °C!" %(T_vessel_max - 273.15, T_creep))
+                    output_lines.append("============================================================================================================================")
+                elif creep_flag_V == 0:
+                    output_lines.append("\nThere is no risk of thermal creep occurring in the vessel.")
+                    output_lines.append("\n============================================================================================================================")               
             
-        elif (sigma_cTR_M > sigma_allowable or sigma_cTR_L > sigma_allowable):
-            print("\nEither the Tresca-Mariotte comparison stress Sc = %.3f MPa or the Tresca-Lamè comparison stress Sc = %.3f MPa is higher than the allowable stress Sa = %.3f MPa" %(sigma_cTR_M,sigma_cTR_L,sigma_allowable))
-            print("\n############################################################################################################################")
+            # ============================ 
+            # Stress Results
+            # ============================
+            output_lines.append("\n\n\n\n######################################################### Stresses #########################################################")
+            output_lines.append("============================================================================================================================")
+            output_lines.append("\nMaximum Thermal Hoop Stress in the vessel: %.3f Mpa at r = %.3f m" %(sigma_t_th_V_max, r_sigma_t_th_V_max))
+            #output_lines.append("Maximum Thermal Hoop Stress (Simplified formula): %.3f Mpa at r = %.3f m" %(sigma_t_th_V_max_SIMP, r_sigma_t_th_V_max_SIMP))
+            output_lines.append("Maximum thermal hoop stress via design curves: %.3f MPa" %sigma_t_th_max_DES)
+            output_lines.append("\n============================================================================================================================")
+            output_lines.append("\nGuest-Tresca comparison stress in the vessel - Mariotte solution: %.3f Mpa" %sigma_cTR_M)
+            output_lines.append("Guest-Tresca comparison stress in the vessel - Lamé solution: %.3f Mpa" %sigma_cTR_L)
+            output_lines.append("\n============================================================================================================================")
             
+            #output_lines.append("\nVon Mises comparison Stress in the vessel - Mariotte solution: %.3f Mpa" %sigma_cVM_M)
+            #output_lines.append("Von Mises comparison Stress in the vessel - Lamé solution: %.3f Mpa" %sigma_cVM_L)
+
+            output_lines.append("\nFor a design vessel temperature of %.3f °C: " %T_des_vessel_C)
+            output_lines.append("Yield Stress: Sy = %.3f MPa" %Yield_stress)
+            output_lines.append("Stress Intensity: Sm = %.3f MPa" %Stress_Intensity)
+            output_lines.append("Allowable Stress: %.3f MPa" %sigma_allowable)
+            output_lines.append("\n============================================================================================================================")
+            
+            # ============================ 
+            # Vessel
+            # ============================
+            output_lines.append("\n\n\n\n########################################################## Vessel ##########################################################")
+            output_lines.append("============================================================================================================================")
+            #Corradi_vessel = Corradi(np.array([Current_Slenderness]))
+            if flag_primsec == 1 or flag_prim == 1:
+                output_lines.append("\nAccording to Lamé:")
+                output_lines.append("Maximum absolute value of the total radial stress: %.3f MPa\nMaximum absolute value of the total hoop stress: %.3f MPa\nMaximum absolute value of the total axial stress: %.3f MPa" %(max(abs(sigma_r_totL)),max(abs(sigma_t_totL)),max(abs(sigma_z_totL))))
+                output_lines.append("\nMaximum value of the primary radial stress: %.3f MPa\nMaximum value of the primary hoop stress: %.3f MPa\nPrimary axial stress: %.3f MPa" %(max(sigma_rL),max(sigma_tL),sigma_zL))
+                if max(abs(sigma_r_totL)) > 3*Stress_Intensity:
+                    output_lines.append("\nThe maximum value of the total radial stress exceeds allowable stress.")
+                if max(abs(sigma_t_totL)) > 3*Stress_Intensity:
+                    output_lines.append("\nThe maximum value of the total hoop stress exceeds allowable stress.")
+                if max(abs(sigma_z_totL)) > 3*Stress_Intensity:
+                    output_lines.append("\nThe maximum value of the total axial stress exceeds allowable stress.")
+                if max(sigma_rL) > Stress_Intensity:
+                    output_lines.append("\nThe maximum value of the primary radial stress exceeds allowable stress.")
+                if max(sigma_tL) > Stress_Intensity:
+                    output_lines.append("\nThe maximum value of the primary hoop stress exceeds allowable stress.")
+                if sigma_zL > Stress_Intensity:
+                    output_lines.append("\nThe primary axial stress exceeds allowable stress.")
+                    
+                output_lines.append("\n============================================================================================================================")
+                output_lines.append("\nAccording to Mariotte:")
+                output_lines.append("Maximum absolute value of the total radial stress: %.3f MPa\nMaximum absolute value of the total hoop stress: %.3f MPa\nMaximum absolute value of the total axial stress: %.3f MPa" %(max(abs(sigma_r_totM)),max(abs(sigma_t_totM)),max(abs(sigma_z_totM))))
+                output_lines.append("\nPrimary radial stress: %.3f MPa\nPrimary hoop stress: %.3f MPa\nPrimary axial stress: %.3f MPa" %(sigma_rM,sigma_tM,sigma_zM))
+                if max(abs(sigma_r_totM)) > 3*Stress_Intensity:
+                    output_lines.append("\nThe maximum value of the total radial stress exceeds allowable stress.")
+                if max(abs(sigma_t_totM)) > 3*Stress_Intensity:
+                    output_lines.append("\nThe maximum value of the total hoop stress exceeds allowable stress.")
+                if max(abs(sigma_z_totM)) > 3*Stress_Intensity:
+                    output_lines.append("\nThe maximum value of the total axial stress exceeds allowable stress.")
+                if sigma_rM > Stress_Intensity:
+                    output_lines.append("\nThe primary radial stress exceeds allowable stress.")
+                if sigma_tM > Stress_Intensity:
+                    output_lines.append("\nThe primary hoop stress exceeds allowable stress.")
+                if sigma_zM > Stress_Intensity:
+                    output_lines.append("\nThe primary axial stress exceeds allowable stress.")
+                output_lines.append("\n============================================================================================================================")
+                output_lines.append("The current stress state in the vessel is not acceptable.")
+                output_lines.append("============================================================================================================================")
+            
+            elif flag_primsec == 0 and flag_prim == 0:
+                output_lines.append("\nAccording to Lamé:")
+                output_lines.append("Maximum absolute value of the total radial stress: %.3f MPa\nMaximum absolute value of the total hoop stress: %.3f MPa\nMaximum absolute value of the total axial stress: %.3f MPa" %(max(abs(sigma_r_totL)),max(abs(sigma_t_totL)),max(abs(sigma_z_totL))))
+                output_lines.append("\nAll are lower than 3Sm = %.3f MPa" %(3*Stress_Intensity))         
+                output_lines.append("\nMaximum value of the primary radial stress: %.3f MPa\nMaximum value of the primary hoop stress: %.3f MPa\nPrimary axial stress: %.3f MPa" %(max(sigma_rL),max(sigma_tL),sigma_zL))
+                output_lines.append("\nAll are lower than Sm = %.3f MPa" %Stress_Intensity)
+                output_lines.append("\n============================================================================================================================")
+                output_lines.append("\nAccording to Mariotte:")
+                output_lines.append("Maximum absolute value of the total radial stress: %.3f MPa\nMaximum absolute value of the total hoop stress: %.3f MPa\nMaximum absolute value of the total axial stress: %.3f MPa" %(max(abs(sigma_r_totM)),max(abs(sigma_t_totM)),max(abs(sigma_z_totM))))
+                output_lines.append("\nAll are lower than 3Sm = %.3f MPa" %(3*Stress_Intensity)) 
+                output_lines.append("\nPrimary radial stress: %.3f MPa\nPrimary hoop stress: %.3f MPa\nPrimary axial stress: %.3f MPa" %(sigma_rM,sigma_tM,sigma_zM))
+                output_lines.append("\nAll are lower than Sm = %.3f MPa" %Stress_Intensity)
+
+            if (sigma_cTR_L < sigma_allowable):
+                output_lines.append("\n============================================================================================================================")
+                output_lines.append("\nThe comparison stress according to Tresca-Lamé Sc = %.3f MPa is lower than the allowable stress Sa = %.3f MPa" %(sigma_cTR_L, sigma_allowable))
+            else:
+                output_lines.append("\n============================================================================================================================")
+                output_lines.append("The comparison stress according to Tresca-Lamé Sc = %.3f MPa is higher than the allowable stress Sa = %.3f MPa" %(sigma_cTR_L, sigma_allowable))
+                output_lines.append("============================================================================================================================")
+            if (sigma_cTR_M < sigma_allowable):
+                output_lines.append("The comparison stress according to Tresca-Mariotte Sc = %.3f MPa is lower than the allowable stress Sa = %.3f MPa" %(sigma_cTR_M, sigma_allowable))
+                output_lines.append("============================================================================================================================")
+            else:
+                output_lines.append("\n============================================================================================================================")
+                output_lines.append("The comparison stress according to Tresca-Mariotte Sc = %.3f MPa is higher than the allowable stress Sa = %.3f MPa" %(sigma_cTR_M, sigma_allowable))
+                output_lines.append("============================================================================================================================")
+                
+            output_lines.append("\n\n\n\n######################################################### Buckling #########################################################")
+            output_lines.append("============================================================================================================================")
+            output_lines.append("\nAccording to the Corradi Design Procedure:")
+            output_lines.append("The theoretical limit for collapse pressure, accounting for ovality, is: q_c = %.3f MPa = %.3f bar" %(Corradi_vessel[0], 10*Corradi_vessel[0]))
+            output_lines.append("A safety factor s = %.3f was assumed. \nThe allowable external pressure is thus: q_a = %.3f MPa = %.3f bar" %(Corradi_vessel[2], Corradi_vessel[1], 10*Corradi_vessel[1]))
+            
+            if (P_cpp < 10*Corradi_vessel[1] and sigma_cTR_M < sigma_allowable and sigma_cTR_L < sigma_allowable):
+                output_lines.append("\nThe given external pressure of %.3f bar is lower than the allowable pressure of %.3f bar" %(P_cpp, 10*Corradi_vessel[1]))
+                output_lines.append("\n============================================================================================================================")
+            elif (P_cpp > 10*Corradi_vessel[1]):
+                output_lines.append("\n============================================================================================================================")
+                output_lines.append("The given external pressure of %.3f bar is higher than the allowable pressure of %.3f bar: a change in thickness is required!" %(P_cpp, 10*Corradi_vessel[1]))
+                output_lines.append("============================================================================================================================")
+
+            if P_cpp < 10*Corradi_vessel[1] and sigma_cTR_L < sigma_allowable and sigma_cTR_M < sigma_allowable and creep_flag_V == 0:
+                output_lines.append("\n\n\n\n############################################################################################################################")
+                output_lines.append("The vessel's integrity is ensured: the design is correct!")
+                output_lines.append("############################################################################################################################")
+
+            for line in output_lines:    # Print messages to the console and write to the file
+                print(line)
+                file.write(line + '\n')  # Add a newline for formatting in the text file
+                
     # ======================================
     # Discretization along z
     # ======================================
@@ -1078,6 +1308,8 @@ if TS_flag == 0:
             # Wall T(T_z, r) map
             # ======================================
             R_mesh, T_z_mesh = np.meshgrid(r, T_z - 273.15)                                                      #Shapes (Nz, Nr)
+            os.makedirs(NTS_plots_directory, exist_ok=True)
+            plot_file_path = os.path.join(NTS_plots_directory, "Temperature 2D Map and Profiles.png")
             plt.figure(figsize=(15,10))
             plt.subplot(1,2,1)
             pcm = plt.pcolormesh(R_mesh, T_z_mesh, T_vessel_Mat - 273.15, shading='auto', cmap='hot')   #Or 'hot','plasma','viridis'
@@ -1085,7 +1317,6 @@ if TS_flag == 0:
             plt.xlabel('Radius (m)')
             plt.ylabel('T$_z$ (°C)')
             plt.title('Wall Temperature Map (r vs T$_z$)')
-            plt.tight_layout()
             
             # ======================================
             # T_avg and T_max profiles as T_z grows
@@ -1098,7 +1329,10 @@ if TS_flag == 0:
             plt.title('Maximum and Average Wall Temperature Profiles as T$_z$ grows')
             plt.legend()
             plt.grid()
+            plt.tight_layout()
+            plt.savefig(plot_file_path)
             plt.show()
+            plt.close()
             
         elif adiab_flag == 1:
             
@@ -1106,6 +1340,8 @@ if TS_flag == 0:
             # Wall T(T_z, r) map
             # ======================================
             R_mesh, T_z_mesh = np.meshgrid(r, T_z - 273.15)
+            os.makedirs(NTS_plots_directory, exist_ok=True)
+            plot_file_path = os.path.join(NTS_plots_directory, "Temperature 2D Map and Profiles under AOW Approximation.png")
             plt.figure(figsize=(15,10))
             plt.subplot(1,2,1)
             pcm = plt.pcolormesh(R_mesh, T_z_mesh, T_vessel_Mat - 273.15, shading='auto', cmap='hot')
@@ -1113,7 +1349,6 @@ if TS_flag == 0:
             plt.xlabel('Radius (m)')
             plt.ylabel('T$_z$ (°C)')
             plt.title('Wall Temperature Map under AOW Approximation (r vs T$_z$)')
-            plt.tight_layout()
             
             # ======================================
             # T_avg and T_max profiles as T_z grows
@@ -1126,12 +1361,17 @@ if TS_flag == 0:
             plt.title('Maximum and Average Wall Temperature Profiles as T$_z$ grows under AOW Approximation')
             plt.legend()
             plt.grid()
+            plt.tight_layout()
+            plt.savefig(plot_file_path)
             plt.show()
+            plt.close()
         
         # ======================================
         # Plotting the thermal stress profiles
         # ======================================
         R_mesh, T_z_mesh = np.meshgrid(r, T_z - 273.15)   # shapes (Nz, Nr)
+        os.makedirs(NTS_plots_directory, exist_ok=True)
+        plot_file_path = os.path.join(NTS_plots_directory, "Thermal Stresses 2D Map.png")
         plt.figure(figsize=(20,20))
         plt.subplot(1,4,1)
         pcm = plt.pcolormesh(R_mesh, T_z_mesh, sigma_r_th, shading='auto', cmap='viridis')
@@ -1139,7 +1379,6 @@ if TS_flag == 0:
         plt.xlabel('Radius (m)')
         plt.ylabel('T$_z$ (°C)')
         plt.title('Radial Stress Map (r vs T$_z$)')
-        plt.tight_layout()
 
         plt.subplot(1,4,2)
         pcm = plt.pcolormesh(R_mesh, T_z_mesh, sigma_t_th, shading='auto', cmap='viridis')
@@ -1147,7 +1386,6 @@ if TS_flag == 0:
         plt.xlabel('Radius (m)')
         plt.ylabel('T$_z$ (°C)')
         plt.title('Hoop Stress Map (r vs T$_z$)')
-        plt.tight_layout()
 
         plt.subplot(1,4,3)
         pcm = plt.pcolormesh(R_mesh, T_z_mesh, sigma_t_th_SIMP, shading='auto', cmap='viridis')
@@ -1155,7 +1393,6 @@ if TS_flag == 0:
         plt.xlabel('Radius (m)')
         plt.ylabel('T$_z$ (°C)')
         plt.title('Simplified Hoop Stress Map (r vs T$_z$)')
-        plt.tight_layout()
 
         plt.subplot(1,4,4)
         pcm = plt.pcolormesh(R_mesh, T_z_mesh, sigma_z_th, shading='auto', cmap='viridis')
@@ -1164,27 +1401,176 @@ if TS_flag == 0:
         plt.ylabel('T$_z$ (°C)')
         plt.title('Axial Stress Map (r vs T$_z$)')
         plt.tight_layout()
+        plt.savefig(plot_file_path)
         plt.show()
+        plt.close()
 
 # =============================================================================================================================================================
-# PURELY THERMAL PROBLEM - POWER IMPOSED - THERMAL SHIELD
+# THERMOMECHANICAL PROBLEM - POWER IMPOSED - THERMAL SHIELD
 # =============================================================================================================================================================
 elif TS_flag == 1:
+    
+    # =============================================================================================================================================================
+    # PURELY MECHANICAL PROBLEM
+    # =============================================================================================================================================================
+    t = 0.05                                    #m
+    R_ext = R_int + t                           #m
+    D_vess_ext = 2*R_ext                        #m
+    rho_ii = (R_ext**2)/(R_ext**2 - R_int**2)
+    rho_i = (R_int**2)/(R_ext**2 - R_int**2)
+    Mar_criterion = R_int/t
+    W = (DeltaD_max/1000)/((D_vess_int+D_vess_ext)/2)
+    
+    dr = 100
+    r = np.linspace(R_int, R_ext, dr)
 
+    # ============================
+    # Mariotte Solution for a thin-walled cylinder (R_int = R_ext = R)
+    # ============================
+    def sigmaM_func (R_int, P_int_MPa, t): 
+        sigma_rM_cyl = -P_int_MPa/2                        #Compressive
+        sigma_tM_cyl = R_int*P_int_MPa/t                   
+        sigma_zM_cyl = R_int*P_int_MPa/(2*t)
+        sigma_tM_sph = R_int*P_int_MPa/(2*t)
+        return (sigma_rM_cyl, sigma_tM_cyl, sigma_zM_cyl, sigma_tM_sph)
+
+    if Mar_criterion > 5:
+        while True:
+            try:
+                Mariotte_flag = int(input("\nWith an initial thickness value of %.3f m, the vessel can be considered thin. Are you interested in visualizing the Mariotte solution for stress? (1: Yes, 0: No): " %t))
+                if Mariotte_flag not in (0, 1):
+                    raise RuntimeError("Invalid input! Please enter either 0 or 1.")
+                break  
+            except ValueError:
+                print("Please enter a valid integer.")
+            except RuntimeError as e:
+                print(e)
+        sigma_M = sigmaM_func(R_int, P_int_MPa, t)
+        sigma_rM = sigma_M[0]
+        sigma_tM = sigma_M[1]
+        sigma_zM = sigma_M[2]
+
+        if Mariotte_flag == 1:
+
+            # ======================================
+            # Plotting the stress profiles: Mariotte
+            # ======================================
+            os.makedirs(TS_plots_directory, exist_ok=True)
+            plot_file_path = os.path.join(TS_plots_directory, "Stress Distribution in a thin-walled cylinder - Mariotte Solution.png")
+            plt.figure(figsize=(15,10))
+            plt.axvline(x = R_int, color='black', linewidth='3', label='Vessel Inner Surface')
+            plt.axvline(x = R_ext, color='black', linewidth='3', label='Vessel Outer Surface')
+            plt.axhline(y = sigma_rM, color='red', label='Radial (r) Stress Mariotte')
+            plt.axhline(y = sigma_tM, color='blue', label=r'Hoop ($\theta$) Stress Mariotte')
+            plt.axhline(y = sigma_zM, color='green', label='Axial (z) Stress Mariotte')
+            plt.plot(r, np.zeros(len(r)), color='black', linewidth='1', label='y=0')
+            plt.xlabel('Radius (m)')
+            plt.ylabel('Stress (MPa)')
+            plt.title('Stress Distribution in a thin-walled cylinder - Mariotte Solution')
+            plt.legend()
+            plt.grid()
+            plt.savefig(plot_file_path)
+            plt.show()
+            plt.close()
+
+        elif Mariotte_flag == 0:
+            print("Skipping Mariotte solution.")
+    else:
+        print("\nThe cylinder can't be considered thin. Skipping Mariotte solution.")
+        Mariotte_flag = 0
+
+    # ============================ 
+    # General Lamé Solution 
+    # ============================
+    def sigmaL_func(r, P_int_MPa, P_cpp_MPa, verbose): #the "verbose" variable is used to avoid printing the hydrostatic stress condition information for every iteration of the thermal shield loop
+        
+        A = ((P_int_MPa*(R_int**2))-(P_cpp_MPa*(R_ext**2)))/((R_ext**2)-(R_int**2))
+        B = (((R_int**2)*(R_ext**2))/((R_ext**2)-(R_int**2)))*(P_int_MPa-P_cpp_MPa)
+        sigma_rL = lambda r: A - B/(r**2)
+        sigma_tL = lambda r: A + B/(r**2)
+
+        if P_int == P_cpp:
+            if verbose:
+                print("\nInternal and external pressures are equal: hydrostatic stress condition is verified. Skipping.")    #Hydrostatic Stress Condition
+            eps_z_a = (2*nu-1)*rho_ii*P_cpp_MPa/E
+            eps_z_b = (1-2*nu)*rho_i*P_int_MPa/E
+
+        elif P_int != P_cpp:
+            if flag_eps == 1:                                                                                           #Plane Stress
+                eps_z_a = 2*nu*rho_ii*P_cpp_MPa/E
+                eps_z_b = -2*nu*rho_i*P_int_MPa/E
+            elif flag_eps == 0:                                                                                         #Plane Strain
+                eps_z_a = 0
+                eps_z_b = 0 
+
+        sigma_zL_a = E*eps_z_a - 2*nu*rho_ii*P_cpp_MPa  #a) P_int = 0
+        sigma_zL_b = E*eps_z_b + 2*nu*rho_i*P_int_MPa   #b) P_cpp = 0
+        return (sigma_rL(r), sigma_tL(r), sigma_zL_a + sigma_zL_b)              #Superposition Principle
+
+    sigma_L = sigmaL_func(r, P_int_MPa, P_cpp_MPa, 1)
+    sigma_rL = sigma_L[0]  
+    sigma_tL = sigma_L[1]
+    sigma_zL = sigma_L[2]
+
+    if Mariotte_flag == 1:
+        while True:
+            try:
+                Lame_flag = int(input("\nThe Mariotte solution for a thin cylinder has been visualized. Are you interested in visualizing the more general Lamé solution? (1: Yes, 0: No): "))
+                if Lame_flag not in (0, 1):
+                    raise RuntimeError("Invalid input! Please enter either 0 or 1.")
+                break  
+            except ValueError:
+                print("Please enter a valid integer.")
+            except RuntimeError as e:
+                print(e)
+
+    elif Mariotte_flag == 0:
+        print("Visualizing general Lamé solution.")
+        Lame_flag = 1
+
+    if Lame_flag == 1:
+        # ======================================
+        # Plotting the stress profiles: Lamé
+        # ======================================
+        os.makedirs(TS_plots_directory, exist_ok=True)
+        plot_file_path = os.path.join(TS_plots_directory, "Stress Distribution in the cylinder wall - Lamé Solution.png")
+        plt.figure(figsize=(15,10))
+        plt.axvline(x = R_int, color='black', linewidth='3', label='Vessel Inner Surface')
+        plt.axvline(x = R_ext, color='black', linewidth='3', label='Vessel Outer Surface')
+        plt.plot(r, sigma_rL, label='Radial (r) Stress Lamé')
+        plt.plot(r, sigma_tL, label=r'Hoop ($\theta$) Stress Lamé')
+        plt.axhline(y = sigma_zL, color='green', label='Axial (z) Stress Lamé')
+        plt.axhline(y = 0, color='black', linewidth='1', label='y=0')
+        plt.xlabel('Radius (m)')
+        plt.ylabel('Stress (MPa)')
+        plt.title('Stress Distribution in the cylinder wall - Lamé Solution')
+        plt.legend()
+        plt.grid()
+        plt.savefig(plot_file_path)
+        plt.show()
+        plt.close()
+
+    elif Lame_flag == 0:
+        print("Skipping Lamé solution.")
+    
+    # =============================================================================================================================================================
+    # PURELY THERMAL PROBLEM
+    # =============================================================================================================================================================
+    
     t_shield_user = 0.001           #Initial guess for the thermal shield thickness
 
     while True:
         try:
-            User_D_flag = float(input("\nWhat position of the thermal shield do you want to consider? (2: Arbitrary, 1: Middle, 0: Equal areas): "))
-            if User_D_flag not in (0, 1, 2):
-                raise RuntimeError("Invalid input! Please enter either 0, 1 or 2.")
+            User_D_flag = float(input("\nWhat position of the thermal shield do you want to consider? (3: Arbitrary, 2: Middle, 1: Equal areas, 0: Equal h_1): "))
+            if User_D_flag not in (0, 1, 2, 3):
+                raise RuntimeError("Invalid input! Please enter either 0, 1, 2 or 3.")
             break  
         except ValueError:
             print("Please enter a valid integer.")
         except RuntimeError as e:
             print(e)
 
-    if User_D_flag == 2:            #Allows the user to assume the default, middle position for the thermal shield, position it himself or choose the position granting equal areas
+    if User_D_flag == 3:            #Allows the user to assume the default, middle position for the thermal shield, position it himself or choose the position granting equal areas
         while True:
             try:
                 D_shield_int = float(input("\nPlease enter the initial thermal shield inner diameter (m) to choose its position: "))
@@ -1197,17 +1583,82 @@ elif TS_flag == 1:
                 print(e)
         R_shield_int = D_shield_int/2
         
-    elif User_D_flag == 1:
+    elif User_D_flag == 2:
         print("Assuming middle thermal shield position.")
         R_shield_int = D_barr_ext/2 + (D_vess_int - D_barr_ext)/4 - t_shield_user/2
          
-    elif User_D_flag == 0:
+    elif User_D_flag == 1:
         A_eq = 1
         B_eq = t_shield_user
         C_eq = (t_shield_user**2)/2 - (R_int**2)/2 - (R_barr_ext**2)/2
         Delta_eq = B_eq**2 - 4*A_eq*C_eq
         R_shield_int = (-B_eq + np.sqrt(Delta_eq))/(2*A_eq)
         D_shield_int = 2*R_shield_int
+    
+    # =============================================================================================================================================================
+    # Thermal Shield Initial Position Iterative Computation to equalize h1
+    # =============================================================================================================================================================
+    elif User_D_flag == 0:
+        counter_h1 = 0
+        N_max_h1 = 1000
+        eps = 1e-8
+        
+        R_shield_int = R_barr_ext + 0.001 #To avoid float division by zero
+        D_shield_int = 2*R_shield_int
+        R_shield_ext = R_shield_int + t_shield_user
+        D_shield_ext = 2*R_shield_ext
+        R_ext = R_int + t
+        D_vess_ext = 2*R_ext
+        
+        #Dummy entries to enter the loop
+        h_1_int = 0 
+        h_1_ext = 1
+        
+        #Bisection method bounds
+        l_bound = R_barr_ext
+        r_bound = R_int - t_shield_user
+        
+        while abs(h_1_int - h_1_ext) > eps:
+            counter_h1 += 1
+            print("Iteration no. %d" %counter_h1)
+            if counter_h1 > N_max_h1:
+                print("Exceeded maximum number of iterations: %d. Exiting the loop." %N_max_h1)
+                break
+            if R_shield_int > R_int - t_shield_user:
+                print("Inner thermal shield radius violates geometric constraints. Exiting the loop.")
+                break
+            
+            D_shield_int = 2*R_shield_int
+            D_shield_ext = 2*R_shield_ext
+            
+            A_int_S = np.pi*((R_shield_int**2) - (R_barr_ext**2))                                       #Inner area crossed by the primary fluid
+            A_ext_S = np.pi*((R_int**2) - (R_shield_ext**2))                                            #Outer area crossed by the primary fluid
+            v_int = v_flr/A_int_S                                                                       #Inner coolant velocity
+            v_ext = v_flr/A_ext_S                                                                       #Outer coolant velocity
+            
+            Pr = (Cp*mu)/k                                                                              #Prandtl number
+            
+            Re_int = (rho*v_int*(D_shield_int - D_barr_ext))/mu                                         #Inner hydraulic diameter                                                     
+            Nu_1_int = 0.023*(Re_int**0.8)*(Pr**0.4)                                                             
+            h_1_int = (Nu_1_int*k)/(D_shield_int - D_barr_ext)
+            
+            Re_ext = (rho*v_ext*(D_vess_int - D_shield_ext))/mu                                         #Outer hydraulic diameter                                                     
+            Nu_1_ext = 0.023*(Re_ext**0.8)*(Pr**0.4)                                                             
+            h_1_ext = (Nu_1_ext*k)/(D_vess_int - D_shield_ext)
+            
+            # Bisection method
+            if h_1_int < h_1_ext:
+                r_bound = R_shield_int
+                R_shield_int = (r_bound + l_bound)/2
+                R_shield_ext = R_shield_int + t_shield_user
+            else:
+                l_bound = R_shield_int
+                R_shield_int = (l_bound + r_bound)/2
+                R_shield_ext = R_shield_int + t_shield_user
+        
+        print("\n############################################################################################################################")
+        print("Initial heat transfer coefficients equalized in %d iterations. Thermal shield initial inner radius: %.3f m" %(counter_h1, R_shield_int))
+        print("############################################################################################################################\n")
 
     print("No discretization along z. Assuming constant temperature of the primary fluid T1.")
     while True:
@@ -1274,14 +1725,14 @@ elif TS_flag == 1:
         if t > t_vessel_max:
             print("Vessel thickness exceeds feasibility margin. Exiting the loop.")
             break
-        if User_D_flag == 2 or User_D_flag == 0:        #If the thermal shield is not in the middle, geometrical constraints are present: the thermal shield must not bump into the vessel
+        if User_D_flag == 3 or User_D_flag == 1:        #If the thermal shield is not in the middle, geometrical constraints are present: the thermal shield must not bump into the vessel
             if t_shield > t_shield_max or (D_shield_int/2 + t_shield) > D_vess_int/2:
                 print("Ran into excessive thermal shield thickness or bumped into the vessel. Adding 1cm to the vessel thickness instead. Restarting...")
                 t += 0.01
                 t_shield = t_shield_user - 0.001
                 counter_vessel += 1
                 continue
-        elif User_D_flag == 1:      #If the thermal shield is in the middle, only its thickness must be checked: no geometrical constraints
+        elif User_D_flag == 2 or User_D_flag == 0:      #If the thermal shield is in the middle, only its thickness must be checked: no geometrical constraints.The same goes for the equal h1 case, as the geometrical constraints are verified elsewhere.
             if t_shield > t_shield_max:
                 print("Ran into excessive thermal shield thickness. Adding 1cm to the vessel thickness instead. Restarting...")
                 t += 0.01
@@ -1289,14 +1740,14 @@ elif TS_flag == 1:
                 counter_vessel += 1
                 continue
 
-        if User_D_flag == 2:
+        if User_D_flag == 3:
             R_shield_int = D_shield_int/2
             
-        elif User_D_flag == 1:
+        elif User_D_flag == 2:
             R_shield_int = D_barr_ext/2 + (D_vess_int - D_barr_ext)/4 - t_shield/2
             D_shield_int = 2*R_shield_int
             
-        elif User_D_flag == 0:
+        elif User_D_flag == 1:
             A_eq = 1
             B_eq = t_shield
             C_eq = (t_shield**2)/2 - (R_int**2)/2 - (R_barr_ext**2)/2
@@ -1304,6 +1755,67 @@ elif TS_flag == 1:
             R_shield_int = (-B_eq + np.sqrt(Delta_eq))/(2*A_eq)
             D_shield_int = 2*R_shield_int
             
+    # =============================================================================================================================================================
+    # Thermal Shield Position Iterative Computation
+    # =============================================================================================================================================================
+        elif User_D_flag == 0:
+            counter_h1 = 0
+            N_max_h1 = 10000
+            eps = 1e-6
+            
+            R_shield_int = R_barr_ext + 0.001 #To avoid float division by zero
+            D_shield_int = 2*R_shield_int
+            R_shield_ext = R_shield_int + t_shield
+            D_shield_ext = 2*R_shield_ext
+            R_ext = R_int + t
+            D_vess_ext = 2*R_ext
+            
+            #Dummy entries to enter the loop
+            h_1_int = 0 
+            h_1_ext = 1
+            
+            #Bisection method bounds
+            l_bound = R_barr_ext
+            r_bound = R_int - t_shield
+            
+            while abs(h_1_int - h_1_ext) > eps:
+                counter_h1 += 1
+                #print("Sub-iteration no. %d" %counter_h1)
+                if counter_h1 > N_max_h1:
+                    print("Exceeded maximum number of sub-iterations: %d. Exiting the loop." %N_max_h1)
+                    break
+                if R_shield_int > R_int - t_shield:
+                    print("Inner thermal shield radius violates geometric constraints. Exiting the loop.")
+                    break
+                
+                D_shield_int = 2*R_shield_int
+                D_shield_ext = 2*R_shield_ext
+                
+                A_int_S = np.pi*((R_shield_int**2) - (R_barr_ext**2))                                       #Inner area crossed by the primary fluid
+                A_ext_S = np.pi*((R_int**2) - (R_shield_ext**2))                                            #Outer area crossed by the primary fluid
+                v_int = v_flr/A_int_S                                                                       #Inner coolant velocity
+                v_ext = v_flr/A_ext_S                                                                       #Outer coolant velocity
+                
+                Pr = (Cp*mu)/k                                                                              #Prandtl number
+                
+                Re_int = (rho*v_int*(D_shield_int - D_barr_ext))/mu                                         #Inner hydraulic diameter                                                     
+                Nu_1_int = 0.023*(Re_int**0.8)*(Pr**0.4)                                                             
+                h_1_int = (Nu_1_int*k)/(D_shield_int - D_barr_ext)
+                
+                Re_ext = (rho*v_ext*(D_vess_int - D_shield_ext))/mu                                         #Outer hydraulic diameter                                                     
+                Nu_1_ext = 0.023*(Re_ext**0.8)*(Pr**0.4)                                                             
+                h_1_ext = (Nu_1_ext*k)/(D_vess_int - D_shield_ext)
+                
+                # Bisection method
+                if h_1_int < h_1_ext:
+                    r_bound = R_shield_int
+                    R_shield_int = (r_bound + l_bound)/2
+                    R_shield_ext = R_shield_int + t_shield
+                else:
+                    l_bound = R_shield_int
+                    R_shield_int = (l_bound + r_bound)/2
+                    R_shield_ext = R_shield_int + t_shield
+        
         R_shield_ext = R_shield_int + t_shield
         D_shield_ext = 2*R_shield_ext
         
@@ -1311,29 +1823,30 @@ elif TS_flag == 1:
         D_vess_ext = 2*R_ext                        #m
         W = (DeltaD_max/1000)/((D_vess_int+D_vess_ext)/2)  #The denominator is the average diameter of the vessel wall  
                                                            #No need to compute these for the thermal shield, which is not subject to buckling
-        
+                
         r_S = np.linspace(R_shield_int, R_shield_ext, dr)
         Phi_0S = Phi_0                                                #All gamma rays reach the shield, not the vessel
 
         # ======================================
         # Dimensionless numbers and heat transfer coefficients
         # ======================================
-        A_int_S = np.pi*((R_shield_int**2) - (R_barr_ext**2))                                       #Inner area crossed by the primary fluid
-        A_ext_S = np.pi*((R_int**2) - (R_shield_ext**2))                                            #Outer area crossed by the primary fluid
-        v_int = v_flr/A_int_S                                                                       #Inner coolant velocity
-        v_ext = v_flr/A_ext_S
-        
-        Pr = (Cp*mu)/k                                                                              #Prandtl number
-        Pr_cpp = (Cp_cpp*mu_cpp)/k_cpp                                                              #Prandtl number of the containment water
-        
-        Re_int = (rho*v_int*(D_shield_int - D_barr_ext))/mu                                         #Inner hydraulic diameter                                                     
-        Nu_1_int = 0.023*(Re_int**0.8)*(Pr**0.4)                                                             
-        h_1_int = (Nu_1_int*k)/(D_shield_int - D_barr_ext)
-        
-        Re_ext = (rho*v_ext*(D_vess_int - D_shield_ext))/mu                                         #Outer hydraulic diameter                                                     
-        Nu_1_ext = 0.023*(Re_ext**0.8)*(Pr**0.4)                                                             
-        h_1_ext = (Nu_1_ext*k)/(D_vess_int - D_shield_ext)
-                                                                                 
+        if User_D_flag != 0:
+            A_int_S = np.pi*((R_shield_int**2) - (R_barr_ext**2))                                       #Inner area crossed by the primary fluid
+            A_ext_S = np.pi*((R_int**2) - (R_shield_ext**2))                                            #Outer area crossed by the primary fluid
+            v_int = v_flr/A_int_S                                                                       #Inner coolant velocity
+            v_ext = v_flr/A_ext_S                                                                       #Outer coolant velocity
+            
+            Pr = (Cp*mu)/k                                                                              #Prandtl number
+            
+            Re_int = (rho*v_int*(D_shield_int - D_barr_ext))/mu                                         #Inner hydraulic diameter                                                     
+            Nu_1_int = 0.023*(Re_int**0.8)*(Pr**0.4)                                                             
+            h_1_int = (Nu_1_int*k)/(D_shield_int - D_barr_ext)
+            
+            Re_ext = (rho*v_ext*(D_vess_int - D_shield_ext))/mu                                         #Outer hydraulic diameter                                                     
+            Nu_1_ext = 0.023*(Re_ext**0.8)*(Pr**0.4)                                                             
+            h_1_ext = (Nu_1_ext*k)/(D_vess_int - D_shield_ext)
+            
+        Pr_cpp = (Cp_cpp*mu_cpp)/k_cpp                                                              #Prandtl number of the containment water                                 
         Gr = (rho_cpp**2)*9.81*beta_cpp*DeltaT*(L**3)/(mu_cpp**2)                                   #Grashof number (Uses the external diameter as characteristic length, might wanna use L though?)
         Nu_2 = 0.13*((Gr*Pr_cpp)**(1/3))                                                            #McAdams correlation for natural convection
         h_2 = (Nu_2*k_cpp)/L                                                                        #W/(m²·K)
@@ -1371,14 +1884,20 @@ elif TS_flag == 1:
         q_iii = lambda r: q_0*np.exp(-mu_st*(r-R_int))                 #W/(m³) 
         
         # ======================================
-        # T profile constants for the vessel: general and under adiabatic outer wall approximation (dT/dx = 0 at r = R_ext)
+        # Convective heat transfer coefficient choice
         # ======================================
-        if User_D_flag == 2 or User_D_flag == 1:
+        if User_D_flag == 3 or User_D_flag == 2:
             h_1 = min(h_1_int, h_1_ext)                 #Conservative: minimum h means highest thermal stresses
-        elif User_D_flag == 0:
-            if h_1_int - h_1_ext <= eps:
+        elif User_D_flag == 1:
+            h_1 = min(h_1_int, h_1_ext)
+            if abs(h_1_int - h_1_ext) <= eps:
                 h_1 = h_1_int                           #Below the tolerance, they can be considered equal
-            
+        elif User_D_flag == 0:
+            h_1 = h_1_int                               #By construction, h_1_int = h_1_ext = h_1
+        
+        # ======================================
+        # T profile constants for the vessel: general and under adiabatic outer wall approximation (dT/dx = 0 at r = R_ext)
+        # ======================================    
         if adiab_flag == 0:
             C1 = ((q_0/(k_st*mu_st**2))*(np.exp(-mu_st*t)-1)-(q_0/mu_st)*((1/h_1)+(np.exp(-mu_st*t)/u_2))-(T1-T_cpp))/(t+(k_st/h_1)+(k_st/u_2))
         elif adiab_flag == 1:
@@ -1557,11 +2076,11 @@ elif TS_flag == 1:
 
         Yield_stress = Yield_CubicSpline(T_des_vessel_C)
         Stress_Intensity = Intensity_CubicSpline(T_des_vessel_C)
-        sigma_allowable = 1.5 * Stress_Intensity  #MPa
+        sigma_allowable = Stress_Intensity                                              #MPa
     
         Yield_stress_S = Yield_CubicSpline(T_des_shield_C)
         Stress_Intensity_S = Intensity_CubicSpline(T_des_shield_C)
-        sigma_allowable_S = 1.5 * Stress_Intensity_S  #MPa
+        sigma_allowable_S = Stress_Intensity_S                                          #MPa
         """
         # ======================================
         # Thermal Shield Thermomechanical Integrity Verification    -   Lamé + Thermal stresses
@@ -1691,10 +2210,10 @@ elif TS_flag == 1:
         # ======================================
         # Final Verification: buckling + vessel stress state to exit the loop
         # ======================================
-        if buckling_flag == 1 and vessel_flag == 1:
-            final_flag = 1
-        else:
-            final_flag = 0
+        if buckling_flag == 1 and vessel_flag == 1: #and sigma_cTR_M < sigma_allowable and sigma_cTR_MS < sigma_allowable_S:     
+            final_flag = 1                          # ======================================
+        else:                                       # Tested, but the Tresca-Mariotte comparison stress is never lower than the allowable stress intensity Sm
+            final_flag = 0                          # ======================================
     
     # ======================================
     # Plotting the volumetric heat source profiles 
@@ -1714,6 +2233,8 @@ elif TS_flag == 1:
         # ======================================
         # Thermal Shield
         # ======================================
+        os.makedirs(TS_plots_directory, exist_ok=True)
+        plot_file_path = os.path.join(TS_plots_directory, "Volumetric heat source profiles.png")
         plt.figure(figsize=(15,15))
         plt.subplot(1,2,1)
         if R_shield_ext - R_shield_int > 0.1:
@@ -1724,12 +2245,12 @@ elif TS_flag == 1:
             plt.xlim(R_shield_int - 0.05, R_shield_ext + 0.05)
         plt.axvline(x = R_shield_int, color='black', linewidth='3', label='Thermal Shield Inner Surface')
         plt.axvline(x = R_shield_ext, color='black', linewidth='3', label='Thermal Shield Outer Surface')
-        plt.plot(r_S, q_iiiS(r_S), 'g', label='Radial (r) Volumetric heat source profile')
-        plt.plot(r_S[0], q_iiiS(r_S[0]), 'or', label='Thermal Shield Inner Surface Value')
-        plt.plot(r_S[-1], q_iiiS(r_S[-1]), 'or', label='Thermal Shield Outer Surface Value')
+        plt.plot(r_S, q_iiiS(r_S)/1e6, 'g', label='Radial (r) Volumetric heat source profile')
+        plt.plot(r_S[0], q_iiiS(r_S[0])/1e6, 'or', label='Thermal Shield Inner Surface Value')
+        plt.plot(r_S[-1], q_iiiS(r_S[-1])/1e6, 'or', label='Thermal Shield Outer Surface Value')
         plt.axhline(y = 0, color='black', linewidth='1', label='y=0')
         plt.xlabel('Radius (m)')
-        plt.ylabel(r'$q_0$ (W/m$^3$)')
+        plt.ylabel(r'$q_0$ (MW/m$^3$)')
         plt.title('Volumetric heat source profile across the thermal shield')
         plt.legend()
         plt.grid()
@@ -1749,7 +2270,10 @@ elif TS_flag == 1:
         plt.title('Volumetric heat source profile across the vessel wall')
         plt.legend()
         plt.grid()
+        plt.tight_layout()
+        plt.savefig(plot_file_path)
         plt.show()
+        plt.close()
 
     # ======================================
     # Plotting the T profiles
@@ -1767,15 +2291,15 @@ elif TS_flag == 1:
     
     if adiab_flag == 0:
         if (T_vessel_max - 273.15) > T_creep:
-            print("\nWARNING: The maximum vessel temperature T = %.3f °C exceeds the creep threshold temperature of %d °C!" %(T_vessel_max - 273.15, T_creep))
             creep_flag_V = 1
         if (T_shield_max - 273.15) > T_creep:
-            print("\nWARNING: The maximum thermal shield temperature T = %.3f °C exceeds the creep threshold temperature of %d °C!" %(T_shield_max - 273.15, T_creep))
             creep_flag_S = 1
         if T_pl_flag == 1:
             # ======================================
             # Thermal Shield T Profile
             # ======================================
+            os.makedirs(TS_plots_directory, exist_ok=True)
+            plot_file_path = os.path.join(TS_plots_directory, "Temperature profiles, averages and maxima.png")
             plt.figure(figsize=(15,15))
             plt.subplot(1,2,1)
             if R_shield_ext - R_shield_int > 0.1:
@@ -1809,19 +2333,22 @@ elif TS_flag == 1:
             plt.title('Vessel Wall Temperature Profile, Average and Maximum ')
             plt.legend()
             plt.grid()
+            plt.tight_layout()
+            plt.savefig(plot_file_path)
             plt.show()
+            plt.close()
      
     elif adiab_flag == 1:
         if (T_vessel_max - 273.15) > T_creep:
-            print("\nWARNING: The maximum vessel temperature T = %.3f °C exceeds the creep threshold temperature of %d °C!" %(T_vessel_max - 273.15, T_creep))
             creep_flag_V = 1
         if (T_shield_max - 273.15) > T_creep:
-            print("\nWARNING: The maximum thermal shield temperature T = %.3f °C exceeds the creep threshold temperature of %d °C!" %(T_shield_max - 273.15, T_creep))
             creep_flag_S = 1
         if T_pl_flag == 1:
             # ======================================
             # Thermal Shield T Profile
             # ======================================
+            os.makedirs(TS_plots_directory, exist_ok=True)
+            plot_file_path = os.path.join(TS_plots_directory, "Temperature profiles, averages and maxima under AOW approximation.png")
             plt.figure(figsize=(15,15))
             plt.subplot(1,2,1)
             if R_shield_ext - R_shield_int > 0.1:
@@ -1837,7 +2364,7 @@ elif TS_flag == 1:
             plt.axhline(y = T_shield_avg - 273.15, color='green', label='Thermal Shield Average T')
             plt.xlabel('Radius (m)')
             plt.ylabel('T (°C)')
-            plt.title('Thermal Shield Temperature Profile, Average and Maximum ')
+            plt.title('Thermal Shield Temperature Profile, Average and Maximum')
             plt.legend()
             plt.grid()
             
@@ -1852,10 +2379,13 @@ elif TS_flag == 1:
             plt.axhline(y = T_vessel_avg - 273.15, color='green', label='Wall Average T')
             plt.xlabel('Radius (m)')
             plt.ylabel('T (°C)')
-            plt.title('Wall Temperature Profile, Average and Maximum under AOW Approximation ')
+            plt.title('Wall Temperature Profile, Average and Maximum under AOW Approximation')
             plt.legend()
             plt.grid()
+            plt.tight_layout()
+            plt.savefig(plot_file_path)
             plt.show()
+            plt.close()
 
     # ======================================
     # Plotting the thermal stress profiles
@@ -1876,6 +2406,8 @@ elif TS_flag == 1:
         # ======================================
         # Thermal shield thermal stress profiles
         # ======================================
+        os.makedirs(TS_plots_directory, exist_ok=True)
+        plot_file_path = os.path.join(TS_plots_directory, "Thermal stresses profiles.png")
         plt.figure(figsize=(15,15))
         plt.subplot(1,2,1)
         if R_shield_ext - R_shield_int > 0.1:
@@ -1913,7 +2445,10 @@ elif TS_flag == 1:
         plt.title('Vessel Wall Thermal Stress Profiles and Maximum Hoop Stress')
         plt.legend()
         plt.grid()
+        plt.tight_layout()
+        plt.savefig(plot_file_path)
         plt.show()
+        plt.close()
 
     # ======================================
     # Plotting the maximum thermal stress via the design curves
@@ -1930,9 +2465,14 @@ elif TS_flag == 1:
             print(e)
 
     if des_pl_flag == 1:
+        os.makedirs(TS_plots_directory, exist_ok=True)
+        plot_file_path = os.path.join(TS_plots_directory, "Design curves.png")
         plt.figure(figsize=(10,10))
+        plt.xlim(ba_ratio_plot[0], ba_ratio_plot[-1])
         plt.plot(ba_ratio_plot, L_Interpolator(ba_ratio_plot), 'k', label=f'Iso-mu = {mu_L} 1/m')
         plt.plot(ba_ratio_plot, R_Interpolator(ba_ratio_plot), 'k', label=f'Iso-mu = {mu_R} 1/m')
+        plt.text(ba_ratio_plot[-1]+0.001, L_Interpolator(ba_ratio_plot)[-1], f'Iso-mu = {mu_L}', color='black', fontsize=10)
+        plt.text(ba_ratio_plot[-1]+0.001, R_Interpolator(ba_ratio_plot)[-1], f'Iso-mu = {mu_R}', color='black', fontsize=10)
         plt.plot(R_ext/R_int, sigmaT_V,'or', label=r'Current $\sigma$$_T$ in the vessel')
         plt.plot(R_shield_ext/R_shield_int, sigmaT_S,'ob', label=r'Current $\sigma$$_T$ in the thermal shield')
         plt.xlabel('R$_{ext}$/R$_{int}$')
@@ -1940,7 +2480,9 @@ elif TS_flag == 1:
         plt.title('Design curves')
         plt.legend()
         plt.grid()
+        plt.savefig(plot_file_path)
         plt.show()
+        plt.close()
 
     # ======================================
     # Plotting the yield stress and stress intensity curves
@@ -1966,6 +2508,8 @@ elif TS_flag == 1:
         # ============================ 
         # Yield Stress
         # ============================
+        os.makedirs(TS_plots_directory, exist_ok=True)
+        plot_file_path = os.path.join(TS_plots_directory, "Yield Stress and Stress Intensity.png")
         plt.figure(figsize = (12,10))
         plt.subplot(1,2,1)
         plt.plot(T_thr, sigma_y, 'sk', label = 'Yield Stress Data')
@@ -1974,11 +2518,10 @@ elif TS_flag == 1:
         plt.plot(T_des_vessel_C, Yield_stress, '--or', label = r'Current Vessel Yield Stress $\sigma$$_y$')
         plt.plot(T_des_shield_C, Yield_stress_S, '--ob', label = r'Current Thermal Shield Yield Stress $\sigma$$_y$')
         plt.xlabel("Temperature (°C)")
-        plt.ylabel(r"Yield Stress $\sigma$$_y$")
+        plt.ylabel(r"Yield Stress $\sigma$$_y$ (MPa)")
         plt.title("Yield Stress Data and Interpolation VS Temperature", fontsize = 10)
         plt.legend()
         plt.grid()
-        plt.tight_layout()
 
         # ============================ 
         # Stress intensity
@@ -1990,12 +2533,14 @@ elif TS_flag == 1:
         plt.plot(T_des_vessel_C, Stress_Intensity, '--or', label = r'Current Vessel Stress Intensity $\sigma$$_m$')
         plt.plot(T_des_shield_C, Stress_Intensity_S, '--ob', label = r'Current Thermal Shield Stress Intensity $\sigma$$_m$')
         plt.xlabel("Temperature (°C)")
-        plt.ylabel(r"Stress Intensity $\sigma$$_m$")
+        plt.ylabel(r"Stress Intensity $\sigma$$_m$ (MPa)")
         plt.title("Stress Intensity Data and Interpolation VS Temperature", fontsize = 10)
         plt.legend()
         plt.grid()
         plt.tight_layout()
+        plt.savefig(plot_file_path)
         plt.show()
+        plt.close()
         
     # ============================ 
     # Sizing of a thick cylinder under external pressure
@@ -2053,6 +2598,8 @@ elif TS_flag == 1:
                 # ============================ 
                 # Plastic collapse and buckling plots
                 # ============================
+                os.makedirs(TS_plots_directory, exist_ok=True)
+                plot_file_path = os.path.join(TS_plots_directory, "Plastic Collapse and Buckling Curves.png")
                 plt.figure(figsize = (8, 8))
                 plt.semilogy(Dt_ratio_plot, p_E_fun(Dt_ratio_plot), 'blue', label='p$_E$')
                 plt.semilogy(Dt_ratio_plot, q_E_fun(Dt_ratio_plot), '--b', label='q$_E$')
@@ -2065,7 +2612,9 @@ elif TS_flag == 1:
                 plt.title("Plastic Collapse and Buckling Curves")
                 plt.legend()
                 plt.grid()
+                plt.savefig(plot_file_path)
                 plt.show()
+                plt.close()
 
         elif Corradi_flag == 1:
             while True:
@@ -2083,6 +2632,8 @@ elif TS_flag == 1:
                 # ============================ 
                 # Plastic collapse and buckling plots
                 # ============================
+                os.makedirs(TS_plots_directory, exist_ok=True)
+                plot_file_path = os.path.join(TS_plots_directory, "Plastic Collapse and Buckling Curves - With Corradi.png")
                 plt.figure(figsize = (8, 8))
                 plt.subplot(1,2,1)
                 plt.semilogy(Dt_ratio_plot, p_E_fun(Dt_ratio_plot), 'blue', label='p$_E$')
@@ -2097,7 +2648,6 @@ elif TS_flag == 1:
                 plt.title("Plastic Collapse and Buckling Curves")
                 plt.legend()
                 plt.grid()
-                plt.tight_layout()
 
                 plt.subplot(1,2,2)
                 plt.plot(Dt_ratio_plot, Corradi(Dt_ratio_plot)[3], 'k', label=r'Corradi $\mu$')
@@ -2107,155 +2657,347 @@ elif TS_flag == 1:
                 plt.legend()
                 plt.grid()
                 plt.tight_layout()
+                plt.savefig(plot_file_path)
                 plt.show()
+                plt.close()
         
     elif ThinTubes_flag == 0:
         print("Adopting Corradi Design Procedure.")
         Corradi_flag = 1
 
-    # ============================ 
-    # Final Results Printing
     # ============================
-    print("\n\n\n###################################################### Final  Results ######################################################")
-        
-    print("\nThe vessel thickness has been increased %d times by 1cm. Computed vessel thickness: %.3f m" %(counter_vessel, t))
-    print("Computed thermal shield thickness: %.3f m" %t_shield)
-    print("\nVessel max ovality W: %.5f = %.3f%%" %(W,W*100))
-    print("Maximum permissible deviation from theoretical form for the vessel according to NB-4221.2: e = %.3f m" %(0.3*t))
-    print("Maximum difference in cross-sectional diameters: %.3f mm" %DeltaD_max)
-
-    # ============================ 
-    # Heat Transfer Results
+    # Final Results Printing and saving
     # ============================
-    print("\n################################################## Heat transfer results ###################################################")
-    print("\nVolumetric heat source at the vessel inner surface: %.3f W/m³" %q_iii(r[0]))
-    print("Volumetric heat source at the vessel-insulation interface: %.3f W/m³" %q_iii(r[-1]))
-
-    print("\nHeat transfer coefficient h1 = %.3f W/(m²·K)" %h_1)
-    print("Heat transfer coefficient h2 = %.3f W/(m²·K)" %h_2)
-    print("Overall heat transfer coefficient outside the vessel u2 = %.3f W/(m²·K)" %u_2)
+    if not os.path.exists(TS_directory_path):                                 # Create the directory if it doesn't exist
+        os.makedirs(TS_directory_path, exist_ok=True)                         # Exist_ok=True avoids error if directory already exists
+    file_path = os.path.join(TS_directory_path, "Final_Results.txt")          # Specify the file path inside the newly created directory
     
-    print("\nThermal power flux on the inner vessel surface: %.3f kW/m²" %q_s1)
-    print("Thermal power flux on the outer vessel surface: %.3f kW/m²" %q_s2)
-    
-    # ============================ 
-    # Temperature Results
-    # ============================
-    print("\n####################################################### Temperatures #######################################################")
-    if adiab_flag == 0:
-        print("\nAverage Vessel Temperature (numerical integration): %.3f °C" %(T_vessel_avg - 273.15))
-        print("Maximum Vessel Temperature: %.3f °C at r = %.3f m" %(T_vessel_max - 273.15, r_T_vessel_max))
-        print("Vessel Temperature at the inner surface: %-3f °C at r = %.3f m" %(T_vessel(r)[0] - 273.15, r[0]))
-        print("Vessel Temperature at the outer surface: %-3f °C at r = %.3f m" %(T_vessel(r)[-1] - 273.15, r[-1]))
+    with open(file_path, "w") as file:
+        output_lines = []
 
-        print("\nAverage Thermal Shield Temperature (numerical integration): %.3f °C" %(T_shield_avg - 273.15))
-        print("Maximum Thermal Shield Temperature: %.3f °C at r = %.3f m" %(T_shield_max - 273.15, r_T_vessel_max))
-        print("Thermal Shield Temperature at the inner surface: %-3f °C at r = %.3f m" %(T_shield(r_S)[0] - 273.15, r_S[0]))
-        print("Thermal Shield Temperature at the outer surface: %-3f °C at r = %.3f m" %(T_shield(r_S)[-1] - 273.15, r_S[-1]))
+        # ============================
+        # Hypothesis and data: not printed, saved only
+        # ============================
+        output_lines.append("\n\n\n\n################################################### Hypothesis and data ####################################################")
+        output_lines.append("============================================================================================================================")
+        output_lines.append("\nDefault pressures assumed: %d" %Def_P_flag)
+        if Def_P_flag == 0:
+            output_lines.append("Internal pressure: %.3f MPa" %P_int)
+            output_lines.append("External pressure: %.3f MPa" %P_cpp)
+        if P_int != P_cpp:
+            output_lines.append("\nAssumed stress/strain condition (1: Plane Stress, 0: Plane Strain): %d" %flag_eps)
+        output_lines.append("\n============================================================================================================================")
+        output_lines.append("\nPresence of the volumetric heat source q0: %d" %q_0_flag)
+        output_lines.append("Presence of the thermal shield: %d" %TS_flag)
+        output_lines.append("Thermal shield chosen position (3: Arbitrary, 2: Middle, 1: Equal areas, 0: Equal h_1): %d" %User_D_flag)
+        if User_D_flag == 0:
+            output_lines.append("Heat transfer coefficients equalized in %d sub-iterations. Final difference: %.9e W/m²K" %(counter_h1, abs(h_1_int - h_1_ext)))
+        output_lines.append("\n============================================================================================================================")
+        output_lines.append("\nDiscretization along z: 0")
+        output_lines.append("Chosen temperature T1 to compute C1, C2 (0: T_in, 1: T_in + 10%%, 2: T_in + 20%%, 3: T_avg, 4: T_out_avg): %d" %T1_flag)
+        output_lines.append("Adiabatic Outer Wall approximation adopted: %d" %adiab_flag)
+        output_lines.append("Logarithmic Mean DeltaT approach adopted for inner heat flux computation: 0")
+        output_lines.append("\n============================================================================================================================")
+        output_lines.append("\nThin tube limits for Elastic Instability and Plastic Collapse adopted: %d" %ThinTubes_flag)
+        output_lines.append("Corradi Design Procedure adopted: %d" %Corradi_flag)
+        if Corradi_flag == 1:
+            output_lines.append("Safety coefficient adopted for the Corradi Design Procedure: %.3f" %s)
+        output_lines.append("\n============================================================================================================================")
+                
+        # ============================
+        # Actual Results
+        # ============================
+        output_lines.append("\n\n\n\n###################################################### Final  Results ######################################################")
+        output_lines.append("============================================================================================================================")
+        output_lines.append("\nThe vessel thickness has been increased %d times by 1cm. Computed vessel thickness: %.3f m" % (counter_vessel, t))
+        output_lines.append("Computed thermal shield thickness: %.3f m" % t_shield)
+        output_lines.append("Inner thermal shield radius: %.3f m" % R_shield_int)
+        output_lines.append("\n============================================================================================================================")
+        output_lines.append("\nVessel max ovality W: %.5f = %.3f%%" % (W, W * 100))
+        output_lines.append("Maximum permissible deviation from theoretical form for the vessel according to NB-4221.2: e = %.3f m" % (0.3 * t))
+        output_lines.append("Maximum difference in cross-sectional diameters: %.3f mm" % DeltaD_max)
+        output_lines.append("\n============================================================================================================================")
+
+        # ============================ 
+        # Heat Transfer Results
+        # ============================
+        output_lines.append("\n\n\n\n################################################## Heat transfer results ###################################################")
+        output_lines.append("============================================================================================================================")
+        output_lines.append("\nVolumetric heat source at the vessel inner surface: %.3f W/m³" %q_iii(r[0]))
+        output_lines.append("Volumetric heat source at the vessel-insulation interface: %.3f W/m³" %q_iii(r[-1]))
+        output_lines.append("\n============================================================================================================================")
+        if User_D_flag == 3 or User_D_flag == 2:
+            output_lines.append("\nInner heat transfer coefficient h1_int = %.3f W/(m²·K)" %h_1_int)
+            output_lines.append("Outer heat transfer coefficient h1_ext = %.3f W/(m²·K)" %h_1_ext)
+            output_lines.append("Chosen heat transfer coefficient h1 = %.3f W/(m²·K)    -    Conservative: minimum h means highest thermal stresses" %h_1)
+        elif User_D_flag == 1:
+            output_lines.append("\nInner heat transfer coefficient h1_int = %.3f W/(m²·K)" %h_1_int)
+            output_lines.append("Outer heat transfer coefficient h1_ext = %.3f W/(m²·K)" %h_1_ext)
+            if abs(h_1_int - h_1_ext) <= eps:
+                output_lines.append("Chosen heat transfer coefficient h1 = %.3f W/(m²·K)    -    Essentially equal: the difference is of the order of %.3e" %(h_1, abs(h_1_int - h_1_ext)))
+            else:
+                output_lines.append("Chosen heat transfer coefficient h1 = %.3f W/(m²·K)    -    Conservative: minimum h means highest thermal stresses" %h_1)
+        elif User_D_flag == 0:
+            output_lines.append("\nInner heat transfer coefficient h1_int = %.3f W/(m²·K)" %h_1_int)
+            output_lines.append("Outer heat transfer coefficient h1_ext = %.3f W/(m²·K)" %h_1_ext)
+            output_lines.append("Heat transfer coefficients equalized in %d sub-iterations. Difference: %.9e W/m²K" %(counter_h1, abs(h_1_int - h_1_ext)))
+        output_lines.append("\n============================================================================================================================")
+        output_lines.append("\nHeat transfer coefficient h2 = %.3f W/(m²·K)" %h_2)
+        output_lines.append("Overall heat transfer coefficient outside the vessel u2 = %.3f W/(m²·K)" %u_2)
+        output_lines.append("\n============================================================================================================================")
+        output_lines.append("\nThermal power flux on the inner vessel surface: %.3f kW/m²" %q_s1)
+        output_lines.append("Thermal power flux on the outer vessel surface: %.3f kW/m²" %q_s2)
+        output_lines.append("\n============================================================================================================================")
         
-    elif adiab_flag == 1:
-        print("\nAverage Vessel Temperature under Adiabatic Outer Wall approximation (numerical integration): %.3f °C" %(T_vessel_avg - 273.15))
-        print("Maximum Vessel Temperature under Adiabatic Outer Wall approximation: %.3f °C at r = %.3f m" %(T_vessel_max - 273.15, r_T_vessel_max))
-        print("Vessel Temperature at the inner surface under Adiabatic Outer Wall approximation: %-3f °C at r = %.3f m" %(T_vessel(r)[0] - 273.15, r[0]))
-        print("Vessel Temperature at the outer surface under Adiabatic Outer Wall approximation: %-3f °C at r = %.3f m" %(T_vessel(r)[-1] - 273.15, r[-1]))
+        # ============================ 
+        # Temperature Results
+        # ============================
+        output_lines.append("\n\n\n\n####################################################### Temperatures #######################################################")
+        output_lines.append("============================================================================================================================")
+        if adiab_flag == 0:
+            output_lines.append("\nAverage Vessel Temperature (numerical integration): %.3f °C" %(T_vessel_avg - 273.15))
+            output_lines.append("Maximum Vessel Temperature: %.3f °C at r = %.3f m" %(T_vessel_max - 273.15, r_T_vessel_max))
+            output_lines.append("Vessel Temperature at the inner surface: %-3f °C at r = %.3f m" %(T_vessel(r)[0] - 273.15, r[0]))
+            output_lines.append("Vessel Temperature at the outer surface: %-3f °C at r = %.3f m" %(T_vessel(r)[-1] - 273.15, r[-1]))
+            if creep_flag_V == 1:
+                output_lines.append("\n============================================================================================================================")
+                output_lines.append("WARNING: The maximum vessel temperature T = %.3f °C exceeds the creep threshold temperature of %d °C!" %(T_vessel_max - 273.15, T_creep))
+                output_lines.append("============================================================================================================================")
+            elif creep_flag_V == 0:
+                output_lines.append("\nThere is no risk of thermal creep occurring in the vessel.")
+                output_lines.append("\n============================================================================================================================")
+                
+            output_lines.append("\nAverage Thermal Shield Temperature (numerical integration): %.3f °C" %(T_shield_avg - 273.15))
+            output_lines.append("Maximum Thermal Shield Temperature: %.3f °C at r = %.3f m" %(T_shield_max - 273.15, r_T_vessel_max))
+            output_lines.append("Thermal Shield Temperature at the inner surface: %-3f °C at r = %.3f m" %(T_shield(r_S)[0] - 273.15, r_S[0]))
+            output_lines.append("Thermal Shield Temperature at the outer surface: %-3f °C at r = %.3f m" %(T_shield(r_S)[-1] - 273.15, r_S[-1]))
+            if creep_flag_S == 1:
+                output_lines.append("\n============================================================================================================================")
+                output_lines.append("WARNING: The maximum thermal shield temperature T = %.3f °C exceeds the creep threshold temperature of %d °C!" %(T_shield_max - 273.15, T_creep))
+                output_lines.append("============================================================================================================================")
+            elif creep_flag_S == 0:
+                output_lines.append("\nThere is no risk of thermal creep occurring in the thermal shield.")
+                output_lines.append("\n============================================================================================================================")
+                
+        elif adiab_flag == 1:
+            output_lines.append("\nAverage Vessel Temperature under Adiabatic Outer Wall approximation (numerical integration): %.3f °C" %(T_vessel_avg - 273.15))
+            output_lines.append("Maximum Vessel Temperature under Adiabatic Outer Wall approximation: %.3f °C at r = %.3f m" %(T_vessel_max - 273.15, r_T_vessel_max))
+            output_lines.append("Vessel Temperature at the inner surface under Adiabatic Outer Wall approximation: %-3f °C at r = %.3f m" %(T_vessel(r)[0] - 273.15, r[0]))
+            output_lines.append("Vessel Temperature at the outer surface under Adiabatic Outer Wall approximation: %-3f °C at r = %.3f m" %(T_vessel(r)[-1] - 273.15, r[-1]))
+            if creep_flag_V == 1:
+                output_lines.append("\n============================================================================================================================")
+                output_lines.append("WARNING: The maximum vessel temperature T = %.3f °C exceeds the creep threshold temperature of %d °C!" %(T_vessel_max - 273.15, T_creep))
+                output_lines.append("============================================================================================================================")
+            elif creep_flag_V == 0:
+                output_lines.append("\nThere is no risk of thermal creep occurring in the vessel.")
+                output_lines.append("\n============================================================================================================================")
             
-        print("\nAverage Thermal Shield Temperature (numerical integration): %.3f °C" %(T_shield_avg - 273.15))
-        print("Maximum Thermal Shield Temperature: %.3f °C at r = %.3f m" %(T_shield_max - 273.15, r_T_vessel_max))
-        print("Thermal Shield Temperature at the inner surface: %-3f °C at r = %.3f m" %(T_shield(r_S)[0] - 273.15, r_S[0]))
-        print("Thermal Shield Temperature at the outer surface: %-3f °C at r = %.3f m" %(T_shield(r_S)[-1] - 273.15, r_S[-1]))
-    
-    # ============================ 
-    # Stress Results
-    # ============================
-    print("\n######################################################### Stresses #########################################################")
-    print("\nMaximum Thermal Hoop Stress in the vessel: %.3f Mpa at r = %.3f m" %(sigma_t_th_V_max, r_sigma_t_th_V_max))
-    #print("Maximum Thermal Hoop Stress in the vessel (Simplified formula): %.3f Mpa at r = %.3f m" %(sigma_t_th_V_max_SIMP, r_sigma_t_th_V_max_SIMP))
-    print("Maximum thermal hoop stress in the vessel via design curves: %.3f MPa" %sigma_t_th_V_max_DES)
+            output_lines.append("\nAverage Thermal Shield Temperature (numerical integration): %.3f °C" %(T_shield_avg - 273.15))
+            output_lines.append("Maximum Thermal Shield Temperature: %.3f °C at r = %.3f m" %(T_shield_max - 273.15, r_T_vessel_max))
+            output_lines.append("Thermal Shield Temperature at the inner surface: %-3f °C at r = %.3f m" %(T_shield(r_S)[0] - 273.15, r_S[0]))
+            output_lines.append("Thermal Shield Temperature at the outer surface: %-3f °C at r = %.3f m" %(T_shield(r_S)[-1] - 273.15, r_S[-1]))
+            if creep_flag_S == 1:
+                output_lines.append("\n============================================================================================================================")
+                output_lines.append("WARNING: The maximum thermal shield temperature T = %.3f °C exceeds the creep threshold temperature of %d °C!" %(T_shield_max - 273.15, T_creep))
+                output_lines.append("============================================================================================================================")
+            elif creep_flag_S == 0:
+                output_lines.append("\nThere is no risk of thermal creep occurring in the thermal shield.")
+                output_lines.append("\n============================================================================================================================")
 
-    print("Maximum Thermal Hoop Stress in the thermal shield: %.3f Mpa at r = %.3f m" %(sigma_t_th_S_max, r_sigma_t_th_S_max))
-    #print("Maximum Thermal Hoop Stress in the thermal shield (Simplified formula): %.3f Mpa at r = %.3f m" %(sigma_t_th_S_max_SIMP, r_sigma_t_th_S_max_SIMP))
-    print("Maximum thermal hoop stress in the thermal shield via design curves: %.3f MPa" %sigma_t_th_S_max_DES)
+        # ============================ 
+        # Stress Results
+        # ============================
+        output_lines.append("\n\n\n\n######################################################### Stresses #########################################################")
+        output_lines.append("============================================================================================================================")
+        output_lines.append("\nMaximum Thermal Hoop Stress in the vessel: %.3f Mpa at r = %.3f m" %(sigma_t_th_V_max, r_sigma_t_th_V_max))
+        #output_lines.append("Maximum Thermal Hoop Stress in the vessel (Simplified formula): %.3f Mpa at r = %.3f m" %(sigma_t_th_V_max_SIMP, r_sigma_t_th_V_max_SIMP))
+        output_lines.append("Maximum thermal hoop stress in the vessel via design curves: %.3f MPa" %sigma_t_th_V_max_DES)
 
-    print("\nGuest-Tresca comparison stress in the vessel - Mariotte solution: %.3f Mpa" %sigma_cTR_M)
-    print("Guest-Tresca comparison stress in the vessel - Lamé solution: %.3f Mpa" %sigma_cTR_L)
+        output_lines.append("Maximum Thermal Hoop Stress in the thermal shield: %.3f Mpa at r = %.3f m" %(sigma_t_th_S_max, r_sigma_t_th_S_max))
+        #output_lines.append("Maximum Thermal Hoop Stress in the thermal shield (Simplified formula): %.3f Mpa at r = %.3f m" %(sigma_t_th_S_max_SIMP, r_sigma_t_th_S_max_SIMP))
+        output_lines.append("Maximum thermal hoop stress in the thermal shield via design curves: %.3f MPa" %sigma_t_th_S_max_DES)
+        output_lines.append("\n============================================================================================================================")
+        output_lines.append("\nGuest-Tresca comparison stress in the vessel - Mariotte solution: %.3f Mpa" %sigma_cTR_M)
+        output_lines.append("Guest-Tresca comparison stress in the vessel - Lamé solution: %.3f Mpa" %sigma_cTR_L)
 
-    print("\nGuest-Tresca comparison stress in the thermal shield - Mariotte solution: %.3f Mpa" %sigma_cTR_MS)
-    print("Guest-Tresca comparison stress in the thermal shield - Lamé solution: %.3f Mpa" %sigma_cTR_LS)
-    
-    print("\nFor a design vessel temperature of %.3f °C: " %T_des_vessel_C)
-    print('Yield Stress: Sy'," = %.3f MPa" %Yield_stress)
-    print('Stress Intensity: Sm'," = %.3f MPa" %Stress_Intensity)
-    print("Allowable Stress: %.3f MPa" %sigma_allowable)
-
-    print("\nFor a design thermal shield temperature of %.3f °C: " %T_des_shield_C)
-    print('Yield Stress: Sy'," = %.3f MPa" %Yield_stress_S)
-    print('Stress Intensity: Sm'," = %.3f MPa" %Stress_Intensity_S)
-    print("Allowable Stress: %.3f MPa" %sigma_allowable_S)
-
-    # ============================ 
-    # Thermal Shield
-    # ============================
-    print("\n###################################################### Thermal Shield ######################################################")
-    if flag_primsec_S == 1 or flag_prim_S == 1:
-        print("\nThe current stress state in the thermal shield is not acceptable. \nPrimary + Secondary Stresses flag: %d \nPrimary Stresses flag: %d" %(flag_primsec_S, flag_prim_S))
-        print("Maximum absolute value of the radial thermal stress: %.3f MPa\nMaximum absolute value of the hoop thermal stress: %.3f MPa\nMaximum absolute value of the axial thermal stress: %.3f MPa" %(max(abs(sigma_r_th_S)),max(abs(sigma_t_th_S)),max(abs(sigma_z_th_S))))
-    
-    elif flag_primsec_S == 0 and flag_prim_S == 0:
-        print("\nThe current stress state in the thermal shield is acceptable:")
-        print("\nMaximum absolute value of the total radial stress: %.3f MPa\nMaximum absolute value of the total hoop stress: %.3f MPa\nMaximum absolute value of the total axial stress: %.3f MPa" %(max(abs(sigma_r_totL_S)),max(abs(sigma_t_totL_S)),max(abs(sigma_z_totL_S))))
-        print("\nAll are lower than 3Sm = %.3f MPa" %(3*Stress_Intensity_S))         
-        print("\nMaximum value of the primary radial stress: %.3f MPa\nMaximum value of the primary hoop stress: %.3f MPa\nPrimary axial stress: %.3f MPa" %(max(sigma_rL_S),max(sigma_tL_S),sigma_zL_S))
-        print("\nAll are lower than Sm = %.3f MPa" %Stress_Intensity_S)
-
-    if (sigma_cTR_LS < sigma_allowable_S):
-        print("\nThe comparison stress according to Tresca-Lamé Sc = %.3f MPa is lower than the allowable stress Sa = %.3f MPa" %(sigma_cTR_LS, sigma_allowable_S))
-    if (sigma_cTR_MS < sigma_allowable_S):
-        print("The comparison stress according to Tresca-Mariotte Sc = %.3f MPa is lower than the allowable stress Sa = %.3f MPa" %(sigma_cTR_MS, sigma_allowable_S))
-
-    if creep_flag_S == 1:
-        print("\nCreep might occur in the thermal shield due to high temperatures. Either an additional thermal shield, a reduced thickness or both are required.")
-    elif creep_flag_S == 0:
-        print("There is no risk of thermal creep occurring in the thermal shield.")
-        print("The thermal shield's integrity is ensured.")
+        output_lines.append("\nGuest-Tresca comparison stress in the thermal shield - Mariotte solution: %.3f Mpa" %sigma_cTR_MS)
+        output_lines.append("Guest-Tresca comparison stress in the thermal shield - Lamé solution: %.3f Mpa" %sigma_cTR_LS)
+        output_lines.append("\n============================================================================================================================")
+        output_lines.append("\nFor a design vessel temperature of %.3f °C: " %T_des_vessel_C)
+        output_lines.append("Yield Stress: Sy = %.3f MPa" %Yield_stress)
+        output_lines.append("Stress Intensity: Sm = %.3f MPa" %Stress_Intensity)
+        output_lines.append("Allowable Stress: %.3f MPa" %sigma_allowable)
+        output_lines.append("\nFor a design thermal shield temperature of %.3f °C: " %T_des_shield_C)
+        output_lines.append("Yield Stress: Sy = %.3f MPa" %Yield_stress_S)
+        output_lines.append("Stress Intensity: Sm = %.3f MPa" %Stress_Intensity_S)
+        output_lines.append("Allowable Stress: %.3f MPa" %sigma_allowable_S)
+        output_lines.append("\n============================================================================================================================")
         
-    # ============================ 
-    # Vessel
-    # ============================
-    print("\n########################################################## Vessel ##########################################################")
-    #Corradi_vessel = Corradi(np.array([Current_Slenderness]))
-    if flag_primsec == 1 or flag_prim == 1:
-        print("\nThe current stress state in the vessel is not acceptable. \nPrimary + Secondary Stresses flag: %d \nPrimary Stresses flag: %d" %(flag_primsec, flag_prim))
-        print("Maximum absolute value of the radial thermal stress: %.3f MPa\nMaximum absolute value of the hoop thermal stress: %.3f MPa\nMaximum absolute value of the axial thermal stress: %.3f MPa" %(max(abs(sigma_r_th_S)),max(abs(sigma_t_th_S)),max(abs(sigma_z_th_S))))
-    
-    elif flag_primsec == 0 and flag_prim == 0:
-        print("\nThe current stress state in the vessel is acceptable:")
-        print("\nMaximum absolute value of the total radial stress: %.3f MPa\nMaximum absolute value of the total hoop stress: %.3f MPa\nMaximum absolute value of the total axial stress: %.3f MPa" %(max(abs(sigma_r_totL)),max(abs(sigma_t_totL)),max(abs(sigma_z_totL))))
-        print("\nAll are lower than 3Sm = %.3f MPa" %(3*Stress_Intensity))         
-        print("\nMaximum value of the primary radial stress: %.3f MPa\nMaximum value of the primary hoop stress: %.3f MPa\nPrimary axial stress: %.3f MPa" %(max(sigma_rL),max(sigma_tL),sigma_zL))
-        print("\nAll are lower than Sm = %.3f MPa" %Stress_Intensity)
-
-    print("\nAccording to the Corradi Design Procedure:")
-    print("Current slenderness: %.3f    -   Critical slenderness: %.3f" %(Current_Slenderness, Dt_Crit_Ratio))
-    print("\nThe theoretical limit for collapse pressure, accounting for ovality, is: q_c = %.3f MPa = %.3f bar" %(Corradi_vessel[0], 10*Corradi_vessel[0]))
-    print("A safety factor s = %.3f was assumed. \nThe allowable external pressure is thus: q_a = %.3f MPa = %.3f bar" %(Corradi_vessel[2], Corradi_vessel[1], 10*Corradi_vessel[1]))
-
-    if (buckling_flag == 1 and sigma_cTR_L < sigma_allowable and sigma_cTR_M < sigma_allowable):
-        print("The given external pressure of %.3f bar is lower than the allowable pressure of %.3f bar" %(P_cpp, 10*Corradi_vessel[1]))
-        print("\nThe comparison stress according to Tresca-Lamé Sc = %.3f MPa is lower than the allowable stress Sa = %.3f MPa" %(sigma_cTR_L, sigma_allowable))
-        print("The comparison stress according to Tresca-Mariotte Sc = %.3f MPa is lower than the allowable stress Sa = %.3f MPa" %(sigma_cTR_M, sigma_allowable))
-        if creep_flag_V == 1:
-            print("Creep might occur in the vessel due to high temperatures. Either an additional thermal shield, a reduced thickness or both are required.")
-        elif creep_flag_V == 0:
-            print("There is no risk of thermal creep occurring in the vessel.")
-            print("The vessel's integrity is ensured.")
-            print("\n############################################################################################################################")
-            print("\nThe design is correct!")
-        print("\n############################################################################################################################")
+        # ============================ 
+        # Thermal Shield
+        # ============================
+        output_lines.append("\n\n\n\n###################################################### Thermal Shield ######################################################")
+        output_lines.append("============================================================================================================================")
+        if flag_primsec_S == 1 or flag_prim_S == 1:
+            output_lines.append("\nAccording to Lamé:")
+            output_lines.append("Maximum absolute value of the total radial stress: %.3f MPa\nMaximum absolute value of the total hoop stress: %.3f MPa\nMaximum absolute value of the total axial stress: %.3f MPa" %(max(abs(sigma_r_totL_S)),max(abs(sigma_t_totL_S)),max(abs(sigma_z_totL_S))))
+            output_lines.append("\nMaximum value of the primary radial stress: %.3f MPa\nMaximum value of the primary hoop stress: %.3f MPa\nPrimary axial stress: %.3f MPa" %(max(sigma_rL_S),max(sigma_tL_S),sigma_zL_S))
+            if max(abs(sigma_r_totL_S)) > 3*Stress_Intensity_S:
+                output_lines.append("\nThe maximum value of the total radial stress exceeds allowable stress.")
+            if max(abs(sigma_t_totL_S)) > 3*Stress_Intensity_S:
+                output_lines.append("\nThe maximum value of the total hoop stress exceeds allowable stress.")
+            if max(abs(sigma_z_totL_S)) > 3*Stress_Intensity_S:
+                output_lines.append("\nThe maximum value of the total axial stress exceeds allowable stress.")
+            if max(sigma_rL_S) > Stress_Intensity_S:
+                output_lines.append("\nThe maximum value of the primary radial stress exceeds allowable stress.")
+            if max(sigma_tL_S) > Stress_Intensity_S:
+                output_lines.append("\nThe maximum value of the primary hoop stress exceeds allowable stress.")
+            if sigma_zL_S > Stress_Intensity_S:
+                output_lines.append("\nThe primary axial stress exceeds allowable stress.")
+                
+            output_lines.append("\n============================================================================================================================")
+            output_lines.append("\nAccording to Mariotte:")
+            output_lines.append("Maximum absolute value of the total radial stress: %.3f MPa\nMaximum absolute value of the total hoop stress: %.3f MPa\nMaximum absolute value of the total axial stress: %.3f MPa" %(max(abs(sigma_r_totM_S)),max(abs(sigma_t_totM_S)),max(abs(sigma_z_totM_S))))
+            output_lines.append("\nPrimary radial stress: %.3f MPa\nPrimary hoop stress: %.3f MPa\nPrimary axial stress: %.3f MPa" %(sigma_rM_S,sigma_tM_S,sigma_zM_S))
+            if max(abs(sigma_r_totM_S)) > 3*Stress_Intensity_S:
+                output_lines.append("\nThe maximum value of the total radial stress exceeds allowable stress.")
+            if max(abs(sigma_t_totM_S)) > 3*Stress_Intensity_S:
+                output_lines.append("\nThe maximum value of the total hoop stress exceeds allowable stress.")
+            if max(abs(sigma_z_totM_S)) > 3*Stress_Intensity_S:
+                output_lines.append("\nThe maximum value of the total axial stress exceeds allowable stress.")
+            if sigma_rM_S > Stress_Intensity_S:
+                output_lines.append("\nThe primary radial stress exceeds allowable stress.")
+            if sigma_tM_S > Stress_Intensity_S:
+                output_lines.append("\nThe primary hoop stress exceeds allowable stress.")
+            if sigma_zM_S > Stress_Intensity_S:
+                output_lines.append("\nThe primary axial stress exceeds allowable stress.")
+            output_lines.append("\n============================================================================================================================")
+            output_lines.append("The current stress state in the thermal shield is not acceptable.")
+            output_lines.append("============================================================================================================================")
         
-    elif buckling_flag == 0:
-        print("\nThe given external pressure of %.3f bar is higher than the allowable pressure of %.3f bar: a change in thickness is required!" %(P_cpp, 10*Corradi_vessel[1]))
-        print("\n############################################################################################################################")
+        elif flag_primsec_S == 0 and flag_prim_S == 0:
+            output_lines.append("\nAccording to Lamé:")
+            output_lines.append("Maximum absolute value of the total radial stress: %.3f MPa\nMaximum absolute value of the total hoop stress: %.3f MPa\nMaximum absolute value of the total axial stress: %.3f MPa" %(max(abs(sigma_r_totL_S)),max(abs(sigma_t_totL_S)),max(abs(sigma_z_totL_S))))
+            output_lines.append("\nAll are lower than 3Sm = %.3f MPa" %(3*Stress_Intensity_S))         
+            output_lines.append("\nMaximum value of the primary radial stress: %.3f MPa\nMaximum value of the primary hoop stress: %.3f MPa\nPrimary axial stress: %.3f MPa" %(max(sigma_rL_S),max(sigma_tL_S),sigma_zL_S))
+            output_lines.append("\nAll are lower than Sm = %.3f MPa" %Stress_Intensity_S)
+            output_lines.append("\n============================================================================================================================")
+            output_lines.append("\nAccording to Mariotte:")
+            output_lines.append("Maximum absolute value of the total radial stress: %.3f MPa\nMaximum absolute value of the total hoop stress: %.3f MPa\nMaximum absolute value of the total axial stress: %.3f MPa" %(max(abs(sigma_r_totM_S)),max(abs(sigma_t_totM_S)),max(abs(sigma_z_totM_S))))
+            output_lines.append("\nAll are lower than 3Sm = %.3f MPa" %(3*Stress_Intensity_S))         
+            output_lines.append("\nPrimary radial stress: %.3f MPa\nPrimary hoop stress: %.3f MPa\nPrimary axial stress: %.3f MPa" %(sigma_rM_S,sigma_tM_S,sigma_zM_S))
+            output_lines.append("\nAll are lower than Sm = %.3f MPa" %Stress_Intensity_S)
+            output_lines.append("\n============================================================================================================================")
 
-    elif (sigma_cTR_L > sigma_allowable or sigma_cTR_M > sigma_allowable):
-        print("\nEither the Tresca-Lamè comparison stress Sc = %.3f MPa or the Tresca-Mariotte comparison stress Sc = %.3f MPa is higher than the allowable stress Sa = %.3f MPa" %(sigma_cTR_L,sigma_cTR_M,sigma_allowable))
-        print("\n############################################################################################################################")
+        if (sigma_cTR_LS < sigma_allowable_S):
+            output_lines.append("\nThe comparison stress according to Tresca-Lamé Sc = %.3f MPa is lower than the allowable stress Sa = %.3f MPa" %(sigma_cTR_LS, sigma_allowable_S))
+        else:
+            output_lines.append("\n============================================================================================================================")
+            output_lines.append("The comparison stress according to Tresca-Lamé Sc = %.3f MPa is higher than the allowable stress Sa = %.3f MPa" %(sigma_cTR_LS, sigma_allowable_S))
+            output_lines.append("============================================================================================================================")
+        if (sigma_cTR_MS < sigma_allowable_S):
+            output_lines.append("The comparison stress according to Tresca-Mariotte Sc = %.3f MPa is lower than the allowable stress Sa = %.3f MPa" %(sigma_cTR_MS, sigma_allowable_S))
+            output_lines.append("============================================================================================================================")
+        else:
+            output_lines.append("\n============================================================================================================================")
+            output_lines.append("The comparison stress according to Tresca-Mariotte Sc = %.3f MPa is higher than the allowable stress Sa = %.3f MPa" %(sigma_cTR_MS, sigma_allowable_S))
+            output_lines.append("============================================================================================================================")
+            
+        if flag_primsec_S == 0 and flag_prim_S == 0 and sigma_cTR_LS < sigma_allowable_S and sigma_cTR_MS < sigma_allowable_S and creep_flag_S == 0:
+            output_lines.append("\n\n\n\n############################################################################################################################")
+            output_lines.append("The thermal shield's integrity is ensured.")
+            output_lines.append("############################################################################################################################")
+
+        # ============================ 
+        # Vessel
+        # ============================
+        output_lines.append("\n\n\n\n########################################################## Vessel ##########################################################")
+        output_lines.append("============================================================================================================================")
+        #Corradi_vessel = Corradi(np.array([Current_Slenderness]))
+        if flag_primsec == 1 or flag_prim == 1:
+            output_lines.append("\nAccording to Lamé:")
+            output_lines.append("Maximum absolute value of the total radial stress: %.3f MPa\nMaximum absolute value of the total hoop stress: %.3f MPa\nMaximum absolute value of the total axial stress: %.3f MPa" %(max(abs(sigma_r_totL)),max(abs(sigma_t_totL)),max(abs(sigma_z_totL))))
+            output_lines.append("\nMaximum value of the primary radial stress: %.3f MPa\nMaximum value of the primary hoop stress: %.3f MPa\nPrimary axial stress: %.3f MPa" %(max(sigma_rL),max(sigma_tL),sigma_zL))
+            if max(abs(sigma_r_totL)) > 3*Stress_Intensity:
+                output_lines.append("\nThe maximum value of the total radial stress exceeds allowable stress.")
+            if max(abs(sigma_t_totL)) > 3*Stress_Intensity:
+                output_lines.append("\nThe maximum value of the total hoop stress exceeds allowable stress.")
+            if max(abs(sigma_z_totL)) > 3*Stress_Intensity:
+                output_lines.append("\nThe maximum value of the total axial stress exceeds allowable stress.")
+            if max(sigma_rL) > Stress_Intensity:
+                output_lines.append("\nThe maximum value of the primary radial stress exceeds allowable stress.")
+            if max(sigma_tL) > Stress_Intensity:
+                output_lines.append("\nThe maximum value of the primary hoop stress exceeds allowable stress.")
+            if sigma_zL > Stress_Intensity:
+                output_lines.append("\nThe primary axial stress exceeds allowable stress.")
+                
+            output_lines.append("\n============================================================================================================================")
+            output_lines.append("\nAccording to Mariotte:")
+            output_lines.append("Maximum absolute value of the total radial stress: %.3f MPa\nMaximum absolute value of the total hoop stress: %.3f MPa\nMaximum absolute value of the total axial stress: %.3f MPa" %(max(abs(sigma_r_totM)),max(abs(sigma_t_totM)),max(abs(sigma_z_totM))))
+            output_lines.append("\nPrimary radial stress: %.3f MPa\nPrimary hoop stress: %.3f MPa\nPrimary axial stress: %.3f MPa" %(sigma_rM,sigma_tM,sigma_zM))
+            if max(abs(sigma_r_totM)) > 3*Stress_Intensity:
+                output_lines.append("\nThe maximum value of the total radial stress exceeds allowable stress.")
+            if max(abs(sigma_t_totM)) > 3*Stress_Intensity:
+                output_lines.append("\nThe maximum value of the total hoop stress exceeds allowable stress.")
+            if max(abs(sigma_z_totM)) > 3*Stress_Intensity:
+                output_lines.append("\nThe maximum value of the total axial stress exceeds allowable stress.")
+            if sigma_rM > Stress_Intensity:
+                output_lines.append("\nThe primary radial stress exceeds allowable stress.")
+            if sigma_tM > Stress_Intensity:
+                output_lines.append("\nThe primary hoop stress exceeds allowable stress.")
+            if sigma_zM > Stress_Intensity:
+                output_lines.append("\nThe primary axial stress exceeds allowable stress.")
+            output_lines.append("\n============================================================================================================================")
+            output_lines.append("The current stress state in the vessel is not acceptable. \nPrimary + Secondary Stresses flag: %d \nPrimary Stresses flag: %d" %(flag_primsec, flag_prim))
+            output_lines.append("============================================================================================================================")
+    
+        elif flag_primsec == 0 and flag_prim == 0:
+            output_lines.append("\nAccording to Lamé:")
+            output_lines.append("Maximum absolute value of the total radial stress: %.3f MPa\nMaximum absolute value of the total hoop stress: %.3f MPa\nMaximum absolute value of the total axial stress: %.3f MPa" %(max(abs(sigma_r_totL)),max(abs(sigma_t_totL)),max(abs(sigma_z_totL))))
+            output_lines.append("\nAll are lower than 3Sm = %.3f MPa" %(3*Stress_Intensity))         
+            output_lines.append("\nMaximum value of the primary radial stress: %.3f MPa\nMaximum value of the primary hoop stress: %.3f MPa\nPrimary axial stress: %.3f MPa" %(max(sigma_rL),max(sigma_tL),sigma_zL))
+            output_lines.append("\nAll are lower than Sm = %.3f MPa" %Stress_Intensity)
+            output_lines.append("\n============================================================================================================================")
+            output_lines.append("\nAccording to Mariotte:")
+            output_lines.append("Maximum absolute value of the total radial stress: %.3f MPa\nMaximum absolute value of the total hoop stress: %.3f MPa\nMaximum absolute value of the total axial stress: %.3f MPa" %(max(abs(sigma_r_totM)),max(abs(sigma_t_totM)),max(abs(sigma_z_totM))))
+            output_lines.append("\nAll are lower than 3Sm = %.3f MPa" %(3*Stress_Intensity)) 
+            output_lines.append("\nPrimary radial stress: %.3f MPa\nPrimary hoop stress: %.3f MPa\nPrimary axial stress: %.3f MPa" %(sigma_rM,sigma_tM,sigma_zM))
+            output_lines.append("\nAll are lower than Sm = %.3f MPa" %Stress_Intensity)
+
+        if (sigma_cTR_L < sigma_allowable):
+            output_lines.append("\n============================================================================================================================")
+            output_lines.append("\nThe comparison stress according to Tresca-Lamé Sc = %.3f MPa is lower than the allowable stress Sa = %.3f MPa" %(sigma_cTR_L, sigma_allowable))
+        else:
+            output_lines.append("\n============================================================================================================================")
+            output_lines.append("The comparison stress according to Tresca-Lamé Sc = %.3f MPa is higher than the allowable stress Sa = %.3f MPa" %(sigma_cTR_L, sigma_allowable))
+            output_lines.append("============================================================================================================================")
+        if (sigma_cTR_M < sigma_allowable):
+            output_lines.append("The comparison stress according to Tresca-Mariotte Sc = %.3f MPa is lower than the allowable stress Sa = %.3f MPa" %(sigma_cTR_M, sigma_allowable))
+            output_lines.append("============================================================================================================================")
+        else:
+            output_lines.append("\n============================================================================================================================")
+            output_lines.append("The comparison stress according to Tresca-Mariotte Sc = %.3f MPa is higher than the allowable stress Sa = %.3f MPa" %(sigma_cTR_M, sigma_allowable))
+            output_lines.append("============================================================================================================================")
+        
+        output_lines.append("\n\n\n\n######################################################### Buckling #########################################################")
+        output_lines.append("============================================================================================================================")
+        output_lines.append("\nAccording to the Corradi Design Procedure:")
+        output_lines.append("Current slenderness: %.3f    -   Critical slenderness: %.3f" %(Current_Slenderness, Dt_Crit_Ratio))
+        output_lines.append("\nThe theoretical limit for collapse pressure, accounting for ovality, is: q_c = %.3f MPa = %.3f bar" %(Corradi_vessel[0], 10*Corradi_vessel[0]))
+        output_lines.append("A safety factor s = %.3f was assumed. \nThe allowable external pressure is thus: q_a = %.3f MPa = %.3f bar" %(Corradi_vessel[2], Corradi_vessel[1], 10*Corradi_vessel[1]))
+        if (buckling_flag == 1):
+            output_lines.append("The given external pressure of %.3f bar is lower than the allowable pressure of %.3f bar" %(P_cpp, 10*Corradi_vessel[1]))
+            output_lines.append("\n============================================================================================================================")
+        elif buckling_flag == 0:
+            output_lines.append("\n============================================================================================================================")
+            output_lines.append("The given external pressure of %.3f bar is higher than the allowable pressure of %.3f bar: a change in thickness is required!" %(P_cpp, 10*Corradi_vessel[1]))
+            output_lines.append("============================================================================================================================")
+            
+        if buckling_flag == 1 and sigma_cTR_L < sigma_allowable and sigma_cTR_M < sigma_allowable and creep_flag_V == 0:
+            output_lines.append("\n\n\n\n############################################################################################################################")
+            output_lines.append("The vessel's integrity is ensured: the design is correct!")
+            output_lines.append("############################################################################################################################")
+    
+        for line in output_lines:
+            print(line)
+            file.write(line + '\n')
