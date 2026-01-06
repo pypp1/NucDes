@@ -401,7 +401,7 @@ if TS_flag == 0:
     # ======================================
     while True:
         try:
-            Disc_flag = int(input("Do you want to use a discretization approach along z? (1: Yes, 0: No): "))
+            Disc_flag = int(input("Do you want to adopt a discretization approach along z? (1: Yes, 0: No): "))
             if Disc_flag not in (0, 1):
                 raise RuntimeError("Invalid input! Please enter either 0 or 1.")
             break  
@@ -916,6 +916,36 @@ if TS_flag == 0:
             # Create a list to hold the printed messages
             output_lines = []
             
+            # ============================
+            # Hypothesis and data: not printed, saved only
+            # ============================
+            output_lines.append("\n\n\n\n################################################### Hypothesis and data ####################################################")
+            output_lines.append("============================================================================================================================")
+            output_lines.append("\nDefault pressures assumed: %d" %Def_P_flag)
+            if Def_P_flag == 0:
+                output_lines.append("Internal pressure: %.3f MPa" %P_int)
+                output_lines.append("External pressure: %.3f MPa" %P_cpp)
+            if P_int != P_cpp:
+                output_lines.append("\nAssumed stress/strain condition (1: Plane Stress, 0: Plane Strain): %d" %flag_eps)
+            output_lines.append("\n============================================================================================================================")
+            output_lines.append("\nPresence of the volumetric heat source q0: %d" %q_0_flag)
+            if q_0_flag == 1:
+                output_lines.append("Presence of the thermal shield: %d" %TS_flag)
+            output_lines.append("\n============================================================================================================================")
+            output_lines.append("\nDiscretization along z: %d" %Disc_flag)
+            output_lines.append("Chosen temperature T1 to compute C1, C2 (0: T_in, 1: T_in + 10%%, 2: T_in + 20%%, 3: T_avg, 4: T_out_avg): %d" %T1_flag)
+            output_lines.append("Adiabatic Outer Wall approximation adopted: %d" %adiab_flag)
+            output_lines.append("Logarithmic Mean DeltaT approach adopted for inner heat flux computation: %d" %LogDelta_flag)
+            output_lines.append("\n============================================================================================================================")
+            output_lines.append("\nThin tube limits for Elastic Instability and Plastic Collapse adopted: %d" %ThinTubes_flag)
+            output_lines.append("Corradi Design Procedure adopted: %d" %Corradi_flag)
+            if Corradi_flag == 1:
+                output_lines.append("Safety coefficient adopted for the Corradi Design Procedure: %.3f" %s)
+            output_lines.append("\n============================================================================================================================")
+            
+            # ============================
+            # Actual Results
+            # ============================
             output_lines.append("\n\n\n\n###################################################### Final  Results ######################################################")
             output_lines.append("============================================================================================================================")
             output_lines.append("\nCurrent vessel wall thickness: %.3f m" %t)
@@ -2429,6 +2459,38 @@ elif TS_flag == 1:
     with open("final_results_thermal_shield.txt", "w") as file:
         output_lines = []
 
+        # ============================
+        # Hypothesis and data: not printed, saved only
+        # ============================
+        output_lines.append("\n\n\n\n################################################### Hypothesis and data ####################################################")
+        output_lines.append("============================================================================================================================")
+        output_lines.append("\nDefault pressures assumed: %d" %Def_P_flag)
+        if Def_P_flag == 0:
+            output_lines.append("Internal pressure: %.3f MPa" %P_int)
+            output_lines.append("External pressure: %.3f MPa" %P_cpp)
+        if P_int != P_cpp:
+            output_lines.append("\nAssumed stress/strain condition (1: Plane Stress, 0: Plane Strain): %d" %flag_eps)
+        output_lines.append("\n============================================================================================================================")
+        output_lines.append("\nPresence of the volumetric heat source q0: %d" %q_0_flag)
+        output_lines.append("\nPresence of the thermal shield: %d" %TS_flag)
+        output_lines.append("Thermal shield chosen position (3: Arbitrary, 2: Middle, 1: Equal areas, 0: Equal h_1): %d" %User_D_flag)
+        if User_D_flag == 0:
+            output_lines.append("Heat transfer coefficients equalized in %d sub-iterations. Final difference: %.9e W/m²K" %(counter_h1, abs(h_1_int - h_1_ext)))
+        output_lines.append("\n============================================================================================================================")
+        output_lines.append("\nDiscretization along z: 0")
+        output_lines.append("Chosen temperature T1 to compute C1, C2 (0: T_in, 1: T_in + 10%%, 2: T_in + 20%%, 3: T_avg, 4: T_out_avg): %d" %T1_flag)
+        output_lines.append("Adiabatic Outer Wall approximation adopted: %d" %adiab_flag)
+        output_lines.append("Logarithmic Mean DeltaT approach adopted for inner heat flux computation: 0")
+        output_lines.append("\n============================================================================================================================")
+        output_lines.append("\nThin tube limits for Elastic Instability and Plastic Collapse adopted: %d" %ThinTubes_flag)
+        output_lines.append("Corradi Design Procedure adopted: %d" %Corradi_flag)
+        if Corradi_flag == 1:
+            output_lines.append("Safety coefficient adopted for the Corradi Design Procedure: %.3f" %s)
+        output_lines.append("\n============================================================================================================================")
+                
+        # ============================
+        # Actual Results
+        # ============================
         output_lines.append("\n\n\n\n###################################################### Final  Results ######################################################")
         output_lines.append("============================================================================================================================")
         output_lines.append("\nThe vessel thickness has been increased %d times by 1cm. Computed vessel thickness: %.3f m" % (counter_vessel, t))
