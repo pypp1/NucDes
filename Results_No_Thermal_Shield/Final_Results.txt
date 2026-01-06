@@ -73,8 +73,9 @@ Maximum Vessel Temperature: 370.617 °C at r = 1.612 m
 Vessel Temperature at the inner surface: 239.120110 °C at r = 1.500 m
 Vessel Temperature at the outer surface: 367.051049 °C at r = 1.650 m
 
-There is no risk of thermal creep occurring in the vessel.
-
+============================================================================================================================
+WARNING: The maximum vessel temperature T = 370.617 °C exceeds the creep threshold temperature of 370 °C!
+Creep might occur in the vessel due to high temperatures. Either an additional thermal shield, a reduced thickness or both are required.
 ============================================================================================================================
 
 
@@ -105,12 +106,35 @@ Allowable Stress: 114.712 MPa
 
 ########################################################## Vessel ##########################################################
 ============================================================================================================================
-The current stress state in the vessel is not acceptable. 
-Primary + Secondary Stresses flag: 1 
-Primary Stresses flag: 0
-Maximum absolute value of the radial thermal stress: 5.614 MPa
-Maximum absolute value of the hoop thermal stress: 461.385 MPa
-Maximum absolute value of the axial thermal stress: 461.385 MPa
+
+According to Lamé:
+Maximum absolute value of the total radial stress: 7.500 MPa
+Maximum absolute value of the total hoop stress: 453.885 MPa
+Maximum absolute value of the total axial stress: 453.885 MPa
+Maximum value of the primary radial stress: -7.500 MPa
+Maximum value of the primary hoop stress: -7.500 MPa
+Primary axial stress: -7.500 MPa
+
+The maximum value of the total hoop stress exceeds allowable stress.
+
+The maximum value of the total axial stress exceeds allowable stress.
+
+============================================================================================================================
+
+According to Mariotte:
+Maximum absolute value of the total radial stress: 3.750 MPa
+Maximum absolute value of the total hoop stress: 536.385 MPa
+Maximum absolute value of the total axial stress: 498.885 MPa
+Primary radial stress: -3.750 MPa
+Primary hoop stress: 75.000 MPa
+Primary axial stress: 37.500 MPa
+
+The maximum value of the total hoop stress exceeds allowable stress.
+
+The maximum value of the total axial stress exceeds allowable stress.
+
+============================================================================================================================
+The current stress state in the vessel is not acceptable.
 ============================================================================================================================
 
 ============================================================================================================================
