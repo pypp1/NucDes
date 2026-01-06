@@ -2472,7 +2472,7 @@ elif TS_flag == 1:
             output_lines.append("\nAssumed stress/strain condition (1: Plane Stress, 0: Plane Strain): %d" %flag_eps)
         output_lines.append("\n============================================================================================================================")
         output_lines.append("\nPresence of the volumetric heat source q0: %d" %q_0_flag)
-        output_lines.append("\nPresence of the thermal shield: %d" %TS_flag)
+        output_lines.append("Presence of the thermal shield: %d" %TS_flag)
         output_lines.append("Thermal shield chosen position (3: Arbitrary, 2: Middle, 1: Equal areas, 0: Equal h_1): %d" %User_D_flag)
         if User_D_flag == 0:
             output_lines.append("Heat transfer coefficients equalized in %d sub-iterations. Final difference: %.9e W/m²K" %(counter_h1, abs(h_1_int - h_1_ext)))
