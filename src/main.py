@@ -1079,7 +1079,6 @@ if TS_flag == 0:
                 if creep_flag_V == 1:
                     output_lines.append("\n============================================================================================================================")
                     output_lines.append("WARNING: The maximum vessel temperature T = %.3f °C exceeds the creep threshold temperature of %d °C!" %(T_vessel_max - 273.15, T_creep))
-                    output_lines.append("Creep might occur in the vessel due to high temperatures. Either an additional thermal shield, a reduced thickness or both are required.")
                     output_lines.append("============================================================================================================================")
                 elif creep_flag_V == 0:
                     output_lines.append("\nThere is no risk of thermal creep occurring in the vessel.")
@@ -2787,7 +2786,6 @@ elif TS_flag == 1:
             if creep_flag_V == 1:
                 output_lines.append("\n============================================================================================================================")
                 output_lines.append("WARNING: The maximum vessel temperature T = %.3f °C exceeds the creep threshold temperature of %d °C!" %(T_vessel_max - 273.15, T_creep))
-                output_lines.append("Creep might occur in the vessel due to high temperatures. Either an additional thermal shield, a reduced thickness or both are required.")
                 output_lines.append("============================================================================================================================")
             elif creep_flag_V == 0:
                 output_lines.append("\nThere is no risk of thermal creep occurring in the vessel.")
@@ -2800,7 +2798,6 @@ elif TS_flag == 1:
             if creep_flag_S == 1:
                 output_lines.append("\n============================================================================================================================")
                 output_lines.append("WARNING: The maximum thermal shield temperature T = %.3f °C exceeds the creep threshold temperature of %d °C!" %(T_shield_max - 273.15, T_creep))
-                output_lines.append("Creep might occur in the thermal shield due to high temperatures. Either an additional thermal shield, a reduced thickness or both are required.")
                 output_lines.append("============================================================================================================================")
             elif creep_flag_S == 0:
                 output_lines.append("\nThere is no risk of thermal creep occurring in the thermal shield.")

@@ -5,7 +5,9 @@
 ################################################### Hypothesis and data ####################################################
 ============================================================================================================================
 
-Default pressures assumed: 1
+Default pressures assumed: 0
+Internal pressure: 83.000 MPa
+External pressure: 83.000 MPa
 
 ============================================================================================================================
 
@@ -89,7 +91,7 @@ Maximum thermal hoop stress via design curves: 394.453 MPa
 
 ============================================================================================================================
 
-Guest-Tresca comparison stress in the vessel - Mariotte solution: 540.135 Mpa
+Guest-Tresca comparison stress in the vessel - Mariotte solution: 548.535 Mpa
 Guest-Tresca comparison stress in the vessel - Lamé solution: 461.385 Mpa
 
 ============================================================================================================================
@@ -108,12 +110,13 @@ Allowable Stress: 114.712 MPa
 ============================================================================================================================
 
 According to Lamé:
-Maximum absolute value of the total radial stress: 7.500 MPa
-Maximum absolute value of the total hoop stress: 453.885 MPa
-Maximum absolute value of the total axial stress: 453.885 MPa
-Maximum value of the primary radial stress: -7.500 MPa
-Maximum value of the primary hoop stress: -7.500 MPa
-Primary axial stress: -7.500 MPa
+Maximum absolute value of the total radial stress: 8.300 MPa
+Maximum absolute value of the total hoop stress: 453.085 MPa
+Maximum absolute value of the total axial stress: 453.085 MPa
+
+Maximum value of the primary radial stress: -8.300 MPa
+Maximum value of the primary hoop stress: -8.300 MPa
+Primary axial stress: -8.300 MPa
 
 The maximum value of the total hoop stress exceeds allowable stress.
 
@@ -122,12 +125,13 @@ The maximum value of the total axial stress exceeds allowable stress.
 ============================================================================================================================
 
 According to Mariotte:
-Maximum absolute value of the total radial stress: 3.750 MPa
-Maximum absolute value of the total hoop stress: 536.385 MPa
-Maximum absolute value of the total axial stress: 498.885 MPa
-Primary radial stress: -3.750 MPa
-Primary hoop stress: 75.000 MPa
-Primary axial stress: 37.500 MPa
+Maximum absolute value of the total radial stress: 4.150 MPa
+Maximum absolute value of the total hoop stress: 544.385 MPa
+Maximum absolute value of the total axial stress: 502.885 MPa
+
+Primary radial stress: -4.150 MPa
+Primary hoop stress: 83.000 MPa
+Primary axial stress: 41.500 MPa
 
 The maximum value of the total hoop stress exceeds allowable stress.
 
@@ -142,7 +146,7 @@ The comparison stress according to Tresca-Lamé Sc = 461.385 MPa is higher than 
 ============================================================================================================================
 
 ============================================================================================================================
-The comparison stress according to Tresca-Mariotte Sc = 540.135 MPa is higher than the allowable stress Sa = 114.712 MPa
+The comparison stress according to Tresca-Mariotte Sc = 548.535 MPa is higher than the allowable stress Sa = 114.712 MPa
 ============================================================================================================================
 
 
@@ -157,5 +161,5 @@ A safety factor s = 2.000 was assumed.
 The allowable external pressure is thus: q_a = 6.923 MPa = 69.233 bar
 
 ============================================================================================================================
-The given external pressure of 75.000 bar is higher than the allowable pressure of 69.233 bar: a change in thickness is required!
+The given external pressure of 83.000 bar is higher than the allowable pressure of 69.233 bar: a change in thickness is required!
 ============================================================================================================================
