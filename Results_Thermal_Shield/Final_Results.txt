@@ -6,8 +6,8 @@
 ============================================================================================================================
 
 Default pressures assumed: 0
-Internal pressure: 83.000 MPa
-External pressure: 83.000 MPa
+Internal pressure: 82.500 MPa
+External pressure: 82.500 MPa
 
 ============================================================================================================================
 
@@ -87,12 +87,16 @@ Maximum Vessel Temperature: 225.823 °C at r = 1.571 m
 Vessel Temperature at the inner surface: 214.886348 °C at r = 1.500 m
 Vessel Temperature at the outer surface: 220.787011 °C at r = 1.660 m
 
+There is no risk of thermal creep occurring in the vessel.
+
 ============================================================================================================================
 
 Average Thermal Shield Temperature (numerical integration): 246.274 °C
 Maximum Thermal Shield Temperature: 259.355 °C at r = 1.571 m
 Thermal Shield Temperature at the inner surface: 222.563747 °C at r = 1.335 m
 Thermal Shield Temperature at the outer surface: 220.182286 °C at r = 1.422 m
+
+There is no risk of thermal creep occurring in the thermal shield.
 
 ============================================================================================================================
 
@@ -109,10 +113,10 @@ Maximum thermal hoop stress in the thermal shield via design curves: 256.238 MPa
 
 ============================================================================================================================
 
-Guest-Tresca comparison stress in the vessel - Mariotte solution: 118.561 Mpa
+Guest-Tresca comparison stress in the vessel - Mariotte solution: 118.067 Mpa
 Guest-Tresca comparison stress in the vessel - Lamé solution: 36.599 Mpa
 
-Guest-Tresca comparison stress in the thermal shield - Mariotte solution: 243.436 Mpa
+Guest-Tresca comparison stress in the thermal shield - Mariotte solution: 242.643 Mpa
 Guest-Tresca comparison stress in the thermal shield - Lamé solution: 111.877 Mpa
 
 ============================================================================================================================
@@ -136,30 +140,30 @@ Allowable Stress: 127.444 MPa
 ============================================================================================================================
 
 According to Lamé:
-Maximum absolute value of the total radial stress: 9.211 MPa
-Maximum absolute value of the total hoop stress: 103.577 MPa
-Maximum absolute value of the total axial stress: 103.577 MPa
+Maximum absolute value of the total radial stress: 9.161 MPa
+Maximum absolute value of the total hoop stress: 103.627 MPa
+Maximum absolute value of the total axial stress: 103.627 MPa
 
 All are lower than 3Sm = 382.333 MPa
 
-Maximum value of the primary radial stress: -8.300 MPa
-Maximum value of the primary hoop stress: -8.300 MPa
-Primary axial stress: -8.300 MPa
+Maximum value of the primary radial stress: -8.250 MPa
+Maximum value of the primary hoop stress: -8.250 MPa
+Primary axial stress: -8.250 MPa
 
 All are lower than Sm = 127.444 MPa
 
 ============================================================================================================================
 
 According to Mariotte:
-Maximum absolute value of the total radial stress: 5.061 MPa
-Maximum absolute value of the total hoop stress: 239.286 MPa
-Maximum absolute value of the total axial stress: 175.581 MPa
+Maximum absolute value of the total radial stress: 5.036 MPa
+Maximum absolute value of the total hoop stress: 238.518 MPa
+Maximum absolute value of the total axial stress: 175.198 MPa
 
 All are lower than 3Sm = 382.333 MPa
 
-Primary radial stress: -4.150 MPa
-Primary hoop stress: 127.409 MPa
-Primary axial stress: 63.704 MPa
+Primary radial stress: -4.125 MPa
+Primary hoop stress: 126.641 MPa
+Primary axial stress: 63.321 MPa
 
 All are lower than Sm = 127.444 MPa
 
@@ -168,13 +172,7 @@ All are lower than Sm = 127.444 MPa
 The comparison stress according to Tresca-Lamé Sc = 111.877 MPa is lower than the allowable stress Sa = 127.444 MPa
 
 ============================================================================================================================
-The comparison stress according to Tresca-Mariotte Sc = 243.436 MPa is higher than the allowable stress Sa = 127.444 MPa
-============================================================================================================================
-
-============================================================================================================================
-
-There is no risk of thermal creep occurring in the thermal shield.
-
+The comparison stress according to Tresca-Mariotte Sc = 242.643 MPa is higher than the allowable stress Sa = 127.444 MPa
 ============================================================================================================================
 
 
@@ -184,43 +182,37 @@ There is no risk of thermal creep occurring in the thermal shield.
 ============================================================================================================================
 
 According to Lamé:
-Maximum absolute value of the total radial stress: 8.413 MPa
-Maximum absolute value of the total hoop stress: 28.299 MPa
-Maximum absolute value of the total axial stress: 28.299 MPa
+Maximum absolute value of the total radial stress: 8.363 MPa
+Maximum absolute value of the total hoop stress: 28.349 MPa
+Maximum absolute value of the total axial stress: 28.349 MPa
 
 All are lower than 3Sm = 390.590 MPa
 
-Maximum value of the primary radial stress: -8.300 MPa
-Maximum value of the primary hoop stress: -8.300 MPa
-Primary axial stress: -8.300 MPa
+Maximum value of the primary radial stress: -8.250 MPa
+Maximum value of the primary hoop stress: -8.250 MPa
+Primary axial stress: -8.250 MPa
 
 All are lower than Sm = 130.197 MPa
 
 ============================================================================================================================
 
 According to Mariotte:
-Maximum absolute value of the total radial stress: 4.263 MPa
-Maximum absolute value of the total hoop stress: 114.411 MPa
-Maximum absolute value of the total axial stress: 75.505 MPa
+Maximum absolute value of the total radial stress: 4.238 MPa
+Maximum absolute value of the total hoop stress: 113.942 MPa
+Maximum absolute value of the total axial stress: 75.271 MPa
 
 All are lower than 3Sm = 390.590 MPa
 
-Primary radial stress: -4.150 MPa
-Primary hoop stress: 77.812 MPa
-Primary axial stress: 38.906 MPa
+Primary radial stress: -4.125 MPa
+Primary hoop stress: 77.344 MPa
+Primary axial stress: 38.672 MPa
 
 All are lower than Sm = 130.197 MPa
 
 ============================================================================================================================
 
 The comparison stress according to Tresca-Lamé Sc = 36.599 MPa is lower than the allowable stress Sa = 130.197 MPa
-The comparison stress according to Tresca-Mariotte Sc = 118.561 MPa is lower than the allowable stress Sa = 130.197 MPa
-
-============================================================================================================================
-
-There is no risk of thermal creep occurring in the vessel.
-
-============================================================================================================================
+The comparison stress according to Tresca-Mariotte Sc = 118.067 MPa is lower than the allowable stress Sa = 130.197 MPa
 
 
 
@@ -234,7 +226,7 @@ Current slenderness: 20.750    -   Critical slenderness: 31.559
 The theoretical limit for collapse pressure, accounting for ovality, is: q_c = 16.795 MPa = 167.950 bar
 A safety factor s = 2.000 was assumed. 
 The allowable external pressure is thus: q_a = 8.397 MPa = 83.975 bar
-The given external pressure of 83.000 bar is lower than the allowable pressure of 83.975 bar
+The given external pressure of 82.500 bar is lower than the allowable pressure of 83.975 bar
 
 ============================================================================================================================
 
