@@ -252,9 +252,9 @@ if TS_flag == 0:
             except RuntimeError as e:
                 print(e)
         sigma_M = sigmaM_func(R_int, P_int_MPa, t)
-        sigma_rM_cyl = sigma_M[0]
-        sigma_tM_cyl = sigma_M[1]
-        sigma_zM_cyl = sigma_M[2]
+        sigma_rM = sigma_M[0]
+        sigma_tM = sigma_M[1]
+        sigma_zM = sigma_M[2]
 
         if Mariotte_flag == 1:
 
@@ -656,9 +656,9 @@ if TS_flag == 0:
         # ======================================
         # Principal stresses sum and elastic regime verification in the vessel
         # ======================================
-        sigma_r_totM = sigma_rM_cyl + sigma_r_th_V
-        sigma_t_totM = sigma_tM_cyl + sigma_t_th_V
-        sigma_z_totM = sigma_zM_cyl + sigma_z_th_V
+        sigma_r_totM = sigma_rM + sigma_r_th_V
+        sigma_t_totM = sigma_tM + sigma_t_th_V
+        sigma_z_totM = sigma_zM + sigma_z_th_V
         
         sigma_r_totL = sigma_rL + sigma_r_th_V
         sigma_t_totL = sigma_tL + sigma_t_th_V
@@ -694,10 +694,11 @@ if TS_flag == 0:
             os.makedirs(NTS_plots_directory, exist_ok=True)
             plot_file_path = os.path.join(NTS_plots_directory, "Design Curves.png")
             plt.figure(figsize=(10,10))
+            plt.xlim(ba_ratio_plot[0], ba_ratio_plot[-1])
             plt.plot(ba_ratio_plot, L_Interpolator(ba_ratio_plot), 'k', label=f'Iso-mu = {mu_L} 1/m')
             plt.plot(ba_ratio_plot, R_Interpolator(ba_ratio_plot), 'k', label=f'Iso-mu = {mu_R} 1/m')
-            plt.text(ba_ratio_plot[-1], L_Interpolator(ba_ratio_plot)[-1], f'Iso-mu = {mu_L}', color='black', fontsize=10)
-            plt.text(ba_ratio_plot[-1], R_Interpolator(ba_ratio_plot)[-1], f'Iso-mu = {mu_R}', color='black', fontsize=10)
+            plt.text(ba_ratio_plot[-1]+0.001, L_Interpolator(ba_ratio_plot)[-1], f'Iso-mu = {mu_L}', color='black', fontsize=10)
+            plt.text(ba_ratio_plot[-1]+0.001, R_Interpolator(ba_ratio_plot)[-1], f'Iso-mu = {mu_R}', color='black', fontsize=10)
             plt.plot(R_ext/R_int, sigmaT,'or', label=r'Current $\sigma$$_T$')
             plt.xlabel('R$_{ext}$/R$_{int}$')
             plt.ylabel(r'$\sigma$$_T$')
@@ -725,6 +726,40 @@ if TS_flag == 0:
         Stress_Intensity = Intensity_CubicSpline(T_des_vessel_C)
         sigma_allowable = Stress_Intensity                                              #MPa
 
+        """
+        # ======================================
+        # Vessel Thermomechanical Integrity Verification    -   Lamé + Thermal stresses
+        # ======================================
+        if max(abs(sigma_r_totL)) > 3*Stress_Intensity or max(abs(sigma_t_totL)) > 3*Stress_Intensity or max(abs(sigma_z_totL)) > 3*Stress_Intensity:
+            flag_primsec = 1
+        else:
+            flag_primsec = 0
+
+        if max(abs(sigma_rL)) > Stress_Intensity or max(abs(sigma_tL)) > Stress_Intensity or sigma_zL > Stress_Intensity:
+            flag_prim = 1
+        else:
+            flag_prim = 0
+        
+        if flag_primsec == 1 or flag_prim == 1:
+            print("\nThe current stress state in the vessel is not acceptable. \nPrimary + Secondary Stresses flag: %d \nPrimary Stresses flag: %d" %(flag_primsec, flag_prim))
+            print("Absolute value of the maximum radial thermal stress: %.3f MPa\nAbsolute value of the maximum hoop thermal stress: %.3f MPa\nAbsolute value of the maximum axial thermal stress: %.3f MPa" %(abs(max(sigma_r_th_S)),abs(max(sigma_t_th_S)),abs(max(sigma_z_th_S))))
+            continue
+        elif flag_primsec == 0 and flag_prim == 0:
+            vessel_flag = 1
+        """ 
+        # ======================================
+        # Vessel Thermomechanical Integrity Verification    -   Mariotte + Thermal stresses
+        # ======================================
+        if max(abs(sigma_r_totM)) > 3*Stress_Intensity or max(abs(sigma_t_totM)) > 3*Stress_Intensity or max(abs(sigma_z_totM)) > 3*Stress_Intensity:
+            flag_primsec = 1
+        else:
+            flag_primsec = 0
+
+        if sigma_rM > Stress_Intensity or sigma_tM > Stress_Intensity or sigma_zM > Stress_Intensity:
+            flag_prim = 1
+        else:
+            flag_prim = 0
+            
         # ======================================
         # Without thermal shield
         # ======================================
@@ -1039,17 +1074,29 @@ if TS_flag == 0:
                 output_lines.append("Maximum Vessel Temperature: %.3f °C at r = %.3f m" %(T_vessel_max - 273.15, r_T_vessel_max))
                 output_lines.append("Vessel Temperature at the inner surface: %-3f °C at r = %.3f m" %(T_vessel(r)[0] - 273.15, r[0]))
                 output_lines.append("Vessel Temperature at the outer surface: %-3f °C at r = %.3f m" %(T_vessel(r)[-1] - 273.15, r[-1]))
-                output_lines.append("\n============================================================================================================================")
+                if creep_flag_V == 1:
+                    output_lines.append("\n============================================================================================================================")
+                    output_lines.append("WARNING: The maximum vessel temperature T = %.3f °C exceeds the creep threshold temperature of %d °C!" %(T_vessel_max - 273.15, T_creep))
+                    output_lines.append("Creep might occur in the vessel due to high temperatures. Either an additional thermal shield, a reduced thickness or both are required.")
+                    output_lines.append("============================================================================================================================")
+                elif creep_flag_V == 0:
+                    output_lines.append("\nThere is no risk of thermal creep occurring in the vessel.")
+                    output_lines.append("\n============================================================================================================================")
+                    
             elif adiab_flag == 1:
                 output_lines.append("\nAverage Vessel Temperature under Adiabatic Outer Wall approximation (numerical integration): %.3f °C" %(T_vessel_avg - 273.15))
                 #output_lines.append("Average Vessel Temperature under Adiabatic Outer Wall approximation (analytical integration): %.3f °C" %T_vessel_avg_2)
                 output_lines.append("Maximum Vessel Temperature under Adiabatic Outer Wall approximation: %.3f °C at r = %.3f m" %(T_vessel_max - 273.15, r_T_vessel_max))
                 output_lines.append("Vessel Temperature at the inner surface under Adiabatic Outer Wall approximation: %-3f °C at r = %.3f m" %(T_vessel(r)[0] - 273.15, r[0]))
                 output_lines.append("Vessel Temperature at the outer surface under Adiabatic Outer Wall approximation: %-3f °C at r = %.3f m" %(T_vessel(r)[-1] - 273.15, r[-1]))
-                output_lines.append("\n============================================================================================================================")
-            if (T_vessel_max - 273.15) > T_creep:
-                output_lines.append("WARNING: The maximum vessel temperature T = %.3f °C exceeds the creep threshold temperature of %d °C!" %(T_vessel_max - 273.15, T_creep))
-                output_lines.append("============================================================================================================================")
+                if creep_flag_V == 1:
+                    output_lines.append("\n============================================================================================================================")
+                    output_lines.append("WARNING: The maximum vessel temperature T = %.3f °C exceeds the creep threshold temperature of %d °C!" %(T_vessel_max - 273.15, T_creep))
+                    output_lines.append("Creep might occur in the vessel due to high temperatures. Either an additional thermal shield, a reduced thickness or both are required.")
+                    output_lines.append("============================================================================================================================")
+                elif creep_flag_V == 0:
+                    output_lines.append("\nThere is no risk of thermal creep occurring in the vessel.")
+                    output_lines.append("\n============================================================================================================================")               
             
             # ============================ 
             # Stress Results
@@ -1074,8 +1121,43 @@ if TS_flag == 0:
             output_lines.append("\n============================================================================================================================")
             
             # ============================ 
-            # Buckling Results
+            # Vessel
             # ============================
+            output_lines.append("\n\n\n\n########################################################## Vessel ##########################################################")
+            output_lines.append("============================================================================================================================")
+            #Corradi_vessel = Corradi(np.array([Current_Slenderness]))
+            if flag_primsec == 1 or flag_prim == 1:
+                output_lines.append("The current stress state in the vessel is not acceptable. \nPrimary + Secondary Stresses flag: %d \nPrimary Stresses flag: %d" %(flag_primsec, flag_prim))
+                output_lines.append("Maximum absolute value of the radial thermal stress: %.3f MPa\nMaximum absolute value of the hoop thermal stress: %.3f MPa\nMaximum absolute value of the axial thermal stress: %.3f MPa" %(max(abs(sigma_r_th_S)),max(abs(sigma_t_th_S)),max(abs(sigma_z_th_S))))
+                output_lines.append("============================================================================================================================")
+            
+            elif flag_primsec == 0 and flag_prim == 0:
+                output_lines.append("\nAccording to Lamé:")
+                output_lines.append("Maximum absolute value of the total radial stress: %.3f MPa\nMaximum absolute value of the total hoop stress: %.3f MPa\nMaximum absolute value of the total axial stress: %.3f MPa" %(max(abs(sigma_r_totL)),max(abs(sigma_t_totL)),max(abs(sigma_z_totL))))
+                output_lines.append("\nAll are lower than 3Sm = %.3f MPa" %(3*Stress_Intensity))         
+                output_lines.append("\nMaximum value of the primary radial stress: %.3f MPa\nMaximum value of the primary hoop stress: %.3f MPa\nPrimary axial stress: %.3f MPa" %(max(sigma_rL),max(sigma_tL),sigma_zL))
+                output_lines.append("\nAll are lower than Sm = %.3f MPa" %Stress_Intensity)
+                output_lines.append("\n============================================================================================================================")
+                output_lines.append("\nAccording to Mariotte:")
+                output_lines.append("Maximum absolute value of the total radial stress: %.3f MPa\nMaximum absolute value of the total hoop stress: %.3f MPa\nMaximum absolute value of the total axial stress: %.3f MPa" %(max(abs(sigma_r_totM)),max(abs(sigma_t_totM)),max(abs(sigma_z_totM))))
+                output_lines.append("\nAll are lower than 3Sm = %.3f MPa" %(3*Stress_Intensity)) 
+                output_lines.append("\nPrimary radial stress: %.3f MPa\nPrimary hoop stress: %.3f MPa\nPrimary axial stress: %.3f MPa" %(sigma_rM,sigma_tM,sigma_zM))
+                output_lines.append("\nAll are lower than Sm = %.3f MPa" %Stress_Intensity)
+
+            if (sigma_cTR_L < sigma_allowable):
+                output_lines.append("\n============================================================================================================================")
+                output_lines.append("\nThe comparison stress according to Tresca-Lamé Sc = %.3f MPa is lower than the allowable stress Sa = %.3f MPa" %(sigma_cTR_L, sigma_allowable))
+            else:
+                output_lines.append("\n============================================================================================================================")
+                output_lines.append("The comparison stress according to Tresca-Lamé Sc = %.3f MPa is higher than the allowable stress Sa = %.3f MPa" %(sigma_cTR_L, sigma_allowable))
+                output_lines.append("============================================================================================================================")
+            if (sigma_cTR_M < sigma_allowable):
+                output_lines.append("The comparison stress according to Tresca-Mariotte Sc = %.3f MPa is lower than the allowable stress Sa = %.3f MPa" %(sigma_cTR_M, sigma_allowable))
+            else:
+                output_lines.append("\n============================================================================================================================")
+                output_lines.append("The comparison stress according to Tresca-Mariotte Sc = %.3f MPa is higher than the allowable stress Sa = %.3f MPa" %(sigma_cTR_M, sigma_allowable))
+                output_lines.append("============================================================================================================================")
+                
             output_lines.append("\n\n\n\n######################################################### Buckling #########################################################")
             output_lines.append("============================================================================================================================")
             output_lines.append("\nAccording to the Corradi Design Procedure:")
@@ -1085,29 +1167,17 @@ if TS_flag == 0:
             if (P_cpp < 10*Corradi_vessel[1] and sigma_cTR_M < sigma_allowable and sigma_cTR_L < sigma_allowable):
                 output_lines.append("\nThe given external pressure of %.3f bar is lower than the allowable pressure of %.3f bar" %(P_cpp, 10*Corradi_vessel[1]))
                 output_lines.append("\n============================================================================================================================")
-                output_lines.append("The comparison stress according to Tresca-Lamé Sc = %.3f MPa is lower than the allowable stress Sa = %.3f MPa\nThe comparison stress according to Tresca-Mariotte Sc = %.3f MPa is also lower than the allowable stress Sa = %.3f MPa" %(sigma_cTR_L, sigma_allowable, sigma_cTR_M, sigma_allowable))
-                if creep_flag_V == 1:
-                    output_lines.append("\nCreep might occur in the vessel due to high temperatures. Either an additional thermal shield, an increased thickness or both are required.")
-                elif creep_flag_V == 0:
-                    output_lines.append("There is no risk of thermal creep occurring in the vessel.")
-                    output_lines.append("The vessel's integrity is ensured.")
-                    output_lines.append("\n============================================================================================================================")
-                    output_lines.append("\n\n\n\n############################################################################################################################")
-                    output_lines.append("\nThe design is correct!")
-                output_lines.append("\n############################################################################################################################")
-                
             elif (P_cpp > 10*Corradi_vessel[1]):
                 output_lines.append("\n============================================================================================================================")
                 output_lines.append("The given external pressure of %.3f bar is higher than the allowable pressure of %.3f bar: a change in thickness is required!" %(P_cpp, 10*Corradi_vessel[1]))
                 output_lines.append("============================================================================================================================")
-                
-            elif (sigma_cTR_M > sigma_allowable or sigma_cTR_L > sigma_allowable):
-                output_lines.append("\n============================================================================================================================")
-                output_lines.append("Either the Tresca-Mariotte comparison stress Sc = %.3f MPa or the Tresca-Lamè comparison stress Sc = %.3f MPa is higher than the allowable stress Sa = %.3f MPa" %(sigma_cTR_M,sigma_cTR_L,sigma_allowable))
-                output_lines.append("============================================================================================================================")
-            
-            # Print messages to the console and write to the file
-            for line in output_lines:
+
+            if P_cpp < 10*Corradi_vessel[1] and sigma_cTR_L < sigma_allowable and sigma_cTR_M < sigma_allowable and creep_flag_V == 0:
+                output_lines.append("\n\n\n\n############################################################################################################################")
+                output_lines.append("The vessel's integrity is ensured: the design is correct!")
+                output_lines.append("############################################################################################################################")
+
+            for line in output_lines:    # Print messages to the console and write to the file
                 print(line)
                 file.write(line + '\n')  # Add a newline for formatting in the text file
                 
@@ -1491,8 +1561,11 @@ elif TS_flag == 1:
         Delta_eq = B_eq**2 - 4*A_eq*C_eq
         R_shield_int = (-B_eq + np.sqrt(Delta_eq))/(2*A_eq)
         D_shield_int = 2*R_shield_int
-        
-    elif User_D_flag == 0:      #Loop required both here, to initialize the correct position, and later, to update it at every iteration
+    
+    # =============================================================================================================================================================
+    # Thermal Shield Initial Position Iterative Computation to equalize h1
+    # =============================================================================================================================================================
+    elif User_D_flag == 0:
         counter_h1 = 0
         N_max_h1 = 1000
         eps = 1e-8
@@ -2185,10 +2258,8 @@ elif TS_flag == 1:
     
     if adiab_flag == 0:
         if (T_vessel_max - 273.15) > T_creep:
-            print("\nWARNING: The maximum vessel temperature T = %.3f °C exceeds the creep threshold temperature of %d °C!" %(T_vessel_max - 273.15, T_creep))
             creep_flag_V = 1
         if (T_shield_max - 273.15) > T_creep:
-            print("\nWARNING: The maximum thermal shield temperature T = %.3f °C exceeds the creep threshold temperature of %d °C!" %(T_shield_max - 273.15, T_creep))
             creep_flag_S = 1
         if T_pl_flag == 1:
             # ======================================
@@ -2236,10 +2307,8 @@ elif TS_flag == 1:
      
     elif adiab_flag == 1:
         if (T_vessel_max - 273.15) > T_creep:
-            print("\nWARNING: The maximum vessel temperature T = %.3f °C exceeds the creep threshold temperature of %d °C!" %(T_vessel_max - 273.15, T_creep))
             creep_flag_V = 1
         if (T_shield_max - 273.15) > T_creep:
-            print("\nWARNING: The maximum thermal shield temperature T = %.3f °C exceeds the creep threshold temperature of %d °C!" %(T_shield_max - 273.15, T_creep))
             creep_flag_S = 1
         if T_pl_flag == 1:
             # ======================================
@@ -2366,10 +2435,11 @@ elif TS_flag == 1:
         os.makedirs(TS_plots_directory, exist_ok=True)
         plot_file_path = os.path.join(TS_plots_directory, "Design curves.png")
         plt.figure(figsize=(10,10))
+        plt.xlim(ba_ratio_plot[0], ba_ratio_plot[-1])
         plt.plot(ba_ratio_plot, L_Interpolator(ba_ratio_plot), 'k', label=f'Iso-mu = {mu_L} 1/m')
         plt.plot(ba_ratio_plot, R_Interpolator(ba_ratio_plot), 'k', label=f'Iso-mu = {mu_R} 1/m')
-        plt.text(ba_ratio_plot[-1], L_Interpolator(ba_ratio_plot)[-1], f'Iso-mu = {mu_L}', color='black', fontsize=10)
-        plt.text(ba_ratio_plot[-1], R_Interpolator(ba_ratio_plot)[-1], f'Iso-mu = {mu_R}', color='black', fontsize=10)
+        plt.text(ba_ratio_plot[-1]+0.001, L_Interpolator(ba_ratio_plot)[-1], f'Iso-mu = {mu_L}', color='black', fontsize=10)
+        plt.text(ba_ratio_plot[-1]+0.001, R_Interpolator(ba_ratio_plot)[-1], f'Iso-mu = {mu_R}', color='black', fontsize=10)
         plt.plot(R_ext/R_int, sigmaT_V,'or', label=r'Current $\sigma$$_T$ in the vessel')
         plt.plot(R_shield_ext/R_shield_int, sigmaT_S,'ob', label=r'Current $\sigma$$_T$ in the thermal shield')
         plt.xlabel('R$_{ext}$/R$_{int}$')
@@ -2656,23 +2726,54 @@ elif TS_flag == 1:
             output_lines.append("Maximum Vessel Temperature: %.3f °C at r = %.3f m" %(T_vessel_max - 273.15, r_T_vessel_max))
             output_lines.append("Vessel Temperature at the inner surface: %-3f °C at r = %.3f m" %(T_vessel(r)[0] - 273.15, r[0]))
             output_lines.append("Vessel Temperature at the outer surface: %-3f °C at r = %.3f m" %(T_vessel(r)[-1] - 273.15, r[-1]))
-            output_lines.append("\n============================================================================================================================")
+            if creep_flag_V == 1:
+                output_lines.append("\n============================================================================================================================")
+                output_lines.append("WARNING: The maximum vessel temperature T = %.3f °C exceeds the creep threshold temperature of %d °C!" %(T_vessel_max - 273.15, T_creep))
+                output_lines.append("Creep might occur in the vessel due to high temperatures. Either an additional thermal shield, a reduced thickness or both are required.")
+                output_lines.append("============================================================================================================================")
+            elif creep_flag_V == 0:
+                output_lines.append("\nThere is no risk of thermal creep occurring in the vessel.")
+                output_lines.append("\n============================================================================================================================")
+                
             output_lines.append("\nAverage Thermal Shield Temperature (numerical integration): %.3f °C" %(T_shield_avg - 273.15))
             output_lines.append("Maximum Thermal Shield Temperature: %.3f °C at r = %.3f m" %(T_shield_max - 273.15, r_T_vessel_max))
             output_lines.append("Thermal Shield Temperature at the inner surface: %-3f °C at r = %.3f m" %(T_shield(r_S)[0] - 273.15, r_S[0]))
             output_lines.append("Thermal Shield Temperature at the outer surface: %-3f °C at r = %.3f m" %(T_shield(r_S)[-1] - 273.15, r_S[-1]))
-            output_lines.append("\n============================================================================================================================")
+            if creep_flag_S == 1:
+                output_lines.append("\n============================================================================================================================")
+                output_lines.append("WARNING: The maximum thermal shield temperature T = %.3f °C exceeds the creep threshold temperature of %d °C!" %(T_shield_max - 273.15, T_creep))
+                output_lines.append("Creep might occur in the thermal shield due to high temperatures. Either an additional thermal shield, a reduced thickness or both are required.")
+                output_lines.append("============================================================================================================================")
+            elif creep_flag_S == 0:
+                output_lines.append("\nThere is no risk of thermal creep occurring in the thermal shield.")
+                output_lines.append("\n============================================================================================================================")
+                
         elif adiab_flag == 1:
             output_lines.append("\nAverage Vessel Temperature under Adiabatic Outer Wall approximation (numerical integration): %.3f °C" %(T_vessel_avg - 273.15))
             output_lines.append("Maximum Vessel Temperature under Adiabatic Outer Wall approximation: %.3f °C at r = %.3f m" %(T_vessel_max - 273.15, r_T_vessel_max))
             output_lines.append("Vessel Temperature at the inner surface under Adiabatic Outer Wall approximation: %-3f °C at r = %.3f m" %(T_vessel(r)[0] - 273.15, r[0]))
             output_lines.append("Vessel Temperature at the outer surface under Adiabatic Outer Wall approximation: %-3f °C at r = %.3f m" %(T_vessel(r)[-1] - 273.15, r[-1]))
-            output_lines.append("\n============================================================================================================================")
+            if creep_flag_V == 1:
+                output_lines.append("\n============================================================================================================================")
+                output_lines.append("WARNING: The maximum vessel temperature T = %.3f °C exceeds the creep threshold temperature of %d °C!" %(T_vessel_max - 273.15, T_creep))
+                output_lines.append("Creep might occur in the vessel due to high temperatures. Either an additional thermal shield, a reduced thickness or both are required.")
+                output_lines.append("============================================================================================================================")
+            elif creep_flag_V == 0:
+                output_lines.append("\nThere is no risk of thermal creep occurring in the vessel.")
+                output_lines.append("\n============================================================================================================================")
+            
             output_lines.append("\nAverage Thermal Shield Temperature (numerical integration): %.3f °C" %(T_shield_avg - 273.15))
             output_lines.append("Maximum Thermal Shield Temperature: %.3f °C at r = %.3f m" %(T_shield_max - 273.15, r_T_vessel_max))
             output_lines.append("Thermal Shield Temperature at the inner surface: %-3f °C at r = %.3f m" %(T_shield(r_S)[0] - 273.15, r_S[0]))
             output_lines.append("Thermal Shield Temperature at the outer surface: %-3f °C at r = %.3f m" %(T_shield(r_S)[-1] - 273.15, r_S[-1]))
-            output_lines.append("\n============================================================================================================================")
+            if creep_flag_S == 1:
+                output_lines.append("\n============================================================================================================================")
+                output_lines.append("WARNING: The maximum thermal shield temperature T = %.3f °C exceeds the creep threshold temperature of %d °C!" %(T_shield_max - 273.15, T_creep))
+                output_lines.append("Creep might occur in the thermal shield due to high temperatures. Either an additional thermal shield, a reduced thickness or both are required.")
+                output_lines.append("============================================================================================================================")
+            elif creep_flag_S == 0:
+                output_lines.append("\nThere is no risk of thermal creep occurring in the thermal shield.")
+                output_lines.append("\n============================================================================================================================")
 
         # ============================ 
         # Stress Results
@@ -2714,8 +2815,6 @@ elif TS_flag == 1:
             output_lines.append("============================================================================================================================")
         
         elif flag_primsec_S == 0 and flag_prim_S == 0:
-            output_lines.append("The current stress state in the thermal shield is acceptable.")
-            output_lines.append("============================================================================================================================")
             output_lines.append("\nAccording to Lamé:")
             output_lines.append("Maximum absolute value of the total radial stress: %.3f MPa\nMaximum absolute value of the total hoop stress: %.3f MPa\nMaximum absolute value of the total axial stress: %.3f MPa" %(max(abs(sigma_r_totL_S)),max(abs(sigma_t_totL_S)),max(abs(sigma_z_totL_S))))
             output_lines.append("\nAll are lower than 3Sm = %.3f MPa" %(3*Stress_Intensity_S))         
@@ -2731,16 +2830,22 @@ elif TS_flag == 1:
 
         if (sigma_cTR_LS < sigma_allowable_S):
             output_lines.append("\nThe comparison stress according to Tresca-Lamé Sc = %.3f MPa is lower than the allowable stress Sa = %.3f MPa" %(sigma_cTR_LS, sigma_allowable_S))
+        else:
+            output_lines.append("\n============================================================================================================================")
+            output_lines.append("The comparison stress according to Tresca-Lamé Sc = %.3f MPa is higher than the allowable stress Sa = %.3f MPa" %(sigma_cTR_LS, sigma_allowable_S))
+            output_lines.append("============================================================================================================================")
         if (sigma_cTR_MS < sigma_allowable_S):
             output_lines.append("The comparison stress according to Tresca-Mariotte Sc = %.3f MPa is lower than the allowable stress Sa = %.3f MPa" %(sigma_cTR_MS, sigma_allowable_S))
-
-        if creep_flag_S == 1:
-            output_lines.append("\nCreep might occur in the thermal shield due to high temperatures. Either an additional thermal shield, a reduced thickness or both are required.")
-        elif creep_flag_S == 0:
-            output_lines.append("There is no risk of thermal creep occurring in the thermal shield.")
-            output_lines.append("The thermal shield's integrity is ensured.")
+        else:
             output_lines.append("\n============================================================================================================================")
+            output_lines.append("The comparison stress according to Tresca-Mariotte Sc = %.3f MPa is higher than the allowable stress Sa = %.3f MPa" %(sigma_cTR_MS, sigma_allowable_S))
+            output_lines.append("============================================================================================================================")
             
+        if flag_primsec_S == 0 and flag_prim_S == 0 and sigma_cTR_LS < sigma_allowable_S and sigma_cTR_MS < sigma_allowable_S and creep_flag_S == 0:
+            output_lines.append("\n\n\n\n############################################################################################################################")
+            output_lines.append("The thermal shield's integrity is ensured.")
+            output_lines.append("############################################################################################################################")
+
         # ============================ 
         # Vessel
         # ============================
@@ -2749,12 +2854,10 @@ elif TS_flag == 1:
         #Corradi_vessel = Corradi(np.array([Current_Slenderness]))
         if flag_primsec == 1 or flag_prim == 1:
             output_lines.append("The current stress state in the vessel is not acceptable. \nPrimary + Secondary Stresses flag: %d \nPrimary Stresses flag: %d" %(flag_primsec, flag_prim))
-            output_lines.append("Maximum absolute value of the radial thermal stress: %.3f MPa\nMaximum absolute value of the hoop thermal stress: %.3f MPa\nMaximum absolute value of the axial thermal stress: %.3f MPa" %(max(abs(sigma_r_th_S)),max(abs(sigma_t_th_S)),max(abs(sigma_z_th_S))))
+            output_lines.append("Maximum absolute value of the radial thermal stress: %.3f MPa\nMaximum absolute value of the hoop thermal stress: %.3f MPa\nMaximum absolute value of the axial thermal stress: %.3f MPa" %(max(abs(sigma_r_th_V)),max(abs(sigma_t_th_V)),max(abs(sigma_z_th_V))))
             output_lines.append("============================================================================================================================")
         
         elif flag_primsec == 0 and flag_prim == 0:
-            output_lines.append("The current stress state in the vessel is acceptable.")
-            output_lines.append("============================================================================================================================")
             output_lines.append("\nAccording to Lamé:")
             output_lines.append("Maximum absolute value of the total radial stress: %.3f MPa\nMaximum absolute value of the total hoop stress: %.3f MPa\nMaximum absolute value of the total axial stress: %.3f MPa" %(max(abs(sigma_r_totL)),max(abs(sigma_t_totL)),max(abs(sigma_z_totL))))
             output_lines.append("\nAll are lower than 3Sm = %.3f MPa" %(3*Stress_Intensity))         
@@ -2767,21 +2870,18 @@ elif TS_flag == 1:
             output_lines.append("\nPrimary radial stress: %.3f MPa\nPrimary hoop stress: %.3f MPa\nPrimary axial stress: %.3f MPa" %(sigma_rM,sigma_tM,sigma_zM))
             output_lines.append("\nAll are lower than Sm = %.3f MPa" %Stress_Intensity)
 
-        if (sigma_cTR_L < sigma_allowable and sigma_cTR_M < sigma_allowable):
+        if (sigma_cTR_L < sigma_allowable):
             output_lines.append("\n============================================================================================================================")
             output_lines.append("\nThe comparison stress according to Tresca-Lamé Sc = %.3f MPa is lower than the allowable stress Sa = %.3f MPa" %(sigma_cTR_L, sigma_allowable))
-            output_lines.append("The comparison stress according to Tresca-Mariotte Sc = %.3f MPa is lower than the allowable stress Sa = %.3f MPa" %(sigma_cTR_M, sigma_allowable))
-            if creep_flag_V == 1:
-                output_lines.append("\n============================================================================================================================")
-                output_lines.append("Creep might occur in the vessel due to high temperatures. Either an additional thermal shield, a reduced thickness or both are required.")
-                output_lines.append("============================================================================================================================")
-            elif creep_flag_V == 0:
-                output_lines.append("There is no risk of thermal creep occurring in the vessel.")
-                output_lines.append("The vessel's integrity is ensured.")
-                output_lines.append("\n============================================================================================================================")
-        elif (sigma_cTR_L > sigma_allowable or sigma_cTR_M > sigma_allowable):
+        else:
             output_lines.append("\n============================================================================================================================")
-            output_lines.append("Either the Tresca-Lamè comparison stress Sc = %.3f MPa or the Tresca-Mariotte comparison stress Sc = %.3f MPa is higher than the allowable stress Sa = %.3f MPa" %(sigma_cTR_L,sigma_cTR_M,sigma_allowable))
+            output_lines.append("The comparison stress according to Tresca-Lamé Sc = %.3f MPa is higher than the allowable stress Sa = %.3f MPa" %(sigma_cTR_L, sigma_allowable))
+            output_lines.append("============================================================================================================================")
+        if (sigma_cTR_M < sigma_allowable):
+            output_lines.append("The comparison stress according to Tresca-Mariotte Sc = %.3f MPa is lower than the allowable stress Sa = %.3f MPa" %(sigma_cTR_M, sigma_allowable))
+        else:
+            output_lines.append("\n============================================================================================================================")
+            output_lines.append("The comparison stress according to Tresca-Mariotte Sc = %.3f MPa is higher than the allowable stress Sa = %.3f MPa" %(sigma_cTR_M, sigma_allowable))
             output_lines.append("============================================================================================================================")
         
         output_lines.append("\n\n\n\n######################################################### Buckling #########################################################")
@@ -2800,8 +2900,8 @@ elif TS_flag == 1:
             
         if buckling_flag == 1 and sigma_cTR_L < sigma_allowable and sigma_cTR_M < sigma_allowable and creep_flag_V == 0:
             output_lines.append("\n\n\n\n############################################################################################################################")
-            output_lines.append("\nThe design is correct!")
-            output_lines.append("\n############################################################################################################################")
+            output_lines.append("The vessel's integrity is ensured: the design is correct!")
+            output_lines.append("############################################################################################################################")
     
         for line in output_lines:
             print(line)

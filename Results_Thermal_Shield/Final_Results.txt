@@ -134,8 +134,6 @@ Allowable Stress: 127.444 MPa
 
 ###################################################### Thermal Shield ######################################################
 ============================================================================================================================
-The current stress state in the thermal shield is acceptable.
-============================================================================================================================
 
 According to Lamé:
 Maximum absolute value of the total radial stress: 9.211 MPa
@@ -168,8 +166,14 @@ All are lower than Sm = 127.444 MPa
 ============================================================================================================================
 
 The comparison stress according to Tresca-Lamé Sc = 111.877 MPa is lower than the allowable stress Sa = 127.444 MPa
+
+============================================================================================================================
+The comparison stress according to Tresca-Mariotte Sc = 243.436 MPa is higher than the allowable stress Sa = 127.444 MPa
+============================================================================================================================
+
+============================================================================================================================
+
 There is no risk of thermal creep occurring in the thermal shield.
-The thermal shield's integrity is ensured.
 
 ============================================================================================================================
 
@@ -177,8 +181,6 @@ The thermal shield's integrity is ensured.
 
 
 ########################################################## Vessel ##########################################################
-============================================================================================================================
-The current stress state in the vessel is acceptable.
 ============================================================================================================================
 
 According to Lamé:
@@ -213,8 +215,10 @@ All are lower than Sm = 130.197 MPa
 
 The comparison stress according to Tresca-Lamé Sc = 36.599 MPa is lower than the allowable stress Sa = 130.197 MPa
 The comparison stress according to Tresca-Mariotte Sc = 118.561 MPa is lower than the allowable stress Sa = 130.197 MPa
+
+============================================================================================================================
+
 There is no risk of thermal creep occurring in the vessel.
-The vessel's integrity is ensured.
 
 ============================================================================================================================
 
@@ -238,7 +242,5 @@ The given external pressure of 83.000 bar is lower than the allowable pressure o
 
 
 ############################################################################################################################
-
-The design is correct!
-
+The vessel's integrity is ensured: the design is correct!
 ############################################################################################################################
