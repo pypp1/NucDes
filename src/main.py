@@ -1128,7 +1128,7 @@ if TS_flag == 0:
             #Corradi_vessel = Corradi(np.array([Current_Slenderness]))
             if flag_primsec == 1 or flag_prim == 1:
                 output_lines.append("The current stress state in the vessel is not acceptable. \nPrimary + Secondary Stresses flag: %d \nPrimary Stresses flag: %d" %(flag_primsec, flag_prim))
-                output_lines.append("Maximum absolute value of the radial thermal stress: %.3f MPa\nMaximum absolute value of the hoop thermal stress: %.3f MPa\nMaximum absolute value of the axial thermal stress: %.3f MPa" %(max(abs(sigma_r_th_S)),max(abs(sigma_t_th_S)),max(abs(sigma_z_th_S))))
+                output_lines.append("Maximum absolute value of the radial thermal stress: %.3f MPa\nMaximum absolute value of the hoop thermal stress: %.3f MPa\nMaximum absolute value of the axial thermal stress: %.3f MPa" %(max(abs(sigma_r_th_V)),max(abs(sigma_t_th_V)),max(abs(sigma_z_th_V))))
                 output_lines.append("============================================================================================================================")
             
             elif flag_primsec == 0 and flag_prim == 0:
