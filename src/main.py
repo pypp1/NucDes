@@ -113,11 +113,11 @@ DeltaD_max = min(((D_vess_int*1000)+1270)/200, (D_vess_int*1000)/100)   #mm inst
 # ======================================
 # Other necessary variables for file saving
 # =====================================
-current_directory = os.getcwd()                                     # Get the current working directory
-NTS_parent_directory_name = "Results_No_Thermal_Shield"                    # Parent folders
+current_directory = os.getcwd()                                                     # Get the current working directory
+NTS_parent_directory_name = "Results_No_Thermal_Shield"                             # Parent folders
 TS_parent_directory_name = "Results_Thermal_Shield"
 
-NTS_directory_path = os.path.join(current_directory, NTS_parent_directory_name)    # Create the full path for the new directory
+NTS_directory_path = os.path.join(current_directory, NTS_parent_directory_name)     # Create the full path for the new directory
 TS_directory_path = os.path.join(current_directory, TS_parent_directory_name)
 NTS_plots_directory_path = os.path.join(NTS_directory_path, "Plots")
 TS_plots_directory_path = os.path.join(TS_directory_path, "Plots")
@@ -1066,7 +1066,9 @@ if not TS_flag:
         # ============================ 
         # Final results printing and saving
         # ============================
-        if not os.path.exists(case_directory_path):                                  # Create the directory if it doesn't exist
+        if os.path.exists(case_directory_path):
+            shutil.rmtree(case_directory_path)                                       # Deletes the pre-existing folder
+        elif not os.path.exists(case_directory_path):                                # Create the directory if it doesn't exist
             os.makedirs(case_directory_path, exist_ok=True)                          # Exist_ok=True avoids error if directory already exists
         file_path = os.path.join(case_directory_path, "Final_Results.txt")           # Specify the file path inside the newly created directory
         
@@ -1286,8 +1288,6 @@ if not TS_flag:
             for line in output_lines:                                   # Print messages to the console and write to the file
                 print(line)
                 file.write(line + '\n')                                 # Add a newline for formatting in the text file
-            if os.path.exists(case_directory_path):
-                shutil.rmtree(case_directory_path)                      # Delete the existing folder
             shutil.move(NTS_plots_directory_path, case_directory_path)  # Move the plots directory into the case directory
     # ======================================
     # Discretization along z
@@ -2787,7 +2787,9 @@ elif TS_flag:
     # ============================
     # Final Results Printing and saving
     # ============================
-    if not os.path.exists(case_directory_path):                                 # Create the directory if it doesn't exist
+    if os.path.exists(case_directory_path):
+        shutil.rmtree(case_directory_path)                                      # Deletes the pre-existing folder
+    elif not os.path.exists(case_directory_path):                               # Create the directory if it doesn't exist
         os.makedirs(case_directory_path, exist_ok=True)                         # Exist_ok=True avoids error if directory already exists
     file_path = os.path.join(case_directory_path, "Final_Results.txt")          # Specify the file path inside the newly created directory
     
@@ -3128,6 +3130,4 @@ elif TS_flag:
         for line in output_lines:
             print(line)
             file.write(line + '\n')
-        if os.path.exists(case_directory_path):
-            shutil.rmtree(case_directory_path)
         shutil.move(TS_plots_directory_path, case_directory_path)
