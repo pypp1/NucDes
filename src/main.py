@@ -316,7 +316,7 @@ if not TS_flag:
         sigma_zL_b = E*eps_z_b + 2*nu*rho_i*P_int_MPa   #b) P_cpp = 0
         return (sigma_rL(r), sigma_tL(r), sigma_zL_a + sigma_zL_b)              #Superposition Principle
 
-    sigma_L = sigmaL_func(r, P_int_MPa, P_cpp_MPa, 1)
+    sigma_L = sigmaL_func(r, P_int_MPa, P_cpp_MPa)
     sigma_rL = sigma_L[0]  
     sigma_tL = sigma_L[1]
     sigma_zL = sigma_L[2]
