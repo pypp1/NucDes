@@ -1,0 +1,161 @@
+
+
+
+
+################################################### Hypothesis and data ####################################################
+============================================================================================================================
+
+Default pressures assumed: True
+
+============================================================================================================================
+
+Presence of the volumetric heat source q0: True
+Presence of the thermal shield: False
+
+============================================================================================================================
+
+Discretization along z: False
+Chosen temperature T1 to compute C1, C2 (0: T_in, 1: T_in + 10%, 2: T_in + 20%, 3: T_avg, 4: T_out_avg): 0
+Adiabatic Outer Wall approximation adopted: False
+
+============================================================================================================================
+
+Thin tube limits for Elastic Instability and Plastic Collapse adopted: True
+Corradi Design Procedure adopted: True
+Safety coefficient adopted for the Corradi Design Procedure: 2.000
+
+============================================================================================================================
+
+
+
+
+###################################################### Final  Results ######################################################
+============================================================================================================================
+
+Current vessel wall thickness: 0.150 m
+Vessel max ovality W: 0.00678 = 0.678%
+Maximum permissible deviation from theoretical form for the vessel according to NB-4221.2: e = 0.045 m
+Maximum difference in cross-sectional diameters: 21.350 mm
+
+============================================================================================================================
+
+
+
+
+################################################## Heat transfer results ###################################################
+============================================================================================================================
+
+Volumetric heat source at the vessel inner surface: 4844992.320 W/m³
+Volumetric heat source at the vessel-insulation interface: 132383.225 W/m³
+
+============================================================================================================================
+
+Heat transfer coefficient h1 = 7498.127 W/(m²·K)
+Heat transfer coefficient h2 = 1164.849 W/(m²·K)
+Overall heat transfer coefficient outside the vessel u2 = 26.948 W/(m²·K)
+
+============================================================================================================================
+
+Thermal power flux on the inner vessel surface: -188.354 kW/m²
+Thermal power flux on the outer vessel surface: 8.005 kW/m²
+
+============================================================================================================================
+
+
+
+
+####################################################### Temperatures #######################################################
+============================================================================================================================
+
+Average Vessel Temperature (numerical integration): 345.663 °C
+Maximum Vessel Temperature: 370.617 °C at r = 1.612 m
+Vessel Temperature at the inner surface: 239.120110 °C at r = 1.500 m
+Vessel Temperature at the outer surface: 367.051049 °C at r = 1.650 m
+
+============================================================================================================================
+WARNING: The maximum vessel temperature T = 370.617 °C exceeds the creep threshold temperature of 370 °C!
+============================================================================================================================
+
+
+
+
+######################################################### Stresses #########################################################
+============================================================================================================================
+
+Maximum Thermal Hoop Stress in the vessel: 461.385 Mpa at r = 1.500 m
+Maximum thermal hoop stress via design curves: 394.453 MPa
+
+============================================================================================================================
+
+Guest-Tresca comparison stress in the vessel - Mariotte solution: 540.135 Mpa
+Guest-Tresca comparison stress in the vessel - Lamé solution: 461.385 Mpa
+
+============================================================================================================================
+
+For a design vessel temperature of 345.663 °C: 
+Yield Stress: Sy = 172.068 MPa
+Stress Intensity: Sm = 114.712 MPa
+Allowable Stress: 114.712 MPa
+
+============================================================================================================================
+
+
+
+
+########################################################## Vessel ##########################################################
+============================================================================================================================
+
+According to Lamé:
+Maximum absolute value of the total radial stress: 7.500 MPa
+Maximum absolute value of the total hoop stress: 453.885 MPa
+Maximum absolute value of the total axial stress: 453.885 MPa
+
+Maximum value of the primary radial stress: -7.500 MPa
+Maximum value of the primary hoop stress: -7.500 MPa
+Primary axial stress: -7.500 MPa
+
+The maximum value of the total hoop stress exceeds allowable stress.
+
+The maximum value of the total axial stress exceeds allowable stress.
+
+============================================================================================================================
+
+According to Mariotte:
+Maximum absolute value of the total radial stress: 3.750 MPa
+Maximum absolute value of the total hoop stress: 536.385 MPa
+Maximum absolute value of the total axial stress: 498.885 MPa
+
+Primary radial stress: -3.750 MPa
+Primary hoop stress: 75.000 MPa
+Primary axial stress: 37.500 MPa
+
+The maximum value of the total hoop stress exceeds allowable stress.
+
+The maximum value of the total axial stress exceeds allowable stress.
+
+============================================================================================================================
+The current stress state in the vessel is not acceptable.
+============================================================================================================================
+
+============================================================================================================================
+The comparison stress according to Tresca-Lamé Sc = 461.385 MPa is higher than the allowable stress Sa = 114.712 MPa
+============================================================================================================================
+
+============================================================================================================================
+The comparison stress according to Tresca-Mariotte Sc = 540.135 MPa is higher than the allowable stress Sa = 114.712 MPa
+============================================================================================================================
+
+
+
+
+######################################################### Buckling #########################################################
+============================================================================================================================
+
+According to the Corradi Design Procedure:
+The theoretical limit for collapse pressure, accounting for ovality, is: q_c = 13.847 MPa = 138.465 bar
+A safety factor s = 2.000 was assumed. 
+The allowable external pressure is thus: q_a = 6.923 MPa = 69.233 bar
+
+============================================================================================================================
+The given external pressure of 75.000 bar is higher than the allowable pressure of 69.233 bar: a change in thickness is required!
+============================================================================================================================
