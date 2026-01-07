@@ -1273,6 +1273,8 @@ if not TS_flag:
             for line in output_lines:                                   # Print messages to the console and write to the file
                 print(line)
                 file.write(line + '\n')                                 # Add a newline for formatting in the text file
+            if os.path.exists(case_directory_path):
+                shutil.rmtree(case_directory_path)                      # Delete the existing folder
             shutil.move(NTS_plots_directory_path, case_directory_path)  # Move the plots directory into the case directory
     # ======================================
     # Discretization along z
@@ -3113,4 +3115,6 @@ elif TS_flag:
         for line in output_lines:
             print(line)
             file.write(line + '\n')
+        if os.path.exists(case_directory_path):
+            shutil.rmtree(case_directory_path)
         shutil.move(TS_plots_directory_path, case_directory_path)
