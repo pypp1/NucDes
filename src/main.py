@@ -223,7 +223,20 @@ if not TS_flag:
     # =============================================================================================================================================================
     # PURELY MECHANICAL PROBLEM
     # =============================================================================================================================================================
-    t = 0.15                                    #m
+    while True:
+        try:
+            t = float(input("\nPlease enter the thickness of the vessel wall (m): "))
+            if t <= 0 or t > 0.3:
+                if t <= 0:
+                    raise RuntimeError("Negative or null thickness! Please enter a positive value.")
+                elif t > 0.3:
+                    raise RuntimeError("Unfeasible thickness! Cylinders thicker than 30cm are currently not possible.")
+            break
+        except ValueError:
+            print("Please enter a valid float.")
+        except RuntimeError as e:
+            print(e)
+
     R_ext = R_int + t                           #m
     D_vess_ext = 2*R_ext                        #m
     rho_ii = (R_ext**2)/(R_ext**2 - R_int**2)
