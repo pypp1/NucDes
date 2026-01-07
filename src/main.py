@@ -2758,7 +2758,7 @@ elif TS_flag:
         case_directory_name.append("_ThinTubes")
     if Corradi_flag:
         case_directory_name.append("_Corradi_s_%.2f" %s)
-    case_directory_path = os.path.join(NTS_directory_path, "".join(case_directory_name))
+    case_directory_path = os.path.join(TS_directory_path, "".join(case_directory_name))
     
     # ============================
     # Final Results Printing and saving
