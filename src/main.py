@@ -1077,7 +1077,16 @@ if not TS_flag:
                 output_lines.append("Presence of the thermal shield: %s" %TS_flag)
             output_lines.append("\n============================================================================================================================")
             output_lines.append("\nDiscretization along z: %s" %Disc_flag)
-            output_lines.append("Chosen temperature T1 to compute C1, C2 (0: T_in, 1: T_in + 10%%, 2: T_in + 20%%, 3: T_avg, 4: T_out_avg): %d" %T1_choice)
+            if T1_choice == 0:
+                output_lines.append("Chosen temperature T1 to compute C1, C2: T_in = %.3s °C" %(T1-273.15))
+            elif T1_choice == 1:
+                output_lines.append("Chosen temperature T1 to compute C1, C2: T_in + 10% = %.3s °C" %(T1-273.15))
+            elif T1_choice == 2:
+                output_lines.append("Chosen temperature T1 to compute C1, C2: T_in + 20% = %.3s °C" %(T1-273.15))
+            elif T1_choice == 3:
+                output_lines.append("Chosen temperature T1 to compute C1, C2: T_avg = %.3s °C" %(T1-273.15))
+            elif T1_choice == 4:
+                output_lines.append("Chosen temperature T1 to compute C1, C2: T_out_avg = %.3s °C" %(T1-273.15))
             output_lines.append("Adiabatic Outer Wall approximation adopted: %s" %adiab_flag)
             #output_lines.append("Logarithmic Mean DeltaT approach adopted for inner heat flux computation: %d" %LogDelta_flag)
             output_lines.append("\n============================================================================================================================")
@@ -1098,7 +1107,7 @@ if not TS_flag:
             output_lines.append("Maximum difference in cross-sectional diameters: %.3f mm" %DeltaD_max)
             output_lines.append("\n============================================================================================================================")
 
-            # ============================ 
+            # ============================
             # Heat Transfer Results
             # ============================
             output_lines.append("\n\n\n\n################################################## Heat transfer results ###################################################")
@@ -2789,7 +2798,16 @@ elif TS_flag:
             output_lines.append("Heat transfer coefficients equalized in %d sub-iterations. Final difference: %.9e W/m²K" %(counter_h1, abs(h_1_int - h_1_ext)))
         output_lines.append("\n============================================================================================================================")
         output_lines.append("\nDiscretization along z: 0")
-        output_lines.append("Chosen temperature T1 to compute C1, C2 (0: T_in, 1: T_in + 10%%, 2: T_in + 20%%, 3: T_avg, 4: T_out_avg): %d" %T1_choice)
+        if T1_choice == 0:
+            output_lines.append("Chosen temperature T1 to compute C1, C2: T_in = %.3s °C" %(T1-273.15))
+        elif T1_choice == 1:
+            output_lines.append("Chosen temperature T1 to compute C1, C2: T_in + 10% = %.3s °C" %(T1-273.15))
+        elif T1_choice == 2:
+            output_lines.append("Chosen temperature T1 to compute C1, C2: T_in + 20% = %.3s °C" %(T1-273.15))
+        elif T1_choice == 3:
+            output_lines.append("Chosen temperature T1 to compute C1, C2: T_avg = %.3s °C" %(T1-273.15))
+        elif T1_choice == 4:
+            output_lines.append("Chosen temperature T1 to compute C1, C2: T_out_avg = %.3s °C" %(T1-273.15))
         output_lines.append("Adiabatic Outer Wall approximation adopted: %s" %adiab_flag)
         #output_lines.append("Logarithmic Mean DeltaT approach adopted for inner heat flux computation: 0")
         output_lines.append("\n============================================================================================================================")
