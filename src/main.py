@@ -3,6 +3,7 @@ import matplotlib.pyplot as plt
 import scipy.linalg as lng 
 from scipy import integrate, interpolate
 import os
+import shutil
 
 # ============================
 # Geometrical data
@@ -113,13 +114,13 @@ DeltaD_max = min(((D_vess_int*1000)+1270)/200, (D_vess_int*1000)/100)   #mm inst
 # Other necessary variables for file saving
 # =====================================
 current_directory = os.getcwd()                                     # Get the current working directory
-NTS_directory_name = "Results_No_Thermal_Shield"
-TS_directory_name = "Results_Thermal_Shield"
+NTS_parent_directory_name = "Results_No_Thermal_Shield"                    # Parent folders
+TS_parent_directory_name = "Results_Thermal_Shield"
 
-NTS_directory_path = os.path.join(current_directory, NTS_directory_name)    # Create the full path for the new directory
-TS_directory_path = os.path.join(current_directory, TS_directory_name)
-NTS_plots_directory = os.path.join(NTS_directory_name, "Plots")
-TS_plots_directory = os.path.join(TS_directory_name, "Plots")
+NTS_directory_path = os.path.join(current_directory, NTS_parent_directory_name)    # Create the full path for the new directory
+TS_directory_path = os.path.join(current_directory, TS_parent_directory_name)
+NTS_plots_directory_path = os.path.join(NTS_directory_path, "Plots")
+TS_plots_directory_path = os.path.join(TS_directory_path, "Plots")
 
 # ======================================
 # Simpson composite integration function
@@ -265,8 +266,8 @@ if not TS_flag:
             # ======================================
             # Plotting the stress profiles: Mariotte
             # ======================================
-            os.makedirs(NTS_plots_directory, exist_ok=True)
-            plot_file_path = os.path.join(NTS_plots_directory, "Stress Distribution in a thin-walled cylinder - Mariotte Solution.png")
+            os.makedirs(NTS_plots_directory_path, exist_ok=True)
+            plot_file_path = os.path.join(NTS_plots_directory_path, "Stress Distribution in a thin-walled cylinder - Mariotte Solution.png")
             plt.figure(figsize=(15,10))
             plt.axvline(x = R_int, color='black', linewidth='3', label='Vessel Inner Surface')
             plt.axvline(x = R_ext, color='black', linewidth='3', label='Vessel Outer Surface')
@@ -341,8 +342,8 @@ if not TS_flag:
         # ======================================
         # Plotting the stress profiles: Lamé
         # ======================================
-        os.makedirs(NTS_plots_directory, exist_ok=True)
-        plot_file_path = os.path.join(NTS_plots_directory, "Stress Distribution in the cylinder wall - Lamé Solution.png")
+        os.makedirs(NTS_plots_directory_path, exist_ok=True)
+        plot_file_path = os.path.join(NTS_plots_directory_path, "Stress Distribution in the cylinder wall - Lamé Solution.png")
         plt.figure(figsize=(15,10))
         plt.axvline(x = R_int, color='black', linewidth='3', label='Vessel Inner Surface')
         plt.axvline(x = R_ext, color='black', linewidth='3', label='Vessel Outer Surface')
@@ -391,8 +392,8 @@ if not TS_flag:
                 print(e)
 
         if hs_flag:
-            os.makedirs(NTS_plots_directory, exist_ok=True)
-            plot_file_path = os.path.join(NTS_plots_directory, "Volumetric heat source profile across the vessel wall.png")
+            os.makedirs(NTS_plots_directory_path, exist_ok=True)
+            plot_file_path = os.path.join(NTS_plots_directory_path, "Volumetric heat source profile across the vessel wall.png")
             plt.figure(figsize=(10,10))
             plt.axvline(x = R_int, color='black', linewidth='3', label='Vessel Inner Surface')
             plt.axvline(x = R_ext, color='black', linewidth='3', label='Vessel Outer Surface')
@@ -543,8 +544,8 @@ if not TS_flag:
             creep_flag_V = bool(1)
         if not adiab_flag:
             if T_pl_flag:
-                os.makedirs(NTS_plots_directory, exist_ok=True)
-                plot_file_path = os.path.join(NTS_plots_directory, "Wall Temperature Profile, Average and Maximum.png")
+                os.makedirs(NTS_plots_directory_path, exist_ok=True)
+                plot_file_path = os.path.join(NTS_plots_directory_path, "Wall Temperature Profile, Average and Maximum.png")
                 plt.figure(figsize=(10,10))
                 plt.axvline(x = R_int, color='black', linewidth='3', label='Vessel Inner Surface')
                 plt.axvline(x = R_ext, color='black', linewidth='3', label='Vessel Outer Surface')
@@ -566,8 +567,8 @@ if not TS_flag:
                 # ======================================
                 # Under Adiabatic Outer Wall Approximation
                 # ======================================
-                os.makedirs(NTS_plots_directory, exist_ok=True)
-                plot_file_path = os.path.join(NTS_plots_directory, "Wall Temperature Profile, Average and Maximum under AOW Approximation.png")
+                os.makedirs(NTS_plots_directory_path, exist_ok=True)
+                plot_file_path = os.path.join(NTS_plots_directory_path, "Wall Temperature Profile, Average and Maximum under AOW Approximation.png")
                 plt.figure(figsize=(10,10))
                 plt.axvline(x = R_int, color='black', linewidth='3', label='Vessel Inner Surface')
                 plt.axvline(x = R_ext, color='black', linewidth='3', label='Vessel Outer Surface')
@@ -642,8 +643,8 @@ if not TS_flag:
                 print(e)
 
         if sigma_th_pl_flag:
-            os.makedirs(NTS_plots_directory, exist_ok=True)
-            plot_file_path = os.path.join(NTS_plots_directory, "Wall Thermal Stress Profiles and Maximum Hoop Stress.png")
+            os.makedirs(NTS_plots_directory_path, exist_ok=True)
+            plot_file_path = os.path.join(NTS_plots_directory_path, "Wall Thermal Stress Profiles and Maximum Hoop Stress.png")
             plt.figure(figsize=(10,10))
             plt.axvline(x = R_int, color='black', linewidth='3', label='Vessel Inner Surface')
             plt.axvline(x = R_ext, color='black', linewidth='3', label='Vessel Outer Surface')
@@ -704,8 +705,8 @@ if not TS_flag:
                 print(e)
 
         if des_pl_flag:
-            os.makedirs(NTS_plots_directory, exist_ok=True)
-            plot_file_path = os.path.join(NTS_plots_directory, "Design Curves.png")
+            os.makedirs(NTS_plots_directory_path, exist_ok=True)
+            plot_file_path = os.path.join(NTS_plots_directory_path, "Design Curves.png")
             plt.figure(figsize=(10,10))
             plt.xlim(ba_ratio_plot[0], ba_ratio_plot[-1])
             plt.plot(ba_ratio_plot, L_Interpolator(ba_ratio_plot), 'k', label=f'Iso-mu = {mu_L} 1/m')
@@ -797,8 +798,8 @@ if not TS_flag:
             # ============================ 
             # Yield Stress and Stress Intensity Data Plots  -   Vessel
             # ============================
-            os.makedirs(NTS_plots_directory, exist_ok=True)
-            plot_file_path = os.path.join(NTS_plots_directory, "Yield Stress and Stress Intensity Data.png")
+            os.makedirs(NTS_plots_directory_path, exist_ok=True)
+            plot_file_path = os.path.join(NTS_plots_directory_path, "Yield Stress and Stress Intensity Data.png")
             plt.figure(figsize = (12,10))
             plt.subplot(1,2,1)
             plt.plot(T_thr, sigma_y, 'sk', label = 'Yield Stress Data')
@@ -949,8 +950,8 @@ if not TS_flag:
                 # ============================ 
                 # Plastic collapse and buckling Plots
                 # ============================
-                os.makedirs(NTS_plots_directory, exist_ok=True)
-                plot_file_path = os.path.join(NTS_plots_directory, "Plastic Collapse and Buckling Curves.png")
+                os.makedirs(NTS_plots_directory_path, exist_ok=True)
+                plot_file_path = os.path.join(NTS_plots_directory_path, "Plastic Collapse and Buckling Curves.png")
                 plt.figure(figsize = (8, 8))
                 plt.semilogy(Dt_ratio_plot, p_E_fun(Dt_ratio_plot), 'blue', label='p$_E$')
                 plt.semilogy(Dt_ratio_plot, q_E_fun(Dt_ratio_plot), '--b', label='q$_E$')
@@ -984,8 +985,8 @@ if not TS_flag:
                 # ============================ 
                 # Plastic collapse and buckling Plots
                 # ============================
-                os.makedirs(NTS_plots_directory, exist_ok=True)
-                plot_file_path = os.path.join(NTS_plots_directory, "Plastic Collapse and Buckling Curves - With Corradi.png")
+                os.makedirs(NTS_plots_directory_path, exist_ok=True)
+                plot_file_path = os.path.join(NTS_plots_directory_path, "Plastic Collapse and Buckling Curves - With Corradi.png")
                 plt.figure(figsize = (8, 8))
                 plt.subplot(1,2,1)
                 plt.semilogy(Dt_ratio_plot, p_E_fun(Dt_ratio_plot), 'blue', label='p$_E$')
@@ -1014,11 +1015,47 @@ if not TS_flag:
                 plt.close()
         
         # ============================ 
+        # Current case specific path creation
+        # ============================
+        case_directory_name = []
+        case_directory_name.append(f"t_{t}m")
+        if Def_P_flag:
+            case_directory_name.append("_Def_P")
+        else:
+            case_directory_name.append("_Pint_%.1f_MPa_Pext_%.1f_MPa" %(P_int, P_cpp))
+            if P_int != P_cpp:
+                if eps_choice == 1:
+                    case_directory_name.append("_Plane_Strain")
+                elif eps_choice == 0:
+                    case_directory_name.append("_Plane_Stress")
+        if q_0_flag:
+            case_directory_name.append("_q0")
+        if Disc_flag:
+            case_directory_name.append("_2D")
+        if T1_choice == 0:
+            case_directory_name.append("_Tin")
+        elif T1_choice == 1:
+            case_directory_name.append("_T_in + 10%%")
+        elif T1_choice == 2:
+            case_directory_name.append("_T_in + 20%%")
+        elif T1_choice == 3:
+            case_directory_name.append("_T_avg")
+        elif T1_choice == 4:
+            case_directory_name.append("_T_out_avg")
+        if adiab_flag:
+            case_directory_name.append("_AOW")
+        if ThinTubes_flag:
+            case_directory_name.append("_ThinTubes")
+        if Corradi_flag:
+            case_directory_name.append("_Corradi_s_%.2f" %s)
+        case_directory_path = os.path.join(NTS_directory_path, case_directory_name)
+        
+        # ============================ 
         # Final results printing and saving
         # ============================
-        if not os.path.exists(NTS_directory_path):                                  # Create the directory if it doesn't exist
-            os.makedirs(NTS_directory_path, exist_ok=True)                          # Exist_ok=True avoids error if directory already exists
-        file_path = os.path.join(NTS_directory_path, "Final_Results.txt")           # Specify the file path inside the newly created directory
+        if not os.path.exists(case_directory_path):                                  # Create the directory if it doesn't exist
+            os.makedirs(case_directory_path, exist_ok=True)                          # Exist_ok=True avoids error if directory already exists
+        file_path = os.path.join(case_directory_path, "Final_Results.txt")           # Specify the file path inside the newly created directory
         
         with open(file_path, "w") as file:
             output_lines = []                                                       # Create a list to hold the printed messages
@@ -1224,10 +1261,10 @@ if not TS_flag:
                 output_lines.append("The vessel's integrity is ensured: the design is correct!")
                 output_lines.append("############################################################################################################################")
 
-            for line in output_lines:    # Print messages to the console and write to the file
+            for line in output_lines:                                   # Print messages to the console and write to the file
                 print(line)
-                file.write(line + '\n')  # Add a newline for formatting in the text file
-                
+                file.write(line + '\n')                                 # Add a newline for formatting in the text file
+            shutil.move(NTS_plots_directory_path, case_directory_path)  # Move the plots directory into the case directory
     # ======================================
     # Discretization along z
     # ======================================
@@ -1324,8 +1361,8 @@ if not TS_flag:
             # Wall T(T_z, r) map
             # ======================================
             R_mesh, T_z_mesh = np.meshgrid(r, T_z - 273.15)                                                      #Shapes (Nz, Nr)
-            os.makedirs(NTS_plots_directory, exist_ok=True)
-            plot_file_path = os.path.join(NTS_plots_directory, "Temperature 2D Map and Profiles.png")
+            os.makedirs(NTS_plots_directory_path, exist_ok=True)
+            plot_file_path = os.path.join(NTS_plots_directory_path, "Temperature 2D Map and Profiles.png")
             plt.figure(figsize=(15,10))
             plt.subplot(1,2,1)
             pcm = plt.pcolormesh(R_mesh, T_z_mesh, T_vessel_Mat - 273.15, shading='auto', cmap='hot')   #Or 'hot','plasma','viridis'
@@ -1356,8 +1393,8 @@ if not TS_flag:
             # Wall T(T_z, r) map
             # ======================================
             R_mesh, T_z_mesh = np.meshgrid(r, T_z - 273.15)
-            os.makedirs(NTS_plots_directory, exist_ok=True)
-            plot_file_path = os.path.join(NTS_plots_directory, "Temperature 2D Map and Profiles under AOW Approximation.png")
+            os.makedirs(NTS_plots_directory_path, exist_ok=True)
+            plot_file_path = os.path.join(NTS_plots_directory_path, "Temperature 2D Map and Profiles under AOW Approximation.png")
             plt.figure(figsize=(15,10))
             plt.subplot(1,2,1)
             pcm = plt.pcolormesh(R_mesh, T_z_mesh, T_vessel_Mat - 273.15, shading='auto', cmap='hot')
@@ -1386,8 +1423,8 @@ if not TS_flag:
         # Plotting the thermal stress profiles
         # ======================================
         R_mesh, T_z_mesh = np.meshgrid(r, T_z - 273.15)   # shapes (Nz, Nr)
-        os.makedirs(NTS_plots_directory, exist_ok=True)
-        plot_file_path = os.path.join(NTS_plots_directory, "Thermal Stresses 2D Map.png")
+        os.makedirs(NTS_plots_directory_path, exist_ok=True)
+        plot_file_path = os.path.join(NTS_plots_directory_path, "Thermal Stresses 2D Map.png")
         plt.figure(figsize=(20,20))
         plt.subplot(1,4,1)
         pcm = plt.pcolormesh(R_mesh, T_z_mesh, sigma_r_th, shading='auto', cmap='viridis')
@@ -1472,8 +1509,8 @@ elif TS_flag:
             # ======================================
             # Plotting the stress profiles: Mariotte
             # ======================================
-            os.makedirs(TS_plots_directory, exist_ok=True)
-            plot_file_path = os.path.join(TS_plots_directory, "Stress Distribution in a thin-walled cylinder - Mariotte Solution.png")
+            os.makedirs(TS_plots_directory_path, exist_ok=True)
+            plot_file_path = os.path.join(TS_plots_directory_path, "Stress Distribution in a thin-walled cylinder - Mariotte Solution.png")
             plt.figure(figsize=(15,10))
             plt.axvline(x = R_int, color='black', linewidth='3', label='Vessel Inner Surface')
             plt.axvline(x = R_ext, color='black', linewidth='3', label='Vessel Outer Surface')
@@ -1550,8 +1587,8 @@ elif TS_flag:
         # ======================================
         # Plotting the stress profiles: Lamé
         # ======================================
-        os.makedirs(TS_plots_directory, exist_ok=True)
-        plot_file_path = os.path.join(TS_plots_directory, "Stress Distribution in the cylinder wall - Lamé Solution.png")
+        os.makedirs(TS_plots_directory_path, exist_ok=True)
+        plot_file_path = os.path.join(TS_plots_directory_path, "Stress Distribution in the cylinder wall - Lamé Solution.png")
         plt.figure(figsize=(15,10))
         plt.axvline(x = R_int, color='black', linewidth='3', label='Vessel Inner Surface')
         plt.axvline(x = R_ext, color='black', linewidth='3', label='Vessel Outer Surface')
@@ -2253,8 +2290,8 @@ elif TS_flag:
         # ======================================
         # Thermal Shield
         # ======================================
-        os.makedirs(TS_plots_directory, exist_ok=True)
-        plot_file_path = os.path.join(TS_plots_directory, "Volumetric heat source profiles.png")
+        os.makedirs(TS_plots_directory_path, exist_ok=True)
+        plot_file_path = os.path.join(TS_plots_directory_path, "Volumetric heat source profiles.png")
         plt.figure(figsize=(15,15))
         plt.subplot(1,2,1)
         if R_shield_ext - R_shield_int > 0.1:
@@ -2320,8 +2357,8 @@ elif TS_flag:
             # ======================================
             # Thermal Shield T Profile
             # ======================================
-            os.makedirs(TS_plots_directory, exist_ok=True)
-            plot_file_path = os.path.join(TS_plots_directory, "Temperature profiles, averages and maxima.png")
+            os.makedirs(TS_plots_directory_path, exist_ok=True)
+            plot_file_path = os.path.join(TS_plots_directory_path, "Temperature profiles, averages and maxima.png")
             plt.figure(figsize=(15,15))
             plt.subplot(1,2,1)
             if R_shield_ext - R_shield_int > 0.1:
@@ -2365,8 +2402,8 @@ elif TS_flag:
             # ======================================
             # Thermal Shield T Profile
             # ======================================
-            os.makedirs(TS_plots_directory, exist_ok=True)
-            plot_file_path = os.path.join(TS_plots_directory, "Temperature profiles, averages and maxima under AOW approximation.png")
+            os.makedirs(TS_plots_directory_path, exist_ok=True)
+            plot_file_path = os.path.join(TS_plots_directory_path, "Temperature profiles, averages and maxima under AOW approximation.png")
             plt.figure(figsize=(15,15))
             plt.subplot(1,2,1)
             if R_shield_ext - R_shield_int > 0.1:
@@ -2424,8 +2461,8 @@ elif TS_flag:
         # ======================================
         # Thermal shield thermal stress profiles
         # ======================================
-        os.makedirs(TS_plots_directory, exist_ok=True)
-        plot_file_path = os.path.join(TS_plots_directory, "Thermal stresses profiles.png")
+        os.makedirs(TS_plots_directory_path, exist_ok=True)
+        plot_file_path = os.path.join(TS_plots_directory_path, "Thermal stresses profiles.png")
         plt.figure(figsize=(15,15))
         plt.subplot(1,2,1)
         if R_shield_ext - R_shield_int > 0.1:
@@ -2484,8 +2521,8 @@ elif TS_flag:
             print(e)
 
     if des_pl_flag:
-        os.makedirs(TS_plots_directory, exist_ok=True)
-        plot_file_path = os.path.join(TS_plots_directory, "Design curves.png")
+        os.makedirs(TS_plots_directory_path, exist_ok=True)
+        plot_file_path = os.path.join(TS_plots_directory_path, "Design curves.png")
         plt.figure(figsize=(10,10))
         plt.xlim(ba_ratio_plot[0], ba_ratio_plot[-1])
         plt.plot(ba_ratio_plot, L_Interpolator(ba_ratio_plot), 'k', label=f'Iso-mu = {mu_L} 1/m')
@@ -2527,8 +2564,8 @@ elif TS_flag:
         # ============================ 
         # Yield Stress
         # ============================
-        os.makedirs(TS_plots_directory, exist_ok=True)
-        plot_file_path = os.path.join(TS_plots_directory, "Yield Stress and Stress Intensity.png")
+        os.makedirs(TS_plots_directory_path, exist_ok=True)
+        plot_file_path = os.path.join(TS_plots_directory_path, "Yield Stress and Stress Intensity.png")
         plt.figure(figsize = (12,10))
         plt.subplot(1,2,1)
         plt.plot(T_thr, sigma_y, 'sk', label = 'Yield Stress Data')
@@ -2621,8 +2658,8 @@ elif TS_flag:
                 # ============================ 
                 # Plastic collapse and buckling plots
                 # ============================
-                os.makedirs(TS_plots_directory, exist_ok=True)
-                plot_file_path = os.path.join(TS_plots_directory, "Plastic Collapse and Buckling Curves.png")
+                os.makedirs(TS_plots_directory_path, exist_ok=True)
+                plot_file_path = os.path.join(TS_plots_directory_path, "Plastic Collapse and Buckling Curves.png")
                 plt.figure(figsize = (8, 8))
                 plt.semilogy(Dt_ratio_plot, p_E_fun(Dt_ratio_plot), 'blue', label='p$_E$')
                 plt.semilogy(Dt_ratio_plot, q_E_fun(Dt_ratio_plot), '--b', label='q$_E$')
@@ -2656,8 +2693,8 @@ elif TS_flag:
                 # ============================ 
                 # Plastic collapse and buckling plots
                 # ============================
-                os.makedirs(TS_plots_directory, exist_ok=True)
-                plot_file_path = os.path.join(TS_plots_directory, "Plastic Collapse and Buckling Curves - With Corradi.png")
+                os.makedirs(TS_plots_directory_path, exist_ok=True)
+                plot_file_path = os.path.join(TS_plots_directory_path, "Plastic Collapse and Buckling Curves - With Corradi.png")
                 plt.figure(figsize = (8, 8))
                 plt.subplot(1,2,1)
                 plt.semilogy(Dt_ratio_plot, p_E_fun(Dt_ratio_plot), 'blue', label='p$_E$')
@@ -2689,12 +2726,46 @@ elif TS_flag:
         print("Adopting Corradi Design Procedure.")
         Corradi_flag = bool(1)
 
+    # ============================ 
+    # Current case specific path creation
+    # ============================
+    case_directory_name = []
+    case_directory_name.append(f"t_{t}m")
+    if Def_P_flag:
+        case_directory_name.append("_Def_P")
+    else:
+        case_directory_name.append("_Pint_%.1f_MPa_Pext_%.1f_MPa" %(P_int, P_cpp))
+        if P_int != P_cpp:
+            if eps_choice == 1:
+                case_directory_name.append("_Plane_Strain")
+            elif eps_choice == 0:
+                case_directory_name.append("_Plane_Stress")
+    case_directory_name.append("_q0")
+    case_directory_name.append("_TS")
+    if T1_choice == 0:
+        case_directory_name.append("_Tin")
+    elif T1_choice == 1:
+        case_directory_name.append("_T_in + 10%%")
+    elif T1_choice == 2:
+        case_directory_name.append("_T_in + 20%%")
+    elif T1_choice == 3:
+        case_directory_name.append("_T_avg")
+    elif T1_choice == 4:
+        case_directory_name.append("_T_out_avg")
+    if adiab_flag:
+        case_directory_name.append("_AOW")
+    if ThinTubes_flag:
+        case_directory_name.append("_ThinTubes")
+    if Corradi_flag:
+        case_directory_name.append("_Corradi_s_%.2f" %s)
+    case_directory_path = os.path.join(NTS_directory_path, case_directory_name)
+    
     # ============================
     # Final Results Printing and saving
     # ============================
-    if not os.path.exists(TS_directory_path):                                 # Create the directory if it doesn't exist
-        os.makedirs(TS_directory_path, exist_ok=True)                         # Exist_ok=True avoids error if directory already exists
-    file_path = os.path.join(TS_directory_path, "Final_Results.txt")          # Specify the file path inside the newly created directory
+    if not os.path.exists(case_directory_path):                                 # Create the directory if it doesn't exist
+        os.makedirs(case_directory_path, exist_ok=True)                         # Exist_ok=True avoids error if directory already exists
+    file_path = os.path.join(case_directory_path, "Final_Results.txt")          # Specify the file path inside the newly created directory
     
     with open(file_path, "w") as file:
         output_lines = []
@@ -3024,3 +3095,4 @@ elif TS_flag:
         for line in output_lines:
             print(line)
             file.write(line + '\n')
+        shutil.move(TS_plots_directory_path, case_directory_path)
