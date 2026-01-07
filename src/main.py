@@ -1068,12 +1068,12 @@ if not TS_flag:
         # ============================
         if os.path.exists(case_directory_path):
             shutil.rmtree(case_directory_path)                                       # Deletes the pre-existing folder
-        elif not os.path.exists(case_directory_path):                                # Create the directory if it doesn't exist
+        if not os.path.exists(case_directory_path):                                  # Create the directory if it doesn't exist
             os.makedirs(case_directory_path, exist_ok=True)                          # Exist_ok=True avoids error if directory already exists
-        file_path = os.path.join(case_directory_path, "Final_Results.txt")           # Specify the file path inside the newly created directory
         
+        file_path = os.path.join(case_directory_path, "Final_Results.txt")           # Specify the file path inside the newly created directory
         with open(file_path, "w") as file:
-            output_lines = []                                                       # Create a list to hold the printed messages
+            output_lines = []                                                        # Create a list to hold the printed messages
             
             # ============================
             # Hypothesis and data: not printed, saved only
@@ -2788,11 +2788,11 @@ elif TS_flag:
     # Final Results Printing and saving
     # ============================
     if os.path.exists(case_directory_path):
-        shutil.rmtree(case_directory_path)                                      # Deletes the pre-existing folder
-    elif not os.path.exists(case_directory_path):                               # Create the directory if it doesn't exist
-        os.makedirs(case_directory_path, exist_ok=True)                         # Exist_ok=True avoids error if directory already exists
-    file_path = os.path.join(case_directory_path, "Final_Results.txt")          # Specify the file path inside the newly created directory
+        shutil.rmtree(case_directory_path)                                       # Deletes the pre-existing folder
+    if not os.path.exists(case_directory_path):                                  # Create the directory if it doesn't exist
+        os.makedirs(case_directory_path, exist_ok=True)                          # Exist_ok=True avoids error if directory already exists
     
+    file_path = os.path.join(case_directory_path, "Final_Results.txt")          # Specify the file path inside the newly created directory
     with open(file_path, "w") as file:
         output_lines = []
 
