@@ -1199,7 +1199,7 @@ if not TS_flag:
                 output_lines.append("============================================================================================================================")
             if (sigma_cTR_M < sigma_allowable):
                 output_lines.append("The comparison stress according to Tresca-Mariotte Sc = %.3f MPa is lower than the allowable stress Sa = %.3f MPa" %(sigma_cTR_M, sigma_allowable))
-                output_lines.append("============================================================================================================================")
+                output_lines.append("\n============================================================================================================================")
             else:
                 output_lines.append("\n============================================================================================================================")
                 output_lines.append("The comparison stress according to Tresca-Mariotte Sc = %.3f MPa is higher than the allowable stress Sa = %.3f MPa" %(sigma_cTR_M, sigma_allowable))
@@ -2921,7 +2921,7 @@ elif TS_flag:
             output_lines.append("============================================================================================================================")
         if (sigma_cTR_MS < sigma_allowable_S):
             output_lines.append("The comparison stress according to Tresca-Mariotte Sc = %.3f MPa is lower than the allowable stress Sa = %.3f MPa" %(sigma_cTR_MS, sigma_allowable_S))
-            output_lines.append("============================================================================================================================")
+            output_lines.append("\n============================================================================================================================")
         else:
             output_lines.append("\n============================================================================================================================")
             output_lines.append("The comparison stress according to Tresca-Mariotte Sc = %.3f MPa is higher than the allowable stress Sa = %.3f MPa" %(sigma_cTR_MS, sigma_allowable_S))
@@ -2996,7 +2996,7 @@ elif TS_flag:
             output_lines.append("============================================================================================================================")
         if (sigma_cTR_M < sigma_allowable):
             output_lines.append("The comparison stress according to Tresca-Mariotte Sc = %.3f MPa is lower than the allowable stress Sa = %.3f MPa" %(sigma_cTR_M, sigma_allowable))
-            output_lines.append("============================================================================================================================")
+            output_lines.append("\n============================================================================================================================")
         else:
             output_lines.append("\n============================================================================================================================")
             output_lines.append("The comparison stress according to Tresca-Mariotte Sc = %.3f MPa is higher than the allowable stress Sa = %.3f MPa" %(sigma_cTR_M, sigma_allowable))
