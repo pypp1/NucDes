@@ -1,0 +1,162 @@
+
+
+
+
+################################################### Hypothesis and data ####################################################
+============================================================================================================================
+
+Default pressures assumed: True
+
+============================================================================================================================
+
+Presence of the volumetric heat source q0: False
+
+============================================================================================================================
+
+Discretization along z: False
+Chosen temperature T1 to compute C1, C2: T_in = 214 °C
+Adiabatic Outer Wall approximation adopted: False
+
+============================================================================================================================
+
+Thin tube limits for Elastic Instability and Plastic Collapse adopted: True
+Corradi Design Procedure adopted: True
+Safety coefficient adopted for the Corradi Design Procedure: 2.000
+
+============================================================================================================================
+
+
+
+
+###################################################### Final  Results ######################################################
+============================================================================================================================
+
+Current vessel wall thickness: 0.150 m
+Vessel max ovality W: 0.00678 = 0.678%
+Maximum permissible deviation from theoretical form for the vessel according to NB-4221.2: e = 0.045 m
+Maximum difference in cross-sectional diameters: 21.350 mm
+
+============================================================================================================================
+
+
+
+
+################################################## Heat transfer results ###################################################
+============================================================================================================================
+
+Volumetric heat source at the vessel inner surface: 0.000 W/m³
+Volumetric heat source at the vessel-insulation interface: 0.000 W/m³
+
+============================================================================================================================
+
+Heat transfer coefficient h1 = 7498.127 W/(m²·K)
+Heat transfer coefficient h2 = 1164.849 W/(m²·K)
+Overall heat transfer coefficient outside the vessel u2 = 26.948 W/(m²·K)
+
+============================================================================================================================
+
+Thermal power flux on the inner vessel surface: 3.568 kW/m²
+Thermal power flux on the outer vessel surface: 3.568 kW/m²
+
+============================================================================================================================
+
+
+
+
+####################################################### Temperatures #######################################################
+============================================================================================================================
+
+Average Vessel Temperature (numerical integration): 207.961 °C
+Maximum Vessel Temperature: 213.524 °C at r = 1.500 m
+Vessel Temperature at the inner surface: 213.524167 °C at r = 1.500 m
+Vessel Temperature at the outer surface: 202.397798 °C at r = 1.650 m
+
+There is no risk of thermal creep occurring in the vessel.
+
+============================================================================================================================
+
+
+
+
+######################################################### Stresses #########################################################
+============================================================================================================================
+
+Maximum Thermal Hoop Stress in the vessel: 23.534 Mpa at r = 1.650 m
+Maximum thermal hoop stress via design curves: 0.000 MPa
+
+============================================================================================================================
+
+Guest-Tresca comparison stress in the vessel - Mariotte solution: 102.284 Mpa
+Guest-Tresca comparison stress in the vessel - Lamé solution: 24.293 Mpa
+
+============================================================================================================================
+
+For a design vessel temperature of 207.961 °C: 
+Yield Stress: Sy = 198.100 MPa
+Stress Intensity: Sm = 132.067 MPa
+Allowable Stress: 132.067 MPa
+
+============================================================================================================================
+
+
+
+
+########################################################## Vessel ##########################################################
+============================================================================================================================
+
+According to Lamé:
+Maximum absolute value of the total radial stress: 8.070 MPa
+Maximum absolute value of the total hoop stress: 31.793 MPa
+Maximum absolute value of the total axial stress: 31.793 MPa
+
+All are lower than 3Sm = 396.201 MPa
+
+Maximum value of the primary radial stress: -7.500 MPa
+Maximum value of the primary hoop stress: -7.500 MPa
+Primary axial stress: -7.500 MPa
+
+All are lower than Sm = 132.067 MPa
+
+============================================================================================================================
+
+According to Mariotte:
+Maximum absolute value of the total radial stress: 4.320 MPa
+Maximum absolute value of the total hoop stress: 98.534 MPa
+Maximum absolute value of the total axial stress: 61.034 MPa
+
+All are lower than 3Sm = 396.201 MPa
+
+Primary radial stress: -3.750 MPa
+Primary hoop stress: 75.000 MPa
+Primary axial stress: 37.500 MPa
+
+All are lower than Sm = 132.067 MPa
+
+============================================================================================================================
+
+The comparison stress according to Tresca-Lamé Sc = 24.293 MPa is lower than the allowable stress Sa = 132.067 MPa
+The comparison stress according to Tresca-Mariotte Sc = 102.284 MPa is lower than the allowable stress Sa = 132.067 MPa
+
+============================================================================================================================
+
+
+
+
+######################################################### Buckling #########################################################
+============================================================================================================================
+
+According to the Corradi Design Procedure:
+The theoretical limit for collapse pressure, accounting for ovality, is: q_c = 15.641 MPa = 156.413 bar
+A safety factor s = 2.000 was assumed. 
+The allowable external pressure is thus: q_a = 7.821 MPa = 78.207 bar
+
+The given external pressure of 75.000 bar is lower than the allowable pressure of 78.207 bar
+
+============================================================================================================================
+
+
+
+
+############################################################################################################################
+The vessel's integrity is ensured: the design is correct!
+############################################################################################################################
