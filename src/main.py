@@ -971,7 +971,8 @@ if not TS_flag:
                 plt.semilogy(Dt_ratio_plot, p_0_fun(Dt_ratio_plot), 'red', label='p$_0$')
                 plt.semilogy(Dt_ratio_plot, q_0_fun(Dt_ratio_plot), '--r', label='q$_0$')
                 plt.axvline(x = Dt_Crit_Ratio, color = 'black', linewidth = '3', label = 'Critical Slenderness')
-                plt.axvline(x = Current_Slenderness, color = 'green', linewidth = '3', label = 'Current Vessel Slenderness')
+                plt.axvline(x = Current_Slenderness, color = 'green', linestyle='--', linewidth = '1.5', label = 'Current Vessel Slenderness')
+                plt.plot(Current_Slenderness, Corradi_vessel[1], 'og', label='Current Vessel Allowable Pressure q$_a$')
                 plt.xlabel("Geometrical Slenderness D/t")
                 plt.ylabel("Theoretical Limit Values (MPa)")
                 plt.title("Plastic Collapse and Buckling Curves")
@@ -1008,7 +1009,8 @@ if not TS_flag:
                 plt.semilogy(Dt_ratio_plot, q_0_fun(Dt_ratio_plot), '--r', label='q$_0$')
                 plt.semilogy(Dt_ratio_plot, Corradi(Dt_ratio_plot)[0], 'orange', label='Corradi q$_c$')
                 plt.axvline(x = Dt_Crit_Ratio, color = 'black', linewidth = '3', label = 'Critical Slenderness')
-                plt.axvline(x = Current_Slenderness, color = 'green', linewidth = '3', label = 'Current Vessel Slenderness')
+                plt.axvline(x = Current_Slenderness, color = 'green', linestyle='--', linewidth = '1.5', label = 'Current Vessel Slenderness')
+                plt.plot(Current_Slenderness, Corradi_vessel[1], 'og', label='Current Vessel Allowable Pressure q$_a$')
                 plt.xlabel("Geometrical Slenderness D/t")
                 plt.ylabel("Theoretical Limit Values (MPa)")
                 plt.title("Plastic Collapse and Buckling Curves")
@@ -2679,7 +2681,7 @@ elif TS_flag:
                     print(e)
             
             if Collapse_pl_flag:
-                # ============================ 
+                # ============================
                 # Plastic collapse and buckling plots
                 # ============================
                 os.makedirs(TS_plots_directory_path, exist_ok=True)
@@ -2690,7 +2692,8 @@ elif TS_flag:
                 plt.semilogy(Dt_ratio_plot, p_0_fun(Dt_ratio_plot), 'red', label='p$_0$')
                 plt.semilogy(Dt_ratio_plot, q_0_fun(Dt_ratio_plot), '--r', label='q$_0$')
                 plt.axvline(x = Dt_Crit_Ratio, color = 'black', linewidth = '3', label = 'Critical Slenderness')
-                plt.axvline(x = Current_Slenderness, color = 'green', linewidth = '3', label = 'Current Vessel Slenderness')
+                plt.axvline(x = Current_Slenderness, color = 'green', linestyle='--', linewidth = '1.5', label = 'Current Vessel Slenderness')
+                plt.plot(Current_Slenderness, Corradi_vessel[1], 'og', label='Current Vessel Allowable Pressure q$_a$')
                 plt.xlabel("Geometrical Slenderness D/t")
                 plt.ylabel("Theoretical Limit Values (MPa)")
                 plt.title("Plastic Collapse and Buckling Curves")
@@ -2727,7 +2730,8 @@ elif TS_flag:
                 plt.semilogy(Dt_ratio_plot, q_0_fun(Dt_ratio_plot), '--r', label='q$_0$')
                 plt.semilogy(Dt_ratio_plot, Corradi(Dt_ratio_plot)[0], 'orange', label='Corradi q$_c$')
                 plt.axvline(x = Dt_Crit_Ratio, color = 'black', linewidth = '3', label = 'Critical Slenderness')
-                plt.axvline(x = Current_Slenderness, color = 'green', linewidth = '3', label = 'Current Vessel Slenderness')
+                plt.axvline(x = Current_Slenderness, color = 'green', linestyle='--', linewidth = '1.5', label = 'Current Vessel Slenderness')
+                plt.plot(Current_Slenderness, Corradi_vessel[1], 'og', label='Current Vessel Allowable Pressure q$_a$')
                 plt.xlabel("Geometrical Slenderness D/t")
                 plt.ylabel("Theoretical Limit Values (MPa)")
                 plt.title("Plastic Collapse and Buckling Curves")
