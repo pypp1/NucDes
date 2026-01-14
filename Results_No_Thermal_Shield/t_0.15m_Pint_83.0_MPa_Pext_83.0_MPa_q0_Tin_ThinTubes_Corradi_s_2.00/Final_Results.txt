@@ -6,8 +6,8 @@
 ============================================================================================================================
 
 Default pressures assumed: False
-Internal pressure: 83.000 MPa
-External pressure: 83.000 MPa
+Internal pressure: 8.300 MPa
+External pressure: 8.300 MPa
 
 ============================================================================================================================
 
@@ -38,6 +38,10 @@ Current vessel wall thickness: 0.150 m
 Vessel max ovality W: 0.00678 = 0.678%
 Maximum permissible deviation from theoretical form for the vessel according to NB-4221.2: e = 0.045 m
 Maximum difference in cross-sectional diameters: 21.350 mm
+
+============================================================================================================================
+
+The current vessel wall thickness is above the minimum thickness required under internal pressure: 0.113 m
 
 ============================================================================================================================
 

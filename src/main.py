@@ -1036,6 +1036,12 @@ if not TS_flag:
                 plt.savefig(plot_file_path)
                 plt.show()
                 plt.close()
+                
+        # ============================ 
+        # Minimum thickness under internal pressure check
+        # ============================
+        t_min = (P_int_MPa*R_int)/(Stress_Intensity - 0.5*P_int_MPa)
+        isAbove = t >= t_min
         
         # ============================ 
         # Current case specific path creation
@@ -1092,8 +1098,8 @@ if not TS_flag:
             output_lines.append("============================================================================================================================")
             output_lines.append("\nDefault pressures assumed: %s" %Def_P_flag)
             if not Def_P_flag:
-                output_lines.append("Internal pressure: %.3f MPa" %P_int)
-                output_lines.append("External pressure: %.3f MPa" %P_cpp)
+                output_lines.append("Internal pressure: %.3f MPa" %P_int_MPa)
+                output_lines.append("External pressure: %.3f MPa" %P_cpp_MPa)
             if P_int != P_cpp:
                 output_lines.append("\nAssumed stress/strain condition (1: Plane Stress, 0: Plane Strain): %d" %eps_choice)
             output_lines.append("\n============================================================================================================================")
@@ -1131,6 +1137,13 @@ if not TS_flag:
             output_lines.append("Maximum permissible deviation from theoretical form for the vessel according to NB-4221.2: e = %.3f m" %(0.3*t))
             output_lines.append("Maximum difference in cross-sectional diameters: %.3f mm" %DeltaD_max)
             output_lines.append("\n============================================================================================================================")
+            if isAbove:
+                output_lines.append("\nThe current vessel wall thickness is above the minimum thickness required under internal pressure: %.3f m" %t_min)
+                output_lines.append("\n============================================================================================================================")
+            elif not isAbove:
+                output_lines.append("\n============================================================================================================================")
+                output_lines.append("WARNING: The current vessel wall thickness is below the minimum thickness required under internal pressure: %.3f m" %t_min)
+                output_lines.append("============================================================================================================================")
 
             # ============================
             # Heat Transfer Results
@@ -1299,6 +1312,11 @@ if not TS_flag:
                 print(line)
                 file.write(line + '\n')                                 # Add a newline for formatting in the text file
             shutil.move(NTS_plots_directory_path, case_directory_path)  # Move the plots directory into the case directory
+            
+            print("\n############################################################################################################################")
+            print("Results have been saved at: %s" %case_directory_path)
+            print("############################################################################################################################")
+            
     # ======================================
     # Discretization along z
     # ======================================
@@ -2771,6 +2789,14 @@ elif TS_flag:
         Corradi_flag = bool(1)
 
     # ============================ 
+    # Minimum thickness under internal pressure check
+    # ============================
+    t_min = (P_int_MPa * R_int)/(Stress_Intensity - 0.5*P_int_MPa)
+    isAbove = t >= t_min
+    t_min_S = (P_int_MPa * R_shield_int)/(Stress_Intensity_S - 0.5*P_int_MPa)
+    isAbove_S = t_shield >= t_min_S
+    
+    # ============================ 
     # Current case specific path creation
     # ============================
     case_directory_name = []
@@ -2823,8 +2849,8 @@ elif TS_flag:
         output_lines.append("============================================================================================================================")
         output_lines.append("\nDefault pressures assumed: %s" %Def_P_flag)
         if not Def_P_flag:
-            output_lines.append("Internal pressure: %.3f MPa" %P_int)
-            output_lines.append("External pressure: %.3f MPa" %P_cpp)
+            output_lines.append("Internal pressure: %.3f MPa" %P_int_MPa)
+            output_lines.append("External pressure: %.3f MPa" %P_cpp_MPa)
         if P_int != P_cpp:
             output_lines.append("\nAssumed stress/strain condition (1: Plane Stress, 0: Plane Strain): %d" %eps_choice)
         output_lines.append("\n============================================================================================================================")
@@ -2834,7 +2860,7 @@ elif TS_flag:
         if user_D_choice == 0:
             output_lines.append("Heat transfer coefficients equalized in %d sub-iterations. Final difference: %.9e W/m²K" %(counter_h1, abs(h_1_int - h_1_ext)))
         output_lines.append("\n============================================================================================================================")
-        output_lines.append("\nDiscretization along z: 0")
+        output_lines.append("\nDiscretization along z: False")
         if T1_choice == 0:
             output_lines.append("Chosen temperature T1 to compute C1, C2: T_in = %.3s °C" %(T1-273.15))
         elif T1_choice == 1:
@@ -2867,6 +2893,19 @@ elif TS_flag:
         output_lines.append("Maximum permissible deviation from theoretical form for the vessel according to NB-4221.2: e = %.3f m" % (0.3 * t))
         output_lines.append("Maximum difference in cross-sectional diameters: %.3f mm" % DeltaD_max)
         output_lines.append("\n============================================================================================================================")
+        if isAbove:
+            output_lines.append("\nThe current vessel wall thickness is above the minimum thickness required under internal pressure: %.3f m" %t_min)
+        elif not isAbove:
+            output_lines.append("\n============================================================================================================================")
+            output_lines.append("WARNING: The current vessel wall thickness is below the minimum thickness required under internal pressure: %.3f m" %t_min)
+            output_lines.append("============================================================================================================================")
+        if isAbove_S:
+            output_lines.append("The current thermal shield thickness is above the minimum thickness required under internal pressure: %.3f m" %t_min_S)
+            output_lines.append("\n============================================================================================================================")
+        elif not isAbove_S:
+            output_lines.append("\n============================================================================================================================")
+            output_lines.append("WARNING: The current thermal shield thickness is below the minimum thickness required under internal pressure: %.3f m" %t_min_S)
+            output_lines.append("============================================================================================================================")
 
         # ============================ 
         # Heat Transfer Results
@@ -3151,3 +3190,7 @@ elif TS_flag:
             print(line)
             file.write(line + '\n')
         shutil.move(TS_plots_directory_path, case_directory_path)
+        
+        print("\n############################################################################################################################")
+        print("Results have been saved at: %s" %case_directory_path)
+        print("############################################################################################################################")
