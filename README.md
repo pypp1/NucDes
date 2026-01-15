@@ -16,7 +16,7 @@ Once run, the code gives the user room to decide several parameters, like:
 
 All of this happens through a series of prompts: when the code is executed, the user is prompted a series of questions which are to be answered using numbers. 
 
-All acceptable answers are indicated in the questions themselves. **If any invalid answer is given by the user, the code will again output an error. **
+All acceptable answers are indicated in the questions themselves. **If any invalid answer is given by the user, the code will again output an error.**
 
 Some questions may only appear based on previous answers. For example:
 
