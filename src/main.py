@@ -2238,17 +2238,9 @@ elif TS_flag:
         else:
             flag_prim_S = 0
 
-        if flag_primsec_S == 1 or flag_prim_S == 1:
-            print("\nThe current stress state in the thermal shield is not acceptable. \nPrimary + Secondary Stresses flag: %d \nPrimary Stresses flag: %d" %(flag_primsec_S, flag_prim_S))
-            print("Absolute value of the maximum radial thermal stress: %.3f MPa\nAbsolute value of the maximum hoop thermal stress: %.3f MPa\nAbsolute value of the maximum axial thermal stress: %.3f MPa" %(abs(max(sigma_r_th_S)),abs(max(sigma_t_th_S)),abs(max(sigma_z_th_S))))
-            continue
-        elif flag_primsec_S == 0 and flag_prim_S == 0:
-            Corradi_flag = 1                                                #Only enters the Corradi procedure if the thermal shield is ok
-        """
         # ======================================
         # Thermal Shield Thermomechanical Integrity Verification    -   Mariotte + Thermal stresses
         # ======================================
-        """
         if max(abs(sigma_r_totM_S)) > 3*Stress_Intensity_S or max(abs(sigma_t_totM_S)) > 3*Stress_Intensity_S or max(abs(sigma_z_totM_S)) > 3*Stress_Intensity_S:
             flag_primsec_S = bool(1)
         else:
@@ -2259,7 +2251,10 @@ elif TS_flag:
         else:
             flag_prim_S = bool(0)
         """
-        if sigma_cTR_MS > 3*Stress_Intensity_S:     #Using the Tresca comparison stress instead of the stresses themselves
+        # ======================================
+        # Thermal Shield Thermomechanical Integrity Verification    -   Tresca-Mariotte + Thermal stresses
+        # ======================================
+        if sigma_cTR_MS > 3*Stress_Intensity_S:
             flag_primsec_S = bool(1)
         else:
             flag_primsec_S = bool(0)
@@ -2270,8 +2265,6 @@ elif TS_flag:
             flag_prim_S = bool(0)
         
         if flag_primsec_S or flag_prim_S:
-            #print("\nThe current stress state in the thermal shield is not acceptable. \nPrimary + Secondary Stresses flag: %d \nPrimary Stresses flag: %d" %(flag_primsec_S, flag_prim_S))
-            #print("Absolute value of the maximum radial thermal stress: %.3f MPa\nAbsolute value of the maximum hoop thermal stress: %.3f MPa\nAbsolute value of the maximum axial thermal stress: %.3f MPa" %(abs(max(sigma_r_th_S)),abs(max(sigma_t_th_S)),abs(max(sigma_z_th_S))))
             continue
         elif not flag_primsec_S and not flag_prim_S:
             Corradi_flag = bool(1)                                                #Only enters the Corradi procedure if the thermal shield is ok
@@ -2334,17 +2327,9 @@ elif TS_flag:
         else:
             flag_prim = 0
         
-        if flag_primsec == 1 or flag_prim == 1:
-            print("\nThe current stress state in the vessel is not acceptable. \nPrimary + Secondary Stresses flag: %d \nPrimary Stresses flag: %d" %(flag_primsec, flag_prim))
-            print("Absolute value of the maximum radial thermal stress: %.3f MPa\nAbsolute value of the maximum hoop thermal stress: %.3f MPa\nAbsolute value of the maximum axial thermal stress: %.3f MPa" %(abs(max(sigma_r_th_S)),abs(max(sigma_t_th_S)),abs(max(sigma_z_th_S))))
-            continue
-        elif flag_primsec == 0 and flag_prim == 0:
-            vessel_flag = 1
-        """ 
         # ======================================
         # Vessel Thermomechanical Integrity Verification    -   Mariotte + Thermal stresses
         # ======================================
-        """
         if max(abs(sigma_r_totM)) > 3*Stress_Intensity or max(abs(sigma_t_totM)) > 3*Stress_Intensity or max(abs(sigma_z_totM)) > 3*Stress_Intensity:
             flag_primsec = bool(1)
         else:
@@ -2355,6 +2340,9 @@ elif TS_flag:
         else:
             flag_prim = bool(0)
         """
+        # ======================================
+        # Vessel Thermomechanical Integrity Verification    -   Tresca-Mariotte + Thermal stresses
+        # ======================================
         if sigma_cTR_M > 3*Stress_Intensity:
             flag_primsec = bool(1)
         else:
@@ -2366,23 +2354,22 @@ elif TS_flag:
             flag_prim = bool(0)
         
         if flag_primsec or flag_prim:
-            #print("\nThe current stress state in the vessel is not acceptable. \nPrimary + Secondary Stresses flag: %d \nPrimary Stresses flag: %d" %(flag_primsec, flag_prim))
-            #print("Absolute value of the maximum radial thermal stress: %.3f MPa\nAbsolute value of the maximum hoop thermal stress: %.3f MPa\nAbsolute value of the maximum axial thermal stress: %.3f MPa" %(abs(max(sigma_r_th_S)),abs(max(sigma_t_th_S)),abs(max(sigma_z_th_S))))
             continue
         elif not flag_primsec and not flag_prim:
             vessel_flag = bool(1)
 
         # ======================================
-        # Final Verification: buckling + vessel stress state to exit the loop
+        # Final Verification: buckling + inner P requirement + vessel stress state to exit the loop
         # ======================================
         t_min = (P_int_MPa*R_int)/(Stress_Intensity - 0.5*P_int_MPa)
-        if buckling_flag and vessel_flag:                     #and sigma_cTR_M < sigma_allowable and sigma_cTR_MS < sigma_allowable_S:   
+        
+        if buckling_flag and vessel_flag:                     
             if t >= t_min:  
                 final_flag = bool(1)                          
             else:
-                final_flag = bool(0)                          # ======================================
-        else:                                                 # Tested, but the Tresca-Mariotte comparison stress is never lower than the allowable stress intensity Sm
-            final_flag = bool(0)                              # ======================================
+                final_flag = bool(0)
+        else:
+            final_flag = bool(0)
     
     # ======================================
     # Plotting the volumetric heat source profiles 
