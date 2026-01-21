@@ -3265,6 +3265,7 @@ elif TS_flag:
             output_lines.append("\nAll are lower than 3Sm = %.3f MPa" %(3*Stress_Intensity)) 
             output_lines.append("\nPrimary radial stress: %.3f MPa\nPrimary hoop stress: %.3f MPa\nPrimary axial stress: %.3f MPa" %(sigma_rM,sigma_tM,sigma_zM))
             output_lines.append("\nAll are lower than Sm = %.3f MPa" %Stress_Intensity)
+            output_lines.append("\n============================================================================================================================")
 
         if (sigma_cTR_L_PO < Stress_Intensity):
             output_lines.append("\nThe comparison stress of primary stresses only according to Tresca-Lamé Sc = %.3f MPa is lower than the allowable stress Sa = %.3f MPa" %(sigma_cTR_L_PO, Stress_Intensity))
