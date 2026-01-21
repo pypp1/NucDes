@@ -1144,7 +1144,7 @@ if not TS_flag:
             output_lines.append("Maximum difference in cross-sectional diameters: %.3f mm" %DeltaD_max)
             output_lines.append("\n============================================================================================================================")
             if isAbove:
-                output_lines.append("\nThe current vessel wall thickness is above the minimum thickness required under internal pressure: %.3f m" %t_min)
+                output_lines.append("\nThe current vessel wall thickness is equal to or greater than the minimum thickness required under internal pressure: %.3f m" %t_min)
                 output_lines.append("\n============================================================================================================================")
             elif not isAbove:
                 output_lines.append("\n============================================================================================================================")
@@ -2955,13 +2955,13 @@ elif TS_flag:
         output_lines.append("Maximum difference in cross-sectional diameters: %.3f mm" % DeltaD_max)
         output_lines.append("\n============================================================================================================================")
         if isAbove:
-            output_lines.append("\nThe current vessel wall thickness is above the minimum thickness required under internal pressure: %.3f m" %t_min)
+            output_lines.append("\nThe current vessel wall thickness is equal to or greater than the minimum thickness required under internal pressure: %.3f m" %t_min)
         elif not isAbove:
             output_lines.append("\n============================================================================================================================")
             output_lines.append("WARNING: The current vessel wall thickness is below the minimum thickness required under internal pressure: %.3f m" %t_min)
             output_lines.append("============================================================================================================================")
         if isAbove_S:
-            output_lines.append("The current thermal shield thickness is above the minimum thickness required under internal pressure: %.3f m" %t_min_S)
+            output_lines.append("The current thermal shield thickness is equal to or greater than the minimum thickness required under internal pressure: %.3f m" %t_min_S)
             output_lines.append("\n============================================================================================================================")
         elif not isAbove_S:
             output_lines.append("\n============================================================================================================================")
