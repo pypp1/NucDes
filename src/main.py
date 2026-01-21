@@ -2261,7 +2261,7 @@ elif TS_flag:
         # ======================================
         # Thermal Shield Thermomechanical Integrity Verification    -   Tresca-Mariotte + Thermal stresses
         # ======================================
-        if sigma_cTR_MS > 3*Stress_Intensity_S:     #Using the Tresca comparison stress instead of the stresses themselves
+        if sigma_cTR_MS > 3*Stress_Intensity_S:
             flag_primsec_S = bool(1)
         else:
             flag_primsec_S = bool(0)
