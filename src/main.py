@@ -1100,7 +1100,7 @@ if not TS_flag:
             # ============================
             # Hypothesis and data: not printed, saved only
             # ============================
-            output_lines.append("\n\n\n\n################################################### Hypothesis and data ####################################################")
+            output_lines.append("################################################### Hypothesis and data ####################################################")
             output_lines.append("============================================================================================================================")
             output_lines.append("\nDefault pressures assumed: %s" %Def_P_flag)
             if not Def_P_flag:
@@ -1332,7 +1332,7 @@ if not TS_flag:
                 output_lines.append("############################################################################################################################")
 
             for line in output_lines:                                   # Print messages to the console and write to the file
-                print(line)
+                #print(line)
                 file.write(line + '\n')                                 # Add a newline for formatting in the text file
             shutil.move(NTS_plots_directory_path, case_directory_path)  # Move the plots directory into the case directory
             
@@ -2957,7 +2957,7 @@ elif TS_flag:
         # ============================
         # Hypothesis and data: not printed, saved only
         # ============================
-        output_lines.append("\n\n\n\n################################################### Hypothesis and data ####################################################")
+        output_lines.append("################################################### Hypothesis and data ####################################################")
         output_lines.append("============================================================================================================================")
         output_lines.append("\nDefault pressures assumed: %s" %Def_P_flag)
         if not Def_P_flag:
@@ -3331,7 +3331,7 @@ elif TS_flag:
             output_lines.append("############################################################################################################################")
     
         for line in output_lines:
-            print(line)
+            #print(line)
             file.write(line + '\n')
         shutil.move(TS_plots_directory_path, case_directory_path)
         
