@@ -772,13 +772,6 @@ if not TS_flag:
             flag_prim = bool(1)
         else:
             flag_prim = bool(0)
-        
-        if flag_primsec or flag_prim:
-            print("\nThe current stress state in the vessel is not acceptable. \nPrimary + Secondary Stresses flag: %d \nPrimary Stresses flag: %d" %(flag_primsec, flag_prim))
-            print("Absolute value of the maximum radial thermal stress: %.3f MPa\nAbsolute value of the maximum hoop thermal stress: %.3f MPa\nAbsolute value of the maximum axial thermal stress: %.3f MPa" %(abs(max(sigma_r_th_S)),abs(max(sigma_t_th_S)),abs(max(sigma_z_th_S))))
-            continue
-        elif not flag_primsec and not flag_prim:
-            vessel_flag = 1
         """ 
         # ======================================
         # Vessel Thermomechanical Integrity Verification    -   Mariotte + Thermal stresses
@@ -792,6 +785,20 @@ if not TS_flag:
             flag_prim = bool(1)
         else:
             flag_prim = bool(0)
+        """
+        # ======================================
+        # Vessel Thermomechanical Integrity Verification    -   Tresca-Mariotte
+        # ======================================
+        if sigma_cTR_M > 3*Stress_Intensity:
+            flag_primsec = bool(1)
+        else:
+            flag_primsec = bool(0)
+
+        if sigma_cTR_M_PO > Stress_Intensity:
+            flag_prim = bool(1)
+        else:
+            flag_prim = bool(0)
+        """
             
         # ======================================
         # Without thermal shield
@@ -2362,10 +2369,10 @@ elif TS_flag:
         # Final Verification: buckling + inner P requirement + vessel stress state to exit the loop
         # ======================================
         t_min = (P_int_MPa*R_int)/(Stress_Intensity - 0.5*P_int_MPa)
-        t_min_S = (P_int_MPa * R_shield_int)/(Stress_Intensity_S - 0.5*P_int_MPa)
+        #t_min_S = (P_int_MPa * R_shield_int)/(Stress_Intensity_S - 0.5*P_int_MPa)
         
         if buckling_flag and vessel_flag:                     
-            if t >= t_min and t_shield >= t_min_S:
+            if t >= t_min: #and t_shield >= t_min_S:    -     The thermal shield is always in hydrostatic condition, there's no need to check for its minimum thickness required to sustain P_int
                 final_flag = bool(1)                          
             else:
                 final_flag = bool(0)
