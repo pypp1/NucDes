@@ -2372,7 +2372,7 @@ elif TS_flag:
         #t_min_S = (P_int_MPa * R_shield_int)/(Stress_Intensity_S - 0.5*P_int_MPa)
         
         if buckling_flag and vessel_flag:                     
-            if t >= t_min: #and t_shield >= t_min_S:    -     The thermal shield is always in hydrostatic condition, there's no need to check for its minimum thickness required to sustain P_int
+            if t >= t_min: #and t_shield >= t_min_S:    -     The thermal shield is always in hydrostatic conditions: there's no need to check for its minimum thickness required to sustain a P_int
                 final_flag = bool(1)                          
             else:
                 final_flag = bool(0)
