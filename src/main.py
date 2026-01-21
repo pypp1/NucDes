@@ -2237,7 +2237,7 @@ elif TS_flag:
             flag_prim_S = 1
         else:
             flag_prim_S = 0
-
+        """
         # ======================================
         # Thermal Shield Thermomechanical Integrity Verification    -   Mariotte + Thermal stresses
         # ======================================
@@ -2252,7 +2252,7 @@ elif TS_flag:
             flag_prim_S = bool(0)
         """
         # ======================================
-        # Thermal Shield Thermomechanical Integrity Verification    -   Tresca-Mariotte + Thermal stresses
+        # Thermal Shield Thermomechanical Integrity Verification    -   Tresca-Mariotte
         # ======================================
         if sigma_cTR_MS > 3*Stress_Intensity_S:
             flag_primsec_S = bool(1)
@@ -2263,7 +2263,7 @@ elif TS_flag:
             flag_prim_S = bool(1)
         else:
             flag_prim_S = bool(0)
-        
+        """
         if flag_primsec_S or flag_prim_S:
             continue
         elif not flag_primsec_S and not flag_prim_S:
@@ -2326,7 +2326,7 @@ elif TS_flag:
             flag_prim = 1
         else:
             flag_prim = 0
-        
+        """
         # ======================================
         # Vessel Thermomechanical Integrity Verification    -   Mariotte + Thermal stresses
         # ======================================
@@ -2341,7 +2341,7 @@ elif TS_flag:
             flag_prim = bool(0)
         """
         # ======================================
-        # Vessel Thermomechanical Integrity Verification    -   Tresca-Mariotte + Thermal stresses
+        # Vessel Thermomechanical Integrity Verification    -   Tresca-Mariotte
         # ======================================
         if sigma_cTR_M > 3*Stress_Intensity:
             flag_primsec = bool(1)
@@ -2352,19 +2352,20 @@ elif TS_flag:
             flag_prim = bool(1)
         else:
             flag_prim = bool(0)
-        
+        """
         if flag_primsec or flag_prim:
             continue
         elif not flag_primsec and not flag_prim:
             vessel_flag = bool(1)
-
+        
         # ======================================
         # Final Verification: buckling + inner P requirement + vessel stress state to exit the loop
         # ======================================
         t_min = (P_int_MPa*R_int)/(Stress_Intensity - 0.5*P_int_MPa)
+        t_min_S = (P_int_MPa * R_shield_int)/(Stress_Intensity_S - 0.5*P_int_MPa)
         
         if buckling_flag and vessel_flag:                     
-            if t >= t_min:  
+            if t >= t_min and t_shield >= t_min_S:
                 final_flag = bool(1)                          
             else:
                 final_flag = bool(0)
@@ -2835,6 +2836,53 @@ elif TS_flag:
     elif not ThinTubes_flag:
         print("Adopting Corradi Design Procedure.")
         Corradi_flag = bool(1)
+        while True:
+            try:
+                Collapse_pl_flag = int(input("\nDo you want to visualize the buckling and plastic collapse curves for thin and thick tubes and the Corradi curve? (1: Yes, 0: No): "))
+                if Collapse_pl_flag not in (0, 1):
+                    raise RuntimeError("Invalid input! Please enter either 0 or 1.")
+                Collapse_pl_flag = bool(Collapse_pl_flag)
+                break  
+            except ValueError:
+                print("Please enter a valid integer.")
+            except RuntimeError as e:
+                print(e)
+        
+        if Collapse_pl_flag:
+            # ============================ 
+            # Plastic collapse and buckling plots
+            # ============================
+            os.makedirs(TS_plots_directory_path, exist_ok=True)
+            plot_file_path = os.path.join(TS_plots_directory_path, "Plastic Collapse and Buckling Curves - With Corradi.png")
+            plt.figure(figsize = (8, 8))
+            plt.xlim(0,50)
+            plt.ylim(0.1,max(q_E_fun(Dt_ratio_plot)))
+            plt.subplot(1,2,1)
+            plt.semilogy(Dt_ratio_plot, q_E_fun(Dt_ratio_plot), '--b', label='q$_E$')
+            plt.semilogy(Dt_ratio_plot, q_0_fun(Dt_ratio_plot), '--r', label='q$_0$')
+            plt.semilogy(Dt_ratio_plot, Corradi(Dt_ratio_plot)[0], 'orange', label='Corradi q$_c$')
+            plt.axvline(x = Dt_Crit_Ratio, color = 'black', linewidth = '3', label = 'Critical Slenderness')
+            plt.axvline(x = Current_Slenderness, color = 'green', linestyle='--', linewidth = '1.5', label = 'Current Vessel Slenderness')
+            plt.plot(Current_Slenderness, Corradi_vessel[1], 'og', label='Current Vessel Allowable Pressure q$_a$')
+            plt.fill_betweenx((0.1,max(q_E_fun(Dt_ratio_plot))), 0, Dt_Crit_Ratio, color='lightgreen', alpha=0.20, label='Plastic collapse dominated zone')
+            plt.fill_betweenx((0.1,max(q_E_fun(Dt_ratio_plot))), Dt_Crit_Ratio, 50, color='orange', alpha=0.15, label='Elastic instability dominated zone')
+            plt.xlabel("Geometrical Slenderness D/t")
+            plt.ylabel("Theoretical Limit Values (MPa)")
+            plt.title("Plastic Collapse and Buckling Curves")
+            plt.legend()
+            plt.grid()
+
+            plt.subplot(1,2,2)
+            plt.plot(Dt_ratio_plot, Corradi(Dt_ratio_plot)[3], 'k', label=r'Corradi $\mu$')
+            plt.xlabel("Geometrical Slenderness D/t")
+            plt.ylabel(r"Corradi $\mu$")
+            plt.title(r"$\mu$ coefficient - Corradi Procedure")
+            plt.legend()
+            plt.grid()
+            plt.tight_layout()
+            plt.savefig(plot_file_path)
+            plt.show()
+            plt.close()
 
     # ============================ 
     # Minimum thickness under internal pressure check
