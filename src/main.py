@@ -691,6 +691,12 @@ if not TS_flag:
         sigma_z_totL = sigma_zL + sigma_z_th_V
         
         # ============================ 
+        # Vessel Comparison stress - Guest-Tresca Theory - Mariotte/Lamé only
+        # ============================
+        sigma_cTR_M_PO = np.max([abs(sigma_tM - sigma_rM), abs(sigma_zM - sigma_rM), abs(sigma_tM - sigma_zM)])
+        sigma_cTR_L_PO = np.max([abs(sigma_tL - sigma_rL), abs(sigma_zL - sigma_rL), abs(sigma_tL - sigma_zL)])
+        
+        # ============================ 
         # Vessel Comparison stress - Guest-Tresca Theory - Mariotte/Lamé + Thermal stresses
         # ============================
         sigma_cTR_M = np.max([abs(sigma_t_totM - sigma_r_totM), abs(sigma_z_totM - sigma_r_totM), abs(sigma_t_totM - sigma_z_totM)])
@@ -1205,7 +1211,9 @@ if not TS_flag:
             #output_lines.append("Maximum Thermal Hoop Stress (Simplified formula): %.3f Mpa at r = %.3f m" %(sigma_t_th_V_max_SIMP, r_sigma_t_th_V_max_SIMP))
             output_lines.append("Maximum thermal hoop stress via design curves: %.3f MPa" %sigma_t_th_max_DES)
             output_lines.append("\n============================================================================================================================")
-            output_lines.append("\nGuest-Tresca comparison stress in the vessel - Mariotte solution: %.3f Mpa" %sigma_cTR_M)
+            output_lines.append("\nGuest-Tresca comparison stress of primary stresses only in the vessel - Mariotte solution: %.3f Mpa" %sigma_cTR_M_PO)
+            output_lines.append("Guest-Tresca comparison stress of primary stresses only in the vessel - Lamé solution: %.3f Mpa" %sigma_cTR_L_PO)
+            output_lines.append("Guest-Tresca comparison stress in the vessel - Mariotte solution: %.3f Mpa" %sigma_cTR_M)
             output_lines.append("Guest-Tresca comparison stress in the vessel - Lamé solution: %.3f Mpa" %sigma_cTR_L)
             output_lines.append("\n============================================================================================================================")
             
@@ -1262,7 +1270,7 @@ if not TS_flag:
                 output_lines.append("============================================================================================================================")
             
             elif not flag_primsec and not flag_prim:
-                output_lines.append("\nAccording to Lamé:")
+                output_lines.append("\nAccording to Lamé:") 
                 output_lines.append("Maximum absolute value of the total radial stress: %.3f MPa\nMaximum absolute value of the total hoop stress: %.3f MPa\nMaximum absolute value of the total axial stress: %.3f MPa" %(max(abs(sigma_r_totL)),max(abs(sigma_t_totL)),max(abs(sigma_z_totL))))
                 output_lines.append("\nAll are lower than 3Sm = %.3f MPa" %(3*Stress_Intensity))         
                 output_lines.append("\nMaximum value of the primary radial stress: %.3f MPa\nMaximum value of the primary hoop stress: %.3f MPa\nPrimary axial stress: %.3f MPa" %(max(sigma_rL),max(sigma_tL),sigma_zL))
@@ -1274,19 +1282,34 @@ if not TS_flag:
                 output_lines.append("\nPrimary radial stress: %.3f MPa\nPrimary hoop stress: %.3f MPa\nPrimary axial stress: %.3f MPa" %(sigma_rM,sigma_tM,sigma_zM))
                 output_lines.append("\nAll are lower than Sm = %.3f MPa" %Stress_Intensity)
 
-            if (sigma_cTR_L < sigma_allowable):
+            if (sigma_cTR_L_PO < Stress_Intensity):
                 output_lines.append("\n============================================================================================================================")
-                output_lines.append("\nThe comparison stress according to Tresca-Lamé Sc = %.3f MPa is lower than the allowable stress Sa = %.3f MPa" %(sigma_cTR_L, sigma_allowable))
+                output_lines.append("\nThe comparison stress of primary stresses only according to Tresca-Lamé Sc = %.3f MPa is lower than the allowable stress Sa = %.3f MPa" %(sigma_cTR_L_PO, Stress_Intensity))
             else:
                 output_lines.append("\n============================================================================================================================")
-                output_lines.append("The comparison stress according to Tresca-Lamé Sc = %.3f MPa is higher than the allowable stress Sa = %.3f MPa" %(sigma_cTR_L, sigma_allowable))
+                output_lines.append("The comparison stress of primary stresses only according to Tresca-Lamé Sc = %.3f MPa is higher than the allowable stress Sa = %.3f MPa" %(sigma_cTR_L_PO, Stress_Intensity))
                 output_lines.append("============================================================================================================================")
-            if (sigma_cTR_M < sigma_allowable):
-                output_lines.append("The comparison stress according to Tresca-Mariotte Sc = %.3f MPa is lower than the allowable stress Sa = %.3f MPa" %(sigma_cTR_M, sigma_allowable))
+            if (sigma_cTR_M_PO < Stress_Intensity):
+                output_lines.append("The comparison stress of primary stresses only according to Tresca-Mariotte Sc = %.3f MPa is lower than the allowable stress Sa = %.3f MPa" %(sigma_cTR_M_PO, Stress_Intensity))
                 output_lines.append("\n============================================================================================================================")
             else:
                 output_lines.append("\n============================================================================================================================")
-                output_lines.append("The comparison stress according to Tresca-Mariotte Sc = %.3f MPa is higher than the allowable stress Sa = %.3f MPa" %(sigma_cTR_M, sigma_allowable))
+                output_lines.append("The comparison stress of primary stresses only according to Tresca-Mariotte Sc = %.3f MPa is higher than the allowable stress Sa = %.3f MPa" %(sigma_cTR_M_PO, Stress_Intensity))
+                output_lines.append("============================================================================================================================")
+                
+            if (sigma_cTR_L < 3*Stress_Intensity):
+                output_lines.append("\n============================================================================================================================")
+                output_lines.append("\nThe comparison stress according to Tresca-Lamé Sc = %.3f MPa is lower than the allowable stress Sa = %.3f MPa" %(sigma_cTR_L, 3*Stress_Intensity))
+            else:
+                output_lines.append("\n============================================================================================================================")
+                output_lines.append("The comparison stress according to Tresca-Lamé Sc = %.3f MPa is higher than the allowable stress Sa = %.3f MPa" %(sigma_cTR_L, 3*Stress_Intensity))
+                output_lines.append("============================================================================================================================")
+            if (sigma_cTR_M < 3*Stress_Intensity):
+                output_lines.append("The comparison stress according to Tresca-Mariotte Sc = %.3f MPa is lower than the allowable stress Sa = %.3f MPa" %(sigma_cTR_M, 3*Stress_Intensity))
+                output_lines.append("\n============================================================================================================================")
+            else:
+                output_lines.append("\n============================================================================================================================")
+                output_lines.append("The comparison stress according to Tresca-Mariotte Sc = %.3f MPa is higher than the allowable stress Sa = %.3f MPa" %(sigma_cTR_M, 3*Stress_Intensity))
                 output_lines.append("============================================================================================================================")
                 
             output_lines.append("\n\n\n\n######################################################### Buckling #########################################################")
@@ -2112,6 +2135,12 @@ elif TS_flag:
         sigma_t_th_S_max_DES = sigmaT_S*(alpha_l*E*q_0S)/(k_st*(1-nu)*(mu_st**2))
         
         # ============================ 
+        # Vessel Comparison stress - Guest-Tresca Theory - Mariotte/Lamé only
+        # ============================
+        sigma_cTR_M_PO = np.max([abs(sigma_tM - sigma_rM), abs(sigma_zM - sigma_rM), abs(sigma_tM - sigma_zM)])
+        sigma_cTR_L_PO = np.max([abs(sigma_tL - sigma_rL), abs(sigma_zL - sigma_rL), abs(sigma_tL - sigma_zL)])
+        
+        # ============================ 
         # Vessel Comparison stress - Guest-Tresca Theory - Mariotte/Lamé + Thermal stresses
         # ============================
         sigma_cTR_M = np.max([abs(sigma_t_totM - sigma_r_totM), abs(sigma_z_totM - sigma_r_totM), abs(sigma_t_totM - sigma_z_totM)])
@@ -2163,6 +2192,12 @@ elif TS_flag:
         sigma_z_totM_S = sigma_zM_S + sigma_z_th_S
 
         # ============================ 
+        # Thermal Shield Comparison stress - Guest-Tresca Theory - Mariotte/Lamé only
+        # ============================
+        sigma_cTR_MS_PO = np.max([abs(sigma_tM_S - sigma_rM_S), abs(sigma_zM_S - sigma_rM_S), abs(sigma_tM_S - sigma_zM_S)])
+        sigma_cTR_LS_PO = np.max([abs(sigma_tL_S - sigma_rL_S), abs(sigma_zL_S - sigma_rL_S), abs(sigma_tL_S - sigma_zL_S)])
+        
+        # ============================ 
         # Thermal Shield Comparison stress - Guest-Tresca Theory - Mariotte/Lamé + Thermal stresses
         # ============================
         sigma_cTR_MS = np.max([abs(sigma_t_totM_S - sigma_r_totM_S), abs(sigma_z_totM_S - sigma_r_totM_S), abs(sigma_t_totM_S - sigma_z_totM_S)])
@@ -2213,6 +2248,7 @@ elif TS_flag:
         # ======================================
         # Thermal Shield Thermomechanical Integrity Verification    -   Mariotte + Thermal stresses
         # ======================================
+        """
         if max(abs(sigma_r_totM_S)) > 3*Stress_Intensity_S or max(abs(sigma_t_totM_S)) > 3*Stress_Intensity_S or max(abs(sigma_z_totM_S)) > 3*Stress_Intensity_S:
             flag_primsec_S = bool(1)
         else:
@@ -2222,7 +2258,17 @@ elif TS_flag:
             flag_prim_S = bool(1)
         else:
             flag_prim_S = bool(0)
+        """
+        if sigma_cTR_MS > 3*Stress_Intensity_S:     #Using the Tresca comparison stress instead of the stresses themselves
+            flag_primsec_S = bool(1)
+        else:
+            flag_primsec_S = bool(0)
 
+        if sigma_cTR_MS_PO > Stress_Intensity_S:
+            flag_prim_S = bool(1)
+        else:
+            flag_prim_S = bool(0)
+        
         if flag_primsec_S or flag_prim_S:
             #print("\nThe current stress state in the thermal shield is not acceptable. \nPrimary + Secondary Stresses flag: %d \nPrimary Stresses flag: %d" %(flag_primsec_S, flag_prim_S))
             #print("Absolute value of the maximum radial thermal stress: %.3f MPa\nAbsolute value of the maximum hoop thermal stress: %.3f MPa\nAbsolute value of the maximum axial thermal stress: %.3f MPa" %(abs(max(sigma_r_th_S)),abs(max(sigma_t_th_S)),abs(max(sigma_z_th_S))))
@@ -2298,12 +2344,23 @@ elif TS_flag:
         # ======================================
         # Vessel Thermomechanical Integrity Verification    -   Mariotte + Thermal stresses
         # ======================================
+        """
         if max(abs(sigma_r_totM)) > 3*Stress_Intensity or max(abs(sigma_t_totM)) > 3*Stress_Intensity or max(abs(sigma_z_totM)) > 3*Stress_Intensity:
             flag_primsec = bool(1)
         else:
             flag_primsec = bool(0)
 
         if sigma_rM > Stress_Intensity or sigma_tM > Stress_Intensity or sigma_zM > Stress_Intensity:
+            flag_prim = bool(1)
+        else:
+            flag_prim = bool(0)
+        """
+        if sigma_cTR_M > 3*Stress_Intensity:
+            flag_primsec = bool(1)
+        else:
+            flag_primsec = bool(0)
+
+        if sigma_cTR_M_PO > Stress_Intensity:
             flag_prim = bool(1)
         else:
             flag_prim = bool(0)
@@ -2318,10 +2375,14 @@ elif TS_flag:
         # ======================================
         # Final Verification: buckling + vessel stress state to exit the loop
         # ======================================
-        if buckling_flag and vessel_flag:                 #and sigma_cTR_M < sigma_allowable and sigma_cTR_MS < sigma_allowable_S:     
-            final_flag = bool(1)                          # ======================================
-        else:                                             # Tested, but the Tresca-Mariotte comparison stress is never lower than the allowable stress intensity Sm
-            final_flag = bool(0)                          # ======================================
+        t_min = (P_int_MPa*R_int)/(Stress_Intensity - 0.5*P_int_MPa)
+        if buckling_flag and vessel_flag:                     #and sigma_cTR_M < sigma_allowable and sigma_cTR_MS < sigma_allowable_S:   
+            if t >= t_min:  
+                final_flag = bool(1)                          
+            else:
+                final_flag = bool(0)                          # ======================================
+        else:                                                 # Tested, but the Tresca-Mariotte comparison stress is never lower than the allowable stress intensity Sm
+            final_flag = bool(0)                              # ======================================
     
     # ======================================
     # Plotting the volumetric heat source profiles 
@@ -3006,10 +3067,14 @@ elif TS_flag:
         #output_lines.append("Maximum Thermal Hoop Stress in the thermal shield (Simplified formula): %.3f Mpa at r = %.3f m" %(sigma_t_th_S_max_SIMP, r_sigma_t_th_S_max_SIMP))
         output_lines.append("Maximum thermal hoop stress in the thermal shield via design curves: %.3f MPa" %sigma_t_th_S_max_DES)
         output_lines.append("\n============================================================================================================================")
-        output_lines.append("\nGuest-Tresca comparison stress in the vessel - Mariotte solution: %.3f Mpa" %sigma_cTR_M)
+        output_lines.append("\nGuest-Tresca comparison stress of primary stresses only in the vessel - Mariotte solution: %.3f Mpa" %sigma_cTR_M_PO)
+        output_lines.append("Guest-Tresca comparison stress of primary stresses only in the vessel - Lamé solution: %.3f Mpa" %sigma_cTR_L_PO)
+        output_lines.append("Guest-Tresca comparison stress in the vessel - Mariotte solution: %.3f Mpa" %sigma_cTR_M)
         output_lines.append("Guest-Tresca comparison stress in the vessel - Lamé solution: %.3f Mpa" %sigma_cTR_L)
 
-        output_lines.append("\nGuest-Tresca comparison stress in the thermal shield - Mariotte solution: %.3f Mpa" %sigma_cTR_MS)
+        output_lines.append("\nGuest-Tresca comparison stress of primary stresses only in the thermal shield - Mariotte solution: %.3f Mpa" %sigma_cTR_MS_PO)
+        output_lines.append("Guest-Tresca comparison stress of primary stresses only in the thermal shield - Lamé solution: %.3f Mpa" %sigma_cTR_LS_PO)
+        output_lines.append("Guest-Tresca comparison stress in the thermal shield - Mariotte solution: %.3f Mpa" %sigma_cTR_MS)
         output_lines.append("Guest-Tresca comparison stress in the thermal shield - Lamé solution: %.3f Mpa" %sigma_cTR_LS)
         output_lines.append("\n============================================================================================================================")
         output_lines.append("\nFor a design vessel temperature of %.3f °C: " %T_des_vessel_C)
@@ -3078,18 +3143,32 @@ elif TS_flag:
             output_lines.append("\nAll are lower than Sm = %.3f MPa" %Stress_Intensity_S)
             output_lines.append("\n============================================================================================================================")
 
-        if (sigma_cTR_LS < sigma_allowable_S):
-            output_lines.append("\nThe comparison stress according to Tresca-Lamé Sc = %.3f MPa is lower than the allowable stress Sa = %.3f MPa" %(sigma_cTR_LS, sigma_allowable_S))
+        if (sigma_cTR_LS_PO < Stress_Intensity_S):
+            output_lines.append("\nThe comparison stress of primary stresses only according to Tresca-Lamé Sc = %.3f MPa is lower than the allowable stress Sa = %.3f MPa" %(sigma_cTR_LS_PO, Stress_Intensity_S))
         else:
             output_lines.append("\n============================================================================================================================")
-            output_lines.append("The comparison stress according to Tresca-Lamé Sc = %.3f MPa is higher than the allowable stress Sa = %.3f MPa" %(sigma_cTR_LS, sigma_allowable_S))
+            output_lines.append("The comparison stress of primary stresses only according to Tresca-Lamé Sc = %.3f MPa is higher than the allowable stress Sa = %.3f MPa" %(sigma_cTR_LS_PO, Stress_Intensity_S))
             output_lines.append("============================================================================================================================")
-        if (sigma_cTR_MS < sigma_allowable_S):
-            output_lines.append("The comparison stress according to Tresca-Mariotte Sc = %.3f MPa is lower than the allowable stress Sa = %.3f MPa" %(sigma_cTR_MS, sigma_allowable_S))
+        if (sigma_cTR_MS_PO < Stress_Intensity_S):
+            output_lines.append("The comparison stress of primary stresses only according to Tresca-Mariotte Sc = %.3f MPa is lower than the allowable stress Sa = %.3f MPa" %(sigma_cTR_MS_PO, Stress_Intensity_S))
             output_lines.append("\n============================================================================================================================")
         else:
             output_lines.append("\n============================================================================================================================")
-            output_lines.append("The comparison stress according to Tresca-Mariotte Sc = %.3f MPa is higher than the allowable stress Sa = %.3f MPa" %(sigma_cTR_MS, sigma_allowable_S))
+            output_lines.append("The comparison stress of primary stresses only according to Tresca-Mariotte Sc = %.3f MPa is higher than the allowable stress Sa = %.3f MPa" %(sigma_cTR_MS_PO, Stress_Intensity_S))
+            output_lines.append("============================================================================================================================")
+        
+        if (sigma_cTR_LS < 3*Stress_Intensity_S):
+            output_lines.append("\nThe comparison stress according to Tresca-Lamé Sc = %.3f MPa is lower than the allowable stress Sa = %.3f MPa" %(sigma_cTR_LS, 3*Stress_Intensity_S))
+        else:
+            output_lines.append("\n============================================================================================================================")
+            output_lines.append("The comparison stress according to Tresca-Lamé Sc = %.3f MPa is higher than the allowable stress Sa = %.3f MPa" %(sigma_cTR_LS, 3*Stress_Intensity_S))
+            output_lines.append("============================================================================================================================")
+        if (sigma_cTR_MS < 3*Stress_Intensity_S):
+            output_lines.append("The comparison stress according to Tresca-Mariotte Sc = %.3f MPa is lower than the allowable stress Sa = %.3f MPa" %(sigma_cTR_MS, 3*Stress_Intensity_S))
+            output_lines.append("\n============================================================================================================================")
+        else:
+            output_lines.append("\n============================================================================================================================")
+            output_lines.append("The comparison stress according to Tresca-Mariotte Sc = %.3f MPa is higher than the allowable stress Sa = %.3f MPa" %(sigma_cTR_MS, 3*Stress_Intensity_S))
             output_lines.append("============================================================================================================================")
             
         if not flag_primsec_S and not flag_prim_S and sigma_cTR_LS < sigma_allowable_S and sigma_cTR_MS < sigma_allowable_S and not creep_flag_S:
@@ -3152,19 +3231,34 @@ elif TS_flag:
             output_lines.append("\nPrimary radial stress: %.3f MPa\nPrimary hoop stress: %.3f MPa\nPrimary axial stress: %.3f MPa" %(sigma_rM,sigma_tM,sigma_zM))
             output_lines.append("\nAll are lower than Sm = %.3f MPa" %Stress_Intensity)
 
-        if (sigma_cTR_L < sigma_allowable):
+        if (sigma_cTR_L_PO < Stress_Intensity):
             output_lines.append("\n============================================================================================================================")
-            output_lines.append("\nThe comparison stress according to Tresca-Lamé Sc = %.3f MPa is lower than the allowable stress Sa = %.3f MPa" %(sigma_cTR_L, sigma_allowable))
+            output_lines.append("\nThe comparison stress of primary stresses only according to Tresca-Lamé Sc = %.3f MPa is lower than the allowable stress Sa = %.3f MPa" %(sigma_cTR_L_PO, Stress_Intensity))
         else:
             output_lines.append("\n============================================================================================================================")
-            output_lines.append("The comparison stress according to Tresca-Lamé Sc = %.3f MPa is higher than the allowable stress Sa = %.3f MPa" %(sigma_cTR_L, sigma_allowable))
+            output_lines.append("The comparison stress of primary stresses only according to Tresca-Lamé Sc = %.3f MPa is higher than the allowable stress Sa = %.3f MPa" %(sigma_cTR_L_PO, Stress_Intensity))
             output_lines.append("============================================================================================================================")
-        if (sigma_cTR_M < sigma_allowable):
-            output_lines.append("The comparison stress according to Tresca-Mariotte Sc = %.3f MPa is lower than the allowable stress Sa = %.3f MPa" %(sigma_cTR_M, sigma_allowable))
+        if (sigma_cTR_M_PO < Stress_Intensity):
+            output_lines.append("The comparison stress of primary stresses only according to Tresca-Mariotte Sc = %.3f MPa is lower than the allowable stress Sa = %.3f MPa" %(sigma_cTR_M_PO, Stress_Intensity))
             output_lines.append("\n============================================================================================================================")
         else:
             output_lines.append("\n============================================================================================================================")
-            output_lines.append("The comparison stress according to Tresca-Mariotte Sc = %.3f MPa is higher than the allowable stress Sa = %.3f MPa" %(sigma_cTR_M, sigma_allowable))
+            output_lines.append("The comparison stress of primary stresses only according to Tresca-Mariotte Sc = %.3f MPa is higher than the allowable stress Sa = %.3f MPa" %(sigma_cTR_M_PO, Stress_Intensity))
+            output_lines.append("============================================================================================================================")
+            
+        if (sigma_cTR_L < 3*Stress_Intensity):
+            output_lines.append("\n============================================================================================================================")
+            output_lines.append("\nThe comparison stress according to Tresca-Lamé Sc = %.3f MPa is lower than the allowable stress Sa = %.3f MPa" %(sigma_cTR_L, 3*Stress_Intensity))
+        else:
+            output_lines.append("\n============================================================================================================================")
+            output_lines.append("The comparison stress according to Tresca-Lamé Sc = %.3f MPa is higher than the allowable stress Sa = %.3f MPa" %(sigma_cTR_L, 3*Stress_Intensity))
+            output_lines.append("============================================================================================================================")
+        if (sigma_cTR_M < 3*Stress_Intensity):
+            output_lines.append("The comparison stress according to Tresca-Mariotte Sc = %.3f MPa is lower than the allowable stress Sa = %.3f MPa" %(sigma_cTR_M, 3*Stress_Intensity))
+            output_lines.append("\n============================================================================================================================")
+        else:
+            output_lines.append("\n============================================================================================================================")
+            output_lines.append("The comparison stress according to Tresca-Mariotte Sc = %.3f MPa is higher than the allowable stress Sa = %.3f MPa" %(sigma_cTR_M, 3*Stress_Intensity))
             output_lines.append("============================================================================================================================")
         
         output_lines.append("\n\n\n\n######################################################### Buckling #########################################################")
