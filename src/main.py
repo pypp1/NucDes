@@ -2378,9 +2378,10 @@ elif TS_flag:
         # Final Verification: buckling + inner P requirement + vessel stress state to exit the loop
         # ======================================
         t_min = (P_int_MPa*R_int)/(Stress_Intensity - 0.5*P_int_MPa)
+        t_min_S = (P_int_MPa * R_shield_int)/(Stress_Intensity_S - 0.5*P_int_MPa)
         
-        if buckling_flag and vessel_flag:  
-            if t >= t_min:  
+        if buckling_flag and vessel_flag:        
+            if t >= t_min and t_shield >= t_min_S:  
                 final_flag = bool(1)                          
             else:
                 final_flag = bool(0)
