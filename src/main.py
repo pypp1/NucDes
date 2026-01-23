@@ -694,19 +694,22 @@ if not TS_flag:
         # Vessel Comparison stress - Guest-Tresca Theory - Mariotte/Lamé only
         # ============================
         sigma_cTR_M_PO = np.max([abs(sigma_tM - sigma_rM), abs(sigma_zM - sigma_rM), abs(sigma_tM - sigma_zM)])
-        sigma_cTR_L_PO = np.max([abs(sigma_tL - sigma_rL), abs(sigma_zL - sigma_rL), abs(sigma_tL - sigma_zL)])
-        
+        sigma_cTR_L_PO = []
+        for i in range(len(r)):
+            sigma_cTR_L_PO.append(np.max([abs(sigma_tL - sigma_rL)[i], abs(sigma_zL - sigma_rL)[i], abs(sigma_tL - sigma_zL)[i]]))
+        sigma_cTR_L_PO = max(sigma_cTR_L_PO)
+
         # ============================ 
         # Vessel Comparison stress - Guest-Tresca Theory - Mariotte/Lamé + Thermal stresses
         # ============================
-        sigma_cTR_M = np.max([abs(sigma_t_totM - sigma_r_totM), abs(sigma_z_totM - sigma_r_totM), abs(sigma_t_totM - sigma_z_totM)])
-        sigma_cTR_L = np.max([abs(sigma_t_totL - sigma_r_totL), abs(sigma_z_totL - sigma_r_totL), abs(sigma_t_totL - sigma_z_totL)])
-
-        # ============================ 
-        # Vessel Comparison stress - Von Mises Theory - Mariotte/Lamé + Thermal stresses
-        # ============================
-        sigma_cVM_M = max(np.sqrt(0.5*((sigma_r_totM - sigma_t_totM)**2 + (sigma_t_totM - sigma_z_totM)**2 + (sigma_z_totM - sigma_r_totM)**2)))
-        sigma_cVM_L = max(np.sqrt(0.5*((sigma_r_totL - sigma_t_totL)**2 + (sigma_t_totL - sigma_z_totL)**2 + (sigma_z_totL - sigma_r_totL)**2)))
+        sigma_cTR_M = []
+        for i in range(len(r)):
+            sigma_cTR_M.append(np.max([abs(sigma_t_totM - sigma_r_totM)[i], abs(sigma_z_totM - sigma_r_totM)[i], abs(sigma_t_totM - sigma_z_totM)[i]]))
+        sigma_cTR_M = max(sigma_cTR_M)
+        sigma_cTR_L = []
+        for i in range(len(r)):
+            sigma_cTR_L.append(np.max([abs(sigma_t_totL - sigma_r_totL)[i], abs(sigma_z_totL - sigma_r_totL)[i], abs(sigma_t_totL - sigma_z_totL)[i]]))
+        sigma_cTR_L = max(sigma_cTR_L)
 
         # ======================================
         # Plotting the maximum thermal stress via the design curves
@@ -772,7 +775,7 @@ if not TS_flag:
             flag_prim = bool(1)
         else:
             flag_prim = bool(0)
-        """ 
+         
         # ======================================
         # Vessel Thermomechanical Integrity Verification    -   Mariotte + Thermal stresses
         # ======================================
@@ -798,7 +801,6 @@ if not TS_flag:
             flag_prim = bool(1)
         else:
             flag_prim = bool(0)
-        """
             
         # ======================================
         # Without thermal shield
@@ -1223,9 +1225,6 @@ if not TS_flag:
             output_lines.append("Guest-Tresca comparison stress in the vessel - Mariotte solution: %.3f Mpa" %sigma_cTR_M)
             output_lines.append("Guest-Tresca comparison stress in the vessel - Lamé solution: %.3f Mpa" %sigma_cTR_L)
             output_lines.append("\n============================================================================================================================")
-            
-            #output_lines.append("\nVon Mises comparison Stress in the vessel - Mariotte solution: %.3f Mpa" %sigma_cVM_M)
-            #output_lines.append("Von Mises comparison Stress in the vessel - Lamé solution: %.3f Mpa" %sigma_cVM_L)
 
             output_lines.append("\nFor a design vessel temperature of %.3f °C: " %T_des_vessel_C)
             output_lines.append("Yield Stress: Sy = %.3f MPa" %Yield_stress)
@@ -2145,20 +2144,23 @@ elif TS_flag:
         # Vessel Comparison stress - Guest-Tresca Theory - Mariotte/Lamé only
         # ============================
         sigma_cTR_M_PO = np.max([abs(sigma_tM - sigma_rM), abs(sigma_zM - sigma_rM), abs(sigma_tM - sigma_zM)])
-        sigma_cTR_L_PO = np.max([abs(sigma_tL - sigma_rL), abs(sigma_zL - sigma_rL), abs(sigma_tL - sigma_zL)])
-        
+        sigma_cTR_L_PO = []
+        for i in range(len(r)):
+            sigma_cTR_L_PO.append(np.max([abs(sigma_tL - sigma_rL)[i], abs(sigma_zL - sigma_rL)[i], abs(sigma_tL - sigma_zL)[i]]))
+        sigma_cTR_L_PO = max(sigma_cTR_L_PO)
+
         # ============================ 
         # Vessel Comparison stress - Guest-Tresca Theory - Mariotte/Lamé + Thermal stresses
         # ============================
-        sigma_cTR_M = np.max([abs(sigma_t_totM - sigma_r_totM), abs(sigma_z_totM - sigma_r_totM), abs(sigma_t_totM - sigma_z_totM)])
-        sigma_cTR_L = np.max([abs(sigma_t_totL - sigma_r_totL), abs(sigma_z_totL - sigma_r_totL), abs(sigma_t_totL - sigma_z_totL)])
+        sigma_cTR_M = []
+        for i in range(len(r)):
+            sigma_cTR_M.append(np.max([abs(sigma_t_totM - sigma_r_totM)[i], abs(sigma_z_totM - sigma_r_totM)[i], abs(sigma_t_totM - sigma_z_totM)[i]]))
+        sigma_cTR_M = max(sigma_cTR_M)
+        sigma_cTR_L = []
+        for i in range(len(r)):
+            sigma_cTR_L.append(np.max([abs(sigma_t_totL - sigma_r_totL)[i], abs(sigma_z_totL - sigma_r_totL)[i], abs(sigma_t_totL - sigma_z_totL)[i]]))
+        sigma_cTR_L = max(sigma_cTR_L)
 
-        # ============================ 
-        # Vessel Comparison stress - Von Mises Theory - Mariotte/Lamé + Thermal stresses
-        # ============================
-        sigma_cVM_M = max(np.sqrt(0.5*((sigma_r_totM - sigma_t_totM)**2 + (sigma_t_totM - sigma_z_totM)**2 + (sigma_z_totM - sigma_r_totM)**2)))
-        sigma_cVM_L = max(np.sqrt(0.5*((sigma_r_totL - sigma_t_totL)**2 + (sigma_t_totL - sigma_z_totL)**2 + (sigma_z_totL - sigma_r_totL)**2))) #The max should be the worst case, in theory
-        
         # ======================================
         # Thermal Shield Thermal stresses computation
         # ======================================
@@ -2202,20 +2204,23 @@ elif TS_flag:
         # Thermal Shield Comparison stress - Guest-Tresca Theory - Mariotte/Lamé only
         # ============================
         sigma_cTR_MS_PO = np.max([abs(sigma_tM_S - sigma_rM_S), abs(sigma_zM_S - sigma_rM_S), abs(sigma_tM_S - sigma_zM_S)])
-        sigma_cTR_LS_PO = np.max([abs(sigma_tL_S - sigma_rL_S), abs(sigma_zL_S - sigma_rL_S), abs(sigma_tL_S - sigma_zL_S)])
-        
+        sigma_cTR_LS_PO = []
+        for i in range(len(r_S)):
+            sigma_cTR_LS_PO.append(np.max([abs(sigma_tL_S - sigma_rL_S)[i], abs(sigma_zL_S - sigma_rL_S)[i], abs(sigma_tL_S - sigma_zL_S)[i]]))
+        sigma_cTR_LS_PO = max(sigma_cTR_LS_PO)
+
         # ============================ 
         # Thermal Shield Comparison stress - Guest-Tresca Theory - Mariotte/Lamé + Thermal stresses
         # ============================
-        sigma_cTR_MS = np.max([abs(sigma_t_totM_S - sigma_r_totM_S), abs(sigma_z_totM_S - sigma_r_totM_S), abs(sigma_t_totM_S - sigma_z_totM_S)])
-        sigma_cTR_LS = np.max([abs(sigma_t_totL_S - sigma_r_totL_S), abs(sigma_z_totL_S - sigma_r_totL_S), abs(sigma_t_totL_S - sigma_z_totL_S)])
+        sigma_cTR_MS = []
+        for i in range(len(r_S)):
+            sigma_cTR_MS.append(np.max([abs(sigma_t_totM_S - sigma_r_totM_S)[i], abs(sigma_z_totM_S - sigma_r_totM_S)[i], abs(sigma_t_totM_S - sigma_z_totM_S)[i]]))
+        sigma_cTR_MS = max(sigma_cTR_MS)
+        sigma_cTR_LS = []
+        for i in range(len(r_S)):
+            sigma_cTR_LS.append(np.max([abs(sigma_t_totL_S - sigma_r_totL_S)[i], abs(sigma_z_totL_S - sigma_r_totL_S)[i], abs(sigma_t_totL_S - sigma_z_totL_S)[i]]))
+        sigma_cTR_LS = max(sigma_cTR_LS)
 
-        # ============================ 
-        # Thermal Shield Comparison stress - Von Mises Theory - Mariotte/Lamé + Thermal stresses
-        # ============================
-        sigma_cVM_MS = max(np.sqrt(0.5*((sigma_r_totM_S - sigma_t_totM_S)**2 + (sigma_t_totM_S - sigma_z_totM_S)**2 + (sigma_z_totM_S - sigma_r_totM_S)**2)))
-        sigma_cVM_LS = max(np.sqrt(0.5*((sigma_r_totL_S - sigma_t_totL_S)**2 + (sigma_t_totL_S - sigma_z_totL_S)**2 + (sigma_z_totL_S - sigma_r_totL_S)**2)))
-        
         # ============================ 
         # Yield Stress and Stress Intensity Data Interpolation
         # ============================
@@ -2244,7 +2249,7 @@ elif TS_flag:
             flag_prim_S = 1
         else:
             flag_prim_S = 0
-        """
+
         # ======================================
         # Thermal Shield Thermomechanical Integrity Verification    -   Mariotte + Thermal stresses
         # ======================================
@@ -2259,7 +2264,7 @@ elif TS_flag:
             flag_prim_S = bool(0)
         """
         # ======================================
-        # Thermal Shield Thermomechanical Integrity Verification    -   Tresca-Mariotte
+        # Thermal Shield Thermomechanical Integrity Verification    -   Tresca-Mariotte + Thermal stresses
         # ======================================
         if sigma_cTR_MS > 3*Stress_Intensity_S:
             flag_primsec_S = bool(1)
@@ -2270,7 +2275,7 @@ elif TS_flag:
             flag_prim_S = bool(1)
         else:
             flag_prim_S = bool(0)
-        """
+            
         if flag_primsec_S or flag_prim_S:
             continue
         elif not flag_primsec_S and not flag_prim_S:
@@ -2333,7 +2338,7 @@ elif TS_flag:
             flag_prim = 1
         else:
             flag_prim = 0
-        """
+
         # ======================================
         # Vessel Thermomechanical Integrity Verification    -   Mariotte + Thermal stresses
         # ======================================
@@ -2348,7 +2353,7 @@ elif TS_flag:
             flag_prim = bool(0)
         """
         # ======================================
-        # Vessel Thermomechanical Integrity Verification    -   Tresca-Mariotte
+        # Vessel Thermomechanical Integrity Verification    -   Tresca-Mariotte + Thermal stresses
         # ======================================
         if sigma_cTR_M > 3*Stress_Intensity:
             flag_primsec = bool(1)
@@ -2359,7 +2364,7 @@ elif TS_flag:
             flag_prim = bool(1)
         else:
             flag_prim = bool(0)
-        """
+        
         if flag_primsec or flag_prim:
             continue
         elif not flag_primsec and not flag_prim:
@@ -2371,13 +2376,13 @@ elif TS_flag:
         t_min = (P_int_MPa*R_int)/(Stress_Intensity - 0.5*P_int_MPa)
         #t_min_S = (P_int_MPa * R_shield_int)/(Stress_Intensity_S - 0.5*P_int_MPa)
         
-        if buckling_flag and vessel_flag:                     
+        if buckling_flag and vessel_flag:        
             if t >= t_min: #and t_shield >= t_min_S:    -     The thermal shield is always in hydrostatic conditions: there's no need to check for its minimum thickness required to sustain a P_int
                 final_flag = bool(1)                          
             else:
-                final_flag = bool(0)
-        else:
-            final_flag = bool(0)
+                final_flag = bool(0)                          # ======================================
+        else:                                                 # Tested, but the Tresca-Mariotte comparison stress is never lower than the allowable stress intensity Sm
+            final_flag = bool(0)                              # ======================================
     
     # ======================================
     # Plotting the volumetric heat source profiles 
@@ -2890,7 +2895,7 @@ elif TS_flag:
             plt.savefig(plot_file_path)
             plt.show()
             plt.close()
-
+            
     # ============================ 
     # Minimum thickness under internal pressure check
     # ============================
