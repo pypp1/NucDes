@@ -36,9 +36,7 @@ While it will not give any error, it will only give partial results and **should
 
 Additionally, after performing all the calculations, the user is given the possibility to display or not the computed plots. 
 
-It should be noted that every plot which is not displayed is deemed uninteresting by the user and is thus not saved. 
-
-**Any plot which the user desires to keep should be displayed.**
+**All plots are now saved in the "Plots" folder, regardless of having been displayed or not.**
 
 Finally, the code saves the results of each simulation in case-specific directories which, if not pre-existing, are created by the script itself. 
 
@@ -48,7 +46,7 @@ The name of the folders containing the results is built based on the simulation'
    
 	• A "Final Results.txt" text file
 
-The former contains all the displayed (and saved) plots, whereas the latter contains a recap of the simulation's chosen parameters and hypothesis and the related results. 
+The former contains all the saved plots, whereas the latter contains a recap of the simulation's chosen parameters and hypothesis and the related results. 
 
 Everything contained in such text file is also displayed in the terminal for immediate consulting. The case directory path is always displayed at the end of each simulation.
 
