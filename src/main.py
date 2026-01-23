@@ -694,13 +694,22 @@ if not TS_flag:
         # Vessel Comparison stress - Guest-Tresca Theory - Mariotte/Lamé only
         # ============================
         sigma_cTR_M_PO = np.max([abs(sigma_tM - sigma_rM), abs(sigma_zM - sigma_rM), abs(sigma_tM - sigma_zM)])
-        sigma_cTR_L_PO = np.max([abs(sigma_tL - sigma_rL), abs(sigma_zL - sigma_rL), abs(sigma_tL - sigma_zL)])
-        
+        sigma_cTR_L_PO = []
+        for i in range(len(r)):
+            sigma_cTR_L_PO.append(np.max([abs(sigma_tL - sigma_rL)[i], abs(sigma_zL - sigma_rL)[i], abs(sigma_tL - sigma_zL)[i]]))
+        sigma_cTR_L_PO = max(sigma_cTR_L_PO)
+
         # ============================ 
         # Vessel Comparison stress - Guest-Tresca Theory - Mariotte/Lamé + Thermal stresses
         # ============================
-        sigma_cTR_M = np.max([abs(sigma_t_totM - sigma_r_totM), abs(sigma_z_totM - sigma_r_totM), abs(sigma_t_totM - sigma_z_totM)])
-        sigma_cTR_L = np.max([abs(sigma_t_totL - sigma_r_totL), abs(sigma_z_totL - sigma_r_totL), abs(sigma_t_totL - sigma_z_totL)])
+        sigma_cTR_M = []
+        for i in range(len(r)):
+            sigma_cTR_M.append(np.max([abs(sigma_t_totM - sigma_r_totM)[i], abs(sigma_z_totM - sigma_r_totM)[i], abs(sigma_t_totM - sigma_z_totM)[i]]))
+        sigma_cTR_M = max(sigma_cTR_M)
+        sigma_cTR_L = []
+        for i in range(len(r)):
+            sigma_cTR_L.append(np.max([abs(sigma_t_totL - sigma_r_totL)[i], abs(sigma_z_totL - sigma_r_totL)[i], abs(sigma_t_totL - sigma_z_totL)[i]]))
+        sigma_cTR_L = max(sigma_cTR_L)
 
         # ======================================
         # Plotting the maximum thermal stress via the design curves
