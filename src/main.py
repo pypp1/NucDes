@@ -953,6 +953,10 @@ if not TS_flag:
             # Corradi Design Procedure Results
             # ============================
             Corradi_vessel = Corradi(np.array([Current_Slenderness]))
+            if (P_cpp < 10*Corradi_vessel[1]):
+                buckling_flag = bool(1)
+            else:
+                buckling_flag = bool(0)
         
         elif not Corradi_flag:
             print("Skipping Corradi Design Procedure.")
@@ -1324,15 +1328,15 @@ if not TS_flag:
             output_lines.append("The theoretical limit for collapse pressure, accounting for ovality, is: q_c = %.3f MPa = %.3f bar" %(Corradi_vessel[0], 10*Corradi_vessel[0]))
             output_lines.append("A safety factor s = %.3f was assumed. \nThe allowable external pressure is thus: q_a = %.3f MPa = %.3f bar" %(Corradi_vessel[2], Corradi_vessel[1], 10*Corradi_vessel[1]))
             
-            if (P_cpp < 10*Corradi_vessel[1] and sigma_cTR_M < sigma_allowable and sigma_cTR_L < sigma_allowable):
+            if buckling_flag:
                 output_lines.append("\nThe given external pressure of %.3f bar is lower than the allowable pressure of %.3f bar" %(P_cpp, 10*Corradi_vessel[1]))
                 output_lines.append("\n============================================================================================================================")
-            elif (P_cpp > 10*Corradi_vessel[1]):
+            elif not buckling_flag:
                 output_lines.append("\n============================================================================================================================")
                 output_lines.append("The given external pressure of %.3f bar is higher than the allowable pressure of %.3f bar: a change in thickness is required!" %(P_cpp, 10*Corradi_vessel[1]))
                 output_lines.append("============================================================================================================================")
 
-            if P_cpp < 10*Corradi_vessel[1] and sigma_cTR_L < sigma_allowable and sigma_cTR_M < sigma_allowable and creep_flag_V == 0:
+            if buckling_flag and sigma_cTR_L_PO < Stress_Intensity and sigma_cTR_M_PO < Stress_Intensity and sigma_cTR_L < 3*Stress_Intensity and sigma_cTR_M < 3*Stress_Intensity and not creep_flag_V:
                 output_lines.append("\n\n\n\n############################################################################################################################")
                 output_lines.append("The vessel's integrity is ensured: the design is correct!")
                 output_lines.append("############################################################################################################################")
@@ -3321,7 +3325,7 @@ elif TS_flag:
             output_lines.append("The given external pressure of %.3f bar is higher than the allowable pressure of %.3f bar: a change in thickness is required!" %(P_cpp, 10*Corradi_vessel[1]))
             output_lines.append("============================================================================================================================")
             
-        if buckling_flag and sigma_cTR_L < sigma_allowable and sigma_cTR_M < sigma_allowable and not creep_flag_V:
+        if buckling_flag and sigma_cTR_L_PO < Stress_Intensity and sigma_cTR_M_PO < Stress_Intensity and sigma_cTR_L < 3*Stress_Intensity and sigma_cTR_M < 3*Stress_Intensity and not creep_flag_V:
             output_lines.append("\n\n\n\n############################################################################################################################")
             output_lines.append("The vessel's integrity is ensured: the design is correct!")
             output_lines.append("############################################################################################################################")
