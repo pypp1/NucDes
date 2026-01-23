@@ -2275,7 +2275,7 @@ elif TS_flag:
             flag_prim_S = bool(1)
         else:
             flag_prim_S = bool(0)
-        
+            
         if flag_primsec_S or flag_prim_S:
             continue
         elif not flag_primsec_S and not flag_prim_S:
@@ -2369,7 +2369,7 @@ elif TS_flag:
             continue
         elif not flag_primsec and not flag_prim:
             vessel_flag = bool(1)
-
+        
         # ======================================
         # Final Verification: buckling + inner P requirement + vessel stress state to exit the loop
         # ======================================
@@ -2380,9 +2380,9 @@ elif TS_flag:
             if t >= t_min: #and t_shield >= t_min_S:    -     The thermal shield is always in hydrostatic conditions: there's no need to check for its minimum thickness required to sustain a P_int
                 final_flag = bool(1)                          
             else:
-                final_flag = bool(0)
-        else:
-            final_flag = bool(0)
+                final_flag = bool(0)                          # ======================================
+        else:                                                 # Tested, but the Tresca-Mariotte comparison stress is never lower than the allowable stress intensity Sm
+            final_flag = bool(0)                              # ======================================
     
     # ======================================
     # Plotting the volumetric heat source profiles 
