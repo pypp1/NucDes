@@ -274,27 +274,28 @@ if not TS_flag:
         sigma_tM = sigma_M[1]
         sigma_zM = sigma_M[2]
 
+        # ======================================
+        # Plotting the stress profiles: Mariotte
+        # ======================================
+        os.makedirs(NTS_plots_directory_path, exist_ok=True)
+        plot_file_path = os.path.join(NTS_plots_directory_path, "Stress Distribution in a thin-walled cylinder - Mariotte Solution.png")
+        plt.figure(figsize=(15,10))
+        plt.axvline(x = R_int, color='black', linewidth='3', label='Vessel Inner Surface')
+        plt.axvline(x = R_ext, color='black', linewidth='3', label='Vessel Outer Surface')
+        plt.axhline(y = sigma_rM, color='red', label='Radial (r) Stress Mariotte')
+        plt.axhline(y = sigma_tM, color='blue', label=r'Hoop ($\theta$) Stress Mariotte')
+        plt.axhline(y = sigma_zM, color='green', label='Axial (z) Stress Mariotte')
+        plt.plot(r, np.zeros(len(r)), color='black', linewidth='1', label='y=0')
+        plt.xlabel('Radius (m)')
+        plt.ylabel('Stress (MPa)')
+        plt.title('Stress Distribution in a thin-walled cylinder - Mariotte Solution')
+        plt.legend()
+        plt.grid()
+        plt.savefig(plot_file_path)
         if Mariotte_flag:
-
-            # ======================================
-            # Plotting the stress profiles: Mariotte
-            # ======================================
-            os.makedirs(NTS_plots_directory_path, exist_ok=True)
-            plot_file_path = os.path.join(NTS_plots_directory_path, "Stress Distribution in a thin-walled cylinder - Mariotte Solution.png")
-            plt.figure(figsize=(15,10))
-            plt.axvline(x = R_int, color='black', linewidth='3', label='Vessel Inner Surface')
-            plt.axvline(x = R_ext, color='black', linewidth='3', label='Vessel Outer Surface')
-            plt.axhline(y = sigma_rM, color='red', label='Radial (r) Stress Mariotte')
-            plt.axhline(y = sigma_tM, color='blue', label=r'Hoop ($\theta$) Stress Mariotte')
-            plt.axhline(y = sigma_zM, color='green', label='Axial (z) Stress Mariotte')
-            plt.plot(r, np.zeros(len(r)), color='black', linewidth='1', label='y=0')
-            plt.xlabel('Radius (m)')
-            plt.ylabel('Stress (MPa)')
-            plt.title('Stress Distribution in a thin-walled cylinder - Mariotte Solution')
-            plt.legend()
-            plt.grid()
-            plt.savefig(plot_file_path)
             plt.show()
+            plt.close()
+        elif not Mariotte_flag:
             plt.close()
 
         elif not Mariotte_flag:
@@ -351,30 +352,29 @@ if not TS_flag:
         print("Visualizing general Lamé solution.")
         Lame_flag = bool(1)
 
+    # ======================================
+    # Plotting the stress profiles: Lamé
+    # ======================================
+    plot_file_path = os.path.join(NTS_plots_directory_path, "Stress Distribution in the cylinder wall - Lamé Solution.png")
+    plt.figure(figsize=(15,10))
+    plt.axvline(x = R_int, color='black', linewidth='3', label='Vessel Inner Surface')
+    plt.axvline(x = R_ext, color='black', linewidth='3', label='Vessel Outer Surface')
+    plt.plot(r, sigma_rL, label='Radial (r) Stress Lamé')
+    plt.plot(r, sigma_tL, label=r'Hoop ($\theta$) Stress Lamé')
+    plt.axhline(y = sigma_zL, color='green', label='Axial (z) Stress Lamé')
+    plt.axhline(y = 0, color='black', linewidth='1', label='y=0')
+    plt.xlabel('Radius (m)')
+    plt.ylabel('Stress (MPa)')
+    plt.title('Stress Distribution in the cylinder wall - Lamé Solution')
+    plt.legend()
+    plt.grid()
+    plt.savefig(plot_file_path)
     if Lame_flag:
-        # ======================================
-        # Plotting the stress profiles: Lamé
-        # ======================================
-        os.makedirs(NTS_plots_directory_path, exist_ok=True)
-        plot_file_path = os.path.join(NTS_plots_directory_path, "Stress Distribution in the cylinder wall - Lamé Solution.png")
-        plt.figure(figsize=(15,10))
-        plt.axvline(x = R_int, color='black', linewidth='3', label='Vessel Inner Surface')
-        plt.axvline(x = R_ext, color='black', linewidth='3', label='Vessel Outer Surface')
-        plt.plot(r, sigma_rL, label='Radial (r) Stress Lamé')
-        plt.plot(r, sigma_tL, label=r'Hoop ($\theta$) Stress Lamé')
-        plt.axhline(y = sigma_zL, color='green', label='Axial (z) Stress Lamé')
-        plt.axhline(y = 0, color='black', linewidth='1', label='y=0')
-        plt.xlabel('Radius (m)')
-        plt.ylabel('Stress (MPa)')
-        plt.title('Stress Distribution in the cylinder wall - Lamé Solution')
-        plt.legend()
-        plt.grid()
-        plt.savefig(plot_file_path)
         plt.show()
         plt.close()
-
     elif not Lame_flag:
         print("Skipping Lamé solution.")
+        plt.close()
     
     # =============================================================================================================================================================
     # PURELY THERMAL PROBLEM
@@ -404,23 +404,24 @@ if not TS_flag:
             except RuntimeError as e:
                 print(e)
 
+        plot_file_path = os.path.join(NTS_plots_directory_path, "Volumetric heat source profile across the vessel wall.png")
+        plt.figure(figsize=(10,10))
+        plt.axvline(x = R_int, color='black', linewidth='3', label='Vessel Inner Surface')
+        plt.axvline(x = R_ext, color='black', linewidth='3', label='Vessel Outer Surface')
+        plt.plot(r, q_iii(r)/1e6, 'g', label='Radial (r) Volumetric heat source profile')
+        plt.plot(r[0], q_iii(r[0])/1e6, 'or', label='Vessel Inner Surface Value')
+        plt.plot(r[-1], q_iii(r[-1])/1e6, 'or', label='Vessel-Insulation Interface Value')
+        plt.axhline(y = 0, color='black', linewidth='1', label='y=0')
+        plt.xlabel('Radius (m)')
+        plt.ylabel(r'$q_0$ (MW/m$^3$)')
+        plt.title('Volumetric heat source profile across the vessel wall')
+        plt.legend()
+        plt.grid()
+        plt.savefig(plot_file_path)
         if hs_flag:
-            os.makedirs(NTS_plots_directory_path, exist_ok=True)
-            plot_file_path = os.path.join(NTS_plots_directory_path, "Volumetric heat source profile across the vessel wall.png")
-            plt.figure(figsize=(10,10))
-            plt.axvline(x = R_int, color='black', linewidth='3', label='Vessel Inner Surface')
-            plt.axvline(x = R_ext, color='black', linewidth='3', label='Vessel Outer Surface')
-            plt.plot(r, q_iii(r)/1e6, 'g', label='Radial (r) Volumetric heat source profile')
-            plt.plot(r[0], q_iii(r[0])/1e6, 'or', label='Vessel Inner Surface Value')
-            plt.plot(r[-1], q_iii(r[-1])/1e6, 'or', label='Vessel-Insulation Interface Value')
-            plt.axhline(y = 0, color='black', linewidth='1', label='y=0')
-            plt.xlabel('Radius (m)')
-            plt.ylabel(r'$q_0$ (MW/m$^3$)')
-            plt.title('Volumetric heat source profile across the vessel wall')
-            plt.legend()
-            plt.grid()
-            plt.savefig(plot_file_path)
             plt.show()
+            plt.close()
+        elif not hs_flag:
             plt.close()
     
     # ======================================
@@ -556,45 +557,47 @@ if not TS_flag:
         if (T_vessel_max - 273.15) > T_creep:
             creep_flag_V = bool(1)
         if not adiab_flag:
+            plot_file_path = os.path.join(NTS_plots_directory_path, "Wall Temperature Profile, Average and Maximum.png")
+            plt.figure(figsize=(10,10))
+            plt.axvline(x = R_int, color='black', linewidth='3', label='Vessel Inner Surface')
+            plt.axvline(x = R_ext, color='black', linewidth='3', label='Vessel Outer Surface')
+            plt.plot(r, T_vessel(r) - 273.15, label='Radial (r) T Profile')
+            plt.plot(r_T_vessel_max, T_vessel_max - 273.15,'or',label='Max T')
+            plt.axhline(y = T_vessel_avg - 273.15, color='green', label='Wall Average T')
+            plt.xlabel('Radius (m)')
+            plt.ylabel('T (°C)')
+            plt.title('Wall Temperature Profile, Average and Maximum')
+            plt.legend()
+            plt.grid()
+            plt.savefig(plot_file_path)
             if T_pl_flag:
-                os.makedirs(NTS_plots_directory_path, exist_ok=True)
-                plot_file_path = os.path.join(NTS_plots_directory_path, "Wall Temperature Profile, Average and Maximum.png")
-                plt.figure(figsize=(10,10))
-                plt.axvline(x = R_int, color='black', linewidth='3', label='Vessel Inner Surface')
-                plt.axvline(x = R_ext, color='black', linewidth='3', label='Vessel Outer Surface')
-                plt.plot(r, T_vessel(r) - 273.15, label='Radial (r) T Profile')
-                plt.plot(r_T_vessel_max, T_vessel_max - 273.15,'or',label='Max T')
-                plt.axhline(y = T_vessel_avg - 273.15, color='green', label='Wall Average T')
-                plt.xlabel('Radius (m)')
-                plt.ylabel('T (°C)')
-                plt.title('Wall Temperature Profile, Average and Maximum')
-                plt.legend()
-                plt.grid()
-                plt.savefig(plot_file_path)
                 plt.show()
+                plt.close()
+            elif not T_pl_flag:
                 plt.close()
             
         elif adiab_flag:
+             
+            # ======================================
+            # Under Adiabatic Outer Wall Approximation
+            # ======================================
+            plot_file_path = os.path.join(NTS_plots_directory_path, "Wall Temperature Profile, Average and Maximum under AOW Approximation.png")
+            plt.figure(figsize=(10,10))
+            plt.axvline(x = R_int, color='black', linewidth='3', label='Vessel Inner Surface')
+            plt.axvline(x = R_ext, color='black', linewidth='3', label='Vessel Outer Surface')
+            plt.plot(r, T_vessel(r) - 273.15, label='Radial (r) T Profile')
+            plt.plot(r_T_vessel_max, T_vessel_max - 273.15,'or', label='Max T')
+            plt.axhline(y = T_vessel_avg - 273.15, color='green', label='Wall Average T')
+            plt.xlabel('Radius (m)')
+            plt.ylabel('T (°C)')
+            plt.title('Wall Temperature Profile, Average and Maximum under AOW Approximation')
+            plt.legend()
+            plt.grid()
+            plt.savefig(plot_file_path)
             if T_pl_flag:
-                
-                # ======================================
-                # Under Adiabatic Outer Wall Approximation
-                # ======================================
-                os.makedirs(NTS_plots_directory_path, exist_ok=True)
-                plot_file_path = os.path.join(NTS_plots_directory_path, "Wall Temperature Profile, Average and Maximum under AOW Approximation.png")
-                plt.figure(figsize=(10,10))
-                plt.axvline(x = R_int, color='black', linewidth='3', label='Vessel Inner Surface')
-                plt.axvline(x = R_ext, color='black', linewidth='3', label='Vessel Outer Surface')
-                plt.plot(r, T_vessel(r) - 273.15, label='Radial (r) T Profile')
-                plt.plot(r_T_vessel_max, T_vessel_max - 273.15,'or', label='Max T')
-                plt.axhline(y = T_vessel_avg - 273.15, color='green', label='Wall Average T')
-                plt.xlabel('Radius (m)')
-                plt.ylabel('T (°C)')
-                plt.title('Wall Temperature Profile, Average and Maximum under AOW Approximation')
-                plt.legend()
-                plt.grid()
-                plt.savefig(plot_file_path)
                 plt.show()
+                plt.close()
+            elif not T_pl_flag:
                 plt.close()
     
         # ======================================
@@ -655,28 +658,29 @@ if not TS_flag:
             except RuntimeError as e:
                 print(e)
 
+        plot_file_path = os.path.join(NTS_plots_directory_path, "Wall Thermal Stress Profiles and Maximum Hoop Stress.png")
+        plt.figure(figsize=(10,10))
+        plt.axvline(x = R_int, color='black', linewidth='3', label='Vessel Inner Surface')
+        plt.axvline(x = R_ext, color='black', linewidth='3', label='Vessel Outer Surface')
+        plt.plot(r, sigma_r_th_V, linewidth='0.75', label='Radial (r) Thermal Stress Profile')
+        plt.plot(r, sigma_t_th_V, linewidth='0.75', label='Hoop (θ) Thermal Stress Profile')
+        #plt.plot(r, sigma_t_th_SIMP(r), label='Simplified Hoop (θ) Thermal Stress Profile')
+        plt.plot(r, sigma_z_th_V, color='green', linewidth='0.5', label='Axial (z) Thermal Stress Profile')
+        plt.axhline(y = 0, color='black', linewidth='1', label='y=0')
+        plt.plot(r_sigma_t_th_V_max, sigma_t_th_V_max,'or', label='Max Hoop Stress')
+        #plt.axvline(x=r_sigma_th_max_SIMP, color='cyan', linestyle='dashed', linewidth='0.5')
+        #plt.axhline(y=sigma_th_max_SIMP, color='cyan', linestyle='dashed', linewidth='0.5')
+        #plt.plot(r_sigma_th_max_SIMP, sigma_th_max_SIMP,'--oc', label='Simplified Max Hoop Stress')
+        plt.xlabel('Radius (m)')
+        plt.ylabel('Thermal Stress (MPa)')
+        plt.title('Wall Thermal Stress Profiles and Maximum Hoop Stress')
+        plt.legend()
+        plt.grid()
+        plt.savefig(plot_file_path)
         if sigma_th_pl_flag:
-            os.makedirs(NTS_plots_directory_path, exist_ok=True)
-            plot_file_path = os.path.join(NTS_plots_directory_path, "Wall Thermal Stress Profiles and Maximum Hoop Stress.png")
-            plt.figure(figsize=(10,10))
-            plt.axvline(x = R_int, color='black', linewidth='3', label='Vessel Inner Surface')
-            plt.axvline(x = R_ext, color='black', linewidth='3', label='Vessel Outer Surface')
-            plt.plot(r, sigma_r_th_V, linewidth='0.75', label='Radial (r) Thermal Stress Profile')
-            plt.plot(r, sigma_t_th_V, linewidth='0.75', label='Hoop (θ) Thermal Stress Profile')
-            #plt.plot(r, sigma_t_th_SIMP(r), label='Simplified Hoop (θ) Thermal Stress Profile')
-            plt.plot(r, sigma_z_th_V, color='green', linewidth='0.5', label='Axial (z) Thermal Stress Profile')
-            plt.axhline(y = 0, color='black', linewidth='1', label='y=0')
-            plt.plot(r_sigma_t_th_V_max, sigma_t_th_V_max,'or', label='Max Hoop Stress')
-            #plt.axvline(x=r_sigma_th_max_SIMP, color='cyan', linestyle='dashed', linewidth='0.5')
-            #plt.axhline(y=sigma_th_max_SIMP, color='cyan', linestyle='dashed', linewidth='0.5')
-            #plt.plot(r_sigma_th_max_SIMP, sigma_th_max_SIMP,'--oc', label='Simplified Max Hoop Stress')
-            plt.xlabel('Radius (m)')
-            plt.ylabel('Thermal Stress (MPa)')
-            plt.title('Wall Thermal Stress Profiles and Maximum Hoop Stress')
-            plt.legend()
-            plt.grid()
-            plt.savefig(plot_file_path)
             plt.show()
+            plt.close()
+        elif not sigma_th_pl_flag:
             plt.close()
 
         # ======================================
@@ -726,23 +730,24 @@ if not TS_flag:
             except RuntimeError as e:
                 print(e)
 
+        plot_file_path = os.path.join(NTS_plots_directory_path, "Design Curves.png")
+        plt.figure(figsize=(10,10))
+        plt.xlim(ba_ratio_plot[0], ba_ratio_plot[-1])
+        plt.plot(ba_ratio_plot, L_Interpolator(ba_ratio_plot), 'k', label=f'Iso-mu = {mu_L} 1/m')
+        plt.plot(ba_ratio_plot, R_Interpolator(ba_ratio_plot), 'k', label=f'Iso-mu = {mu_R} 1/m')
+        plt.text(ba_ratio_plot[-1]+0.001, L_Interpolator(ba_ratio_plot)[-1], f'Iso-mu = {mu_L}', color='black', fontsize=10)
+        plt.text(ba_ratio_plot[-1]+0.001, R_Interpolator(ba_ratio_plot)[-1], f'Iso-mu = {mu_R}', color='black', fontsize=10)
+        plt.plot(R_ext/R_int, sigmaT,'or', label=r'Current $\sigma$$_T$')
+        plt.xlabel('R$_{ext}$/R$_{int}$')
+        plt.ylabel(r'$\sigma$$_T$')
+        plt.title('Design curves')
+        plt.legend()
+        plt.grid()
+        plt.savefig(plot_file_path)
         if des_pl_flag:
-            os.makedirs(NTS_plots_directory_path, exist_ok=True)
-            plot_file_path = os.path.join(NTS_plots_directory_path, "Design Curves.png")
-            plt.figure(figsize=(10,10))
-            plt.xlim(ba_ratio_plot[0], ba_ratio_plot[-1])
-            plt.plot(ba_ratio_plot, L_Interpolator(ba_ratio_plot), 'k', label=f'Iso-mu = {mu_L} 1/m')
-            plt.plot(ba_ratio_plot, R_Interpolator(ba_ratio_plot), 'k', label=f'Iso-mu = {mu_R} 1/m')
-            plt.text(ba_ratio_plot[-1]+0.001, L_Interpolator(ba_ratio_plot)[-1], f'Iso-mu = {mu_L}', color='black', fontsize=10)
-            plt.text(ba_ratio_plot[-1]+0.001, R_Interpolator(ba_ratio_plot)[-1], f'Iso-mu = {mu_R}', color='black', fontsize=10)
-            plt.plot(R_ext/R_int, sigmaT,'or', label=r'Current $\sigma$$_T$')
-            plt.xlabel('R$_{ext}$/R$_{int}$')
-            plt.ylabel(r'$\sigma$$_T$')
-            plt.title('Design curves')
-            plt.legend()
-            plt.grid()
-            plt.savefig(plot_file_path)
             plt.show()
+            plt.close()
+        elif not des_pl_flag:
             plt.close()
         
         # ============================ 
@@ -822,37 +827,38 @@ if not TS_flag:
         else:
             Tplot = np.linspace(min(T_thr), T_des_vessel_C, 1000)
         
+        # ============================ 
+        # Yield Stress and Stress Intensity Data Plots  -   Vessel
+        # ============================
+        plot_file_path = os.path.join(NTS_plots_directory_path, "Yield Stress and Stress Intensity Data.png")
+        plt.figure(figsize = (12,10))
+        plt.subplot(1,2,1)
+        plt.plot(T_thr, sigma_y, 'sk', label = 'Yield Stress Data')
+        plt.plot(Tplot, Yield_Interpolator(Tplot), '--', color = 'orange', label = 'Yield Stress n-1 Interpolation')
+        plt.plot(Tplot, Yield_CubicSpline(Tplot), 'green', label = 'Yield Stress Cubic Spline Interpolation')
+        plt.plot(T_des_vessel_C, Yield_stress, '--or', label = r'Current Vessel Yield Stress $\sigma$$_y$')
+        plt.xlabel("Temperature (°C)")
+        plt.ylabel(r"Yield Stress $\sigma$$_y$")
+        plt.title("Yield Stress Data and Interpolation VS Temperature", fontsize = 10)
+        plt.legend()
+        plt.grid()
+        
+        plt.subplot(1,2,2)
+        plt.plot(T_thr, sigma_in, 'sk', label = 'Stress Intensity Data')
+        plt.plot(Tplot, Intensity_Interpolator(Tplot), '--', color = 'orange', label = 'Stress Intensity n-1 Interpolation')
+        plt.plot(Tplot, Intensity_CubicSpline(Tplot), 'green', label = 'Stress Intensity Cubic Spline Interpolation')
+        plt.plot(T_des_vessel_C, Stress_Intensity, '--or', label = r'Current Vessel Stress Intensity $\sigma$$_m$')
+        plt.xlabel("Temperature (°C)")
+        plt.ylabel(r"Stress Intensity $\sigma$$_m$")
+        plt.title("Stress Intensity Data and Interpolation VS Temperature", fontsize = 10)
+        plt.legend()
+        plt.grid()
+        plt.tight_layout()
+        plt.savefig(plot_file_path)
         if Interp_pl_flag:
-            # ============================ 
-            # Yield Stress and Stress Intensity Data Plots  -   Vessel
-            # ============================
-            os.makedirs(NTS_plots_directory_path, exist_ok=True)
-            plot_file_path = os.path.join(NTS_plots_directory_path, "Yield Stress and Stress Intensity Data.png")
-            plt.figure(figsize = (12,10))
-            plt.subplot(1,2,1)
-            plt.plot(T_thr, sigma_y, 'sk', label = 'Yield Stress Data')
-            plt.plot(Tplot, Yield_Interpolator(Tplot), '--', color = 'orange', label = 'Yield Stress n-1 Interpolation')
-            plt.plot(Tplot, Yield_CubicSpline(Tplot), 'green', label = 'Yield Stress Cubic Spline Interpolation')
-            plt.plot(T_des_vessel_C, Yield_stress, '--or', label = r'Current Vessel Yield Stress $\sigma$$_y$')
-            plt.xlabel("Temperature (°C)")
-            plt.ylabel(r"Yield Stress $\sigma$$_y$")
-            plt.title("Yield Stress Data and Interpolation VS Temperature", fontsize = 10)
-            plt.legend()
-            plt.grid()
-            
-            plt.subplot(1,2,2)
-            plt.plot(T_thr, sigma_in, 'sk', label = 'Stress Intensity Data')
-            plt.plot(Tplot, Intensity_Interpolator(Tplot), '--', color = 'orange', label = 'Stress Intensity n-1 Interpolation')
-            plt.plot(Tplot, Intensity_CubicSpline(Tplot), 'green', label = 'Stress Intensity Cubic Spline Interpolation')
-            plt.plot(T_des_vessel_C, Stress_Intensity, '--or', label = r'Current Vessel Stress Intensity $\sigma$$_m$')
-            plt.xlabel("Temperature (°C)")
-            plt.ylabel(r"Stress Intensity $\sigma$$_m$")
-            plt.title("Stress Intensity Data and Interpolation VS Temperature", fontsize = 10)
-            plt.legend()
-            plt.grid()
-            plt.tight_layout()
-            plt.savefig(plot_file_path)
             plt.show()
+            plt.close()
+        elif not Interp_pl_flag:
             plt.close()
     
         # ============================ 
@@ -976,33 +982,33 @@ if not TS_flag:
                     print("Please enter a valid integer.")
                 except RuntimeError as e:
                     print(e)
-            
-            if Collapse_pl_flag:
                 
-                # ============================ 
-                # Plastic collapse and buckling Plots
-                # ============================
-                os.makedirs(NTS_plots_directory_path, exist_ok=True)
-                plot_file_path = os.path.join(NTS_plots_directory_path, "Plastic Collapse and Buckling Curves.png")
-                plt.figure(figsize = (8, 8))
-                plt.xlim(0,50)
-                plt.ylim(0.1,max(q_E_fun(Dt_ratio_plot)))
-                plt.semilogy(Dt_ratio_plot, p_E_fun(Dt_ratio_plot), 'blue', label='p$_E$')
-                plt.semilogy(Dt_ratio_plot, q_E_fun(Dt_ratio_plot), '--b', label='q$_E$')
-                plt.semilogy(Dt_ratio_plot, p_0_fun(Dt_ratio_plot), 'red', label='p$_0$')
-                plt.semilogy(Dt_ratio_plot, q_0_fun(Dt_ratio_plot), '--r', label='q$_0$')
-                plt.axvline(x = Dt_Crit_Ratio, color = 'black', linewidth = '3', label = 'Critical Slenderness')
-                plt.axvline(x = Current_Slenderness, color = 'green', linestyle='--', linewidth = '1.5', label = 'Current Vessel Slenderness')
-                plt.plot(Current_Slenderness, Corradi_vessel[1], 'og', label='Current Vessel Allowable Pressure q$_a$')
-                plt.fill_betweenx((0.1,max(q_E_fun(Dt_ratio_plot))), 0, Dt_Crit_Ratio, color='lightgreen', alpha=0.20, label='Plastic collapse dominated zone')
-                plt.fill_betweenx((0.1,max(q_E_fun(Dt_ratio_plot))), Dt_Crit_Ratio, 50, color='orange', alpha=0.15, label='Elastic instability dominated zone')
-                plt.xlabel("Geometrical Slenderness D/t")
-                plt.ylabel("Theoretical Limit Values (MPa)")
-                plt.title("Plastic Collapse and Buckling Curves")
-                plt.legend()
-                plt.grid()
-                plt.savefig(plot_file_path)
+            # ============================ 
+            # Plastic collapse and buckling Plots
+            # ============================
+            plot_file_path = os.path.join(NTS_plots_directory_path, "Plastic Collapse and Buckling Curves.png")
+            plt.figure(figsize = (8, 8))
+            plt.xlim(0,50)
+            plt.ylim(0.1,max(q_E_fun(Dt_ratio_plot)))
+            plt.semilogy(Dt_ratio_plot, p_E_fun(Dt_ratio_plot), 'blue', label='p$_E$')
+            plt.semilogy(Dt_ratio_plot, q_E_fun(Dt_ratio_plot), '--b', label='q$_E$')
+            plt.semilogy(Dt_ratio_plot, p_0_fun(Dt_ratio_plot), 'red', label='p$_0$')
+            plt.semilogy(Dt_ratio_plot, q_0_fun(Dt_ratio_plot), '--r', label='q$_0$')
+            plt.axvline(x = Dt_Crit_Ratio, color = 'black', linewidth = '3', label = 'Critical Slenderness')
+            plt.axvline(x = Current_Slenderness, color = 'green', linestyle='--', linewidth = '1.5', label = 'Current Vessel Slenderness')
+            plt.plot(Current_Slenderness, Corradi_vessel[1], 'og', label='Current Vessel Allowable Pressure q$_a$')
+            plt.fill_betweenx((0.1,max(q_E_fun(Dt_ratio_plot))), 0, Dt_Crit_Ratio, color='lightgreen', alpha=0.20, label='Plastic collapse dominated zone')
+            plt.fill_betweenx((0.1,max(q_E_fun(Dt_ratio_plot))), Dt_Crit_Ratio, 50, color='orange', alpha=0.15, label='Elastic instability dominated zone')
+            plt.xlabel("Geometrical Slenderness D/t")
+            plt.ylabel("Theoretical Limit Values (MPa)")
+            plt.title("Plastic Collapse and Buckling Curves")
+            plt.legend()
+            plt.grid()
+            plt.savefig(plot_file_path)
+            if Collapse_pl_flag:
                 plt.show()
+                plt.close()
+            elif not Collapse_pl_flag:
                 plt.close()
 
         elif ThinTubes_flag and Corradi_flag:
@@ -1017,43 +1023,44 @@ if not TS_flag:
                     print("Please enter a valid integer.")
                 except RuntimeError as e:
                     print(e)
-            
-            if Collapse_pl_flag:
-                # ============================ 
-                # Plastic collapse and buckling Plots
-                # ============================
-                os.makedirs(NTS_plots_directory_path, exist_ok=True)
-                plot_file_path = os.path.join(NTS_plots_directory_path, "Plastic Collapse and Buckling Curves - With Corradi.png")
-                plt.figure(figsize = (8, 8))
-                plt.xlim(0,50)
-                plt.ylim(0.1,max(q_E_fun(Dt_ratio_plot)))
-                plt.subplot(1,2,1)
-                plt.semilogy(Dt_ratio_plot, p_E_fun(Dt_ratio_plot), 'blue', label='p$_E$')
-                plt.semilogy(Dt_ratio_plot, q_E_fun(Dt_ratio_plot), '--b', label='q$_E$')
-                plt.semilogy(Dt_ratio_plot, p_0_fun(Dt_ratio_plot), 'red', label='p$_0$')
-                plt.semilogy(Dt_ratio_plot, q_0_fun(Dt_ratio_plot), '--r', label='q$_0$')
-                plt.semilogy(Dt_ratio_plot, Corradi(Dt_ratio_plot)[0], 'orange', label='Corradi q$_c$')
-                plt.axvline(x = Dt_Crit_Ratio, color = 'black', linewidth = '3', label = 'Critical Slenderness')
-                plt.axvline(x = Current_Slenderness, color = 'green', linestyle='--', linewidth = '1.5', label = 'Current Vessel Slenderness')
-                plt.plot(Current_Slenderness, Corradi_vessel[1], 'og', label='Current Vessel Allowable Pressure q$_a$')
-                plt.fill_betweenx((0.1,max(q_E_fun(Dt_ratio_plot))), 0, Dt_Crit_Ratio, color='lightgreen', alpha=0.20, label='Plastic collapse dominated zone')
-                plt.fill_betweenx((0.1,max(q_E_fun(Dt_ratio_plot))), Dt_Crit_Ratio, 50, color='orange', alpha=0.15, label='Elastic instability dominated zone')
-                plt.xlabel("Geometrical Slenderness D/t")
-                plt.ylabel("Theoretical Limit Values (MPa)")
-                plt.title("Plastic Collapse and Buckling Curves")
-                plt.legend()
-                plt.grid()
 
-                plt.subplot(1,2,2)
-                plt.plot(Dt_ratio_plot, Corradi(Dt_ratio_plot)[3], 'k', label=r'Corradi $\mu$')
-                plt.xlabel("Geometrical Slenderness D/t")
-                plt.ylabel(r"Corradi $\mu$")
-                plt.title(r"$\mu$ coefficient - Corradi Procedure")
-                plt.legend()
-                plt.grid()
-                plt.tight_layout()
-                plt.savefig(plot_file_path)
+            # ============================ 
+            # Plastic collapse and buckling Plots
+            # ============================
+            plot_file_path = os.path.join(NTS_plots_directory_path, "Plastic Collapse and Buckling Curves - With Corradi.png")
+            plt.figure(figsize = (8, 8))
+            plt.xlim(0,50)
+            plt.ylim(0.1,max(q_E_fun(Dt_ratio_plot)))
+            plt.subplot(1,2,1)
+            plt.semilogy(Dt_ratio_plot, p_E_fun(Dt_ratio_plot), 'blue', label='p$_E$')
+            plt.semilogy(Dt_ratio_plot, q_E_fun(Dt_ratio_plot), '--b', label='q$_E$')
+            plt.semilogy(Dt_ratio_plot, p_0_fun(Dt_ratio_plot), 'red', label='p$_0$')
+            plt.semilogy(Dt_ratio_plot, q_0_fun(Dt_ratio_plot), '--r', label='q$_0$')
+            plt.semilogy(Dt_ratio_plot, Corradi(Dt_ratio_plot)[0], 'orange', label='Corradi q$_c$')
+            plt.axvline(x = Dt_Crit_Ratio, color = 'black', linewidth = '3', label = 'Critical Slenderness')
+            plt.axvline(x = Current_Slenderness, color = 'green', linestyle='--', linewidth = '1.5', label = 'Current Vessel Slenderness')
+            plt.plot(Current_Slenderness, Corradi_vessel[1], 'og', label='Current Vessel Allowable Pressure q$_a$')
+            plt.fill_betweenx((0.1,max(q_E_fun(Dt_ratio_plot))), 0, Dt_Crit_Ratio, color='lightgreen', alpha=0.20, label='Plastic collapse dominated zone')
+            plt.fill_betweenx((0.1,max(q_E_fun(Dt_ratio_plot))), Dt_Crit_Ratio, 50, color='orange', alpha=0.15, label='Elastic instability dominated zone')
+            plt.xlabel("Geometrical Slenderness D/t")
+            plt.ylabel("Theoretical Limit Values (MPa)")
+            plt.title("Plastic Collapse and Buckling Curves")
+            plt.legend()
+            plt.grid()
+
+            plt.subplot(1,2,2)
+            plt.plot(Dt_ratio_plot, Corradi(Dt_ratio_plot)[3], 'k', label=r'Corradi $\mu$')
+            plt.xlabel("Geometrical Slenderness D/t")
+            plt.ylabel(r"Corradi $\mu$")
+            plt.title(r"$\mu$ coefficient - Corradi Procedure")
+            plt.legend()
+            plt.grid()
+            plt.tight_layout()
+            plt.savefig(plot_file_path)
+            if Collapse_pl_flag:
                 plt.show()
+                plt.close()
+            elif not Collapse_pl_flag:
                 plt.close()
                 
         # ============================ 
@@ -1508,7 +1515,6 @@ if not TS_flag:
         # Plotting the thermal stress profiles
         # ======================================
         R_mesh, T_z_mesh = np.meshgrid(r, T_z - 273.15)   # shapes (Nz, Nr)
-        os.makedirs(NTS_plots_directory_path, exist_ok=True)
         plot_file_path = os.path.join(NTS_plots_directory_path, "Thermal Stresses 2D Map.png")
         plt.figure(figsize=(20,20))
         plt.subplot(1,4,1)
@@ -1589,27 +1595,28 @@ elif TS_flag:
         sigma_tM = sigma_M[1]
         sigma_zM = sigma_M[2]
 
+        # ======================================
+        # Plotting the stress profiles: Mariotte
+        # ======================================
+        os.makedirs(TS_plots_directory_path, exist_ok=True)
+        plot_file_path = os.path.join(TS_plots_directory_path, "Stress Distribution in a thin-walled cylinder - Mariotte Solution.png")
+        plt.figure(figsize=(15,10))
+        plt.axvline(x = R_int, color='black', linewidth='3', label='Vessel Inner Surface')
+        plt.axvline(x = R_ext, color='black', linewidth='3', label='Vessel Outer Surface')
+        plt.axhline(y = sigma_rM, color='red', label='Radial (r) Stress Mariotte')
+        plt.axhline(y = sigma_tM, color='blue', label=r'Hoop ($\theta$) Stress Mariotte')
+        plt.axhline(y = sigma_zM, color='green', label='Axial (z) Stress Mariotte')
+        plt.plot(r, np.zeros(len(r)), color='black', linewidth='1', label='y=0')
+        plt.xlabel('Radius (m)')
+        plt.ylabel('Stress (MPa)')
+        plt.title('Stress Distribution in a thin-walled cylinder - Mariotte Solution')
+        plt.legend()
+        plt.grid()
+        plt.savefig(plot_file_path)
         if Mariotte_flag:
-
-            # ======================================
-            # Plotting the stress profiles: Mariotte
-            # ======================================
-            os.makedirs(TS_plots_directory_path, exist_ok=True)
-            plot_file_path = os.path.join(TS_plots_directory_path, "Stress Distribution in a thin-walled cylinder - Mariotte Solution.png")
-            plt.figure(figsize=(15,10))
-            plt.axvline(x = R_int, color='black', linewidth='3', label='Vessel Inner Surface')
-            plt.axvline(x = R_ext, color='black', linewidth='3', label='Vessel Outer Surface')
-            plt.axhline(y = sigma_rM, color='red', label='Radial (r) Stress Mariotte')
-            plt.axhline(y = sigma_tM, color='blue', label=r'Hoop ($\theta$) Stress Mariotte')
-            plt.axhline(y = sigma_zM, color='green', label='Axial (z) Stress Mariotte')
-            plt.plot(r, np.zeros(len(r)), color='black', linewidth='1', label='y=0')
-            plt.xlabel('Radius (m)')
-            plt.ylabel('Stress (MPa)')
-            plt.title('Stress Distribution in a thin-walled cylinder - Mariotte Solution')
-            plt.legend()
-            plt.grid()
-            plt.savefig(plot_file_path)
             plt.show()
+            plt.close()
+        elif not Mariotte_flag:
             plt.close()
 
         elif not Mariotte_flag:
@@ -1668,26 +1675,27 @@ elif TS_flag:
         print("Visualizing general Lamé solution.")
         Lame_flag = bool(1)
 
+    # ======================================
+    # Plotting the stress profiles: Lamé
+    # ======================================
+    plot_file_path = os.path.join(TS_plots_directory_path, "Stress Distribution in the cylinder wall - Lamé Solution.png")
+    plt.figure(figsize=(15,10))
+    plt.axvline(x = R_int, color='black', linewidth='3', label='Vessel Inner Surface')
+    plt.axvline(x = R_ext, color='black', linewidth='3', label='Vessel Outer Surface')
+    plt.plot(r, sigma_rL, label='Radial (r) Stress Lamé')
+    plt.plot(r, sigma_tL, label=r'Hoop ($\theta$) Stress Lamé')
+    plt.axhline(y = sigma_zL, color='green', label='Axial (z) Stress Lamé')
+    plt.axhline(y = 0, color='black', linewidth='1', label='y=0')
+    plt.xlabel('Radius (m)')
+    plt.ylabel('Stress (MPa)')
+    plt.title('Stress Distribution in the cylinder wall - Lamé Solution')
+    plt.legend()
+    plt.grid()
+    plt.savefig(plot_file_path)
     if Lame_flag:
-        # ======================================
-        # Plotting the stress profiles: Lamé
-        # ======================================
-        os.makedirs(TS_plots_directory_path, exist_ok=True)
-        plot_file_path = os.path.join(TS_plots_directory_path, "Stress Distribution in the cylinder wall - Lamé Solution.png")
-        plt.figure(figsize=(15,10))
-        plt.axvline(x = R_int, color='black', linewidth='3', label='Vessel Inner Surface')
-        plt.axvline(x = R_ext, color='black', linewidth='3', label='Vessel Outer Surface')
-        plt.plot(r, sigma_rL, label='Radial (r) Stress Lamé')
-        plt.plot(r, sigma_tL, label=r'Hoop ($\theta$) Stress Lamé')
-        plt.axhline(y = sigma_zL, color='green', label='Axial (z) Stress Lamé')
-        plt.axhline(y = 0, color='black', linewidth='1', label='y=0')
-        plt.xlabel('Radius (m)')
-        plt.ylabel('Stress (MPa)')
-        plt.title('Stress Distribution in the cylinder wall - Lamé Solution')
-        plt.legend()
-        plt.grid()
-        plt.savefig(plot_file_path)
         plt.show()
+        plt.close()
+    elif not Lame_flag:
         plt.close()
 
     elif not Lame_flag:
@@ -2403,50 +2411,51 @@ elif TS_flag:
         except RuntimeError as e:
             print(e)
 
-    if hs_flag:
-        # ======================================
-        # Thermal Shield
-        # ======================================
-        os.makedirs(TS_plots_directory_path, exist_ok=True)
-        plot_file_path = os.path.join(TS_plots_directory_path, "Volumetric heat source profiles.png")
-        plt.figure(figsize=(15,15))
-        plt.subplot(1,2,1)
-        if R_shield_ext - R_shield_int > 0.1:
-            plt.xlim(D_barr_ext/2, R_int)
-            plt.axvline(x = D_barr_ext/2, color='black', linewidth='3', label='Barrel Outer Surface')
-            plt.axvline(x = R_int, color='black', linewidth='3', label='Vessel Inner Surface')
-        else:
-            plt.xlim(R_shield_int - 0.05, R_shield_ext + 0.05)
-        plt.axvline(x = R_shield_int, color='black', linewidth='3', label='Thermal Shield Inner Surface')
-        plt.axvline(x = R_shield_ext, color='black', linewidth='3', label='Thermal Shield Outer Surface')
-        plt.plot(r_S, q_iiiS(r_S)/1e6, 'g', label='Radial (r) Volumetric heat source profile')
-        plt.plot(r_S[0], q_iiiS(r_S[0])/1e6, 'or', label='Thermal Shield Inner Surface Value')
-        plt.plot(r_S[-1], q_iiiS(r_S[-1])/1e6, 'or', label='Thermal Shield Outer Surface Value')
-        plt.axhline(y = 0, color='black', linewidth='1', label='y=0')
-        plt.xlabel('Radius (m)')
-        plt.ylabel(r'$q_0$ (MW/m$^3$)')
-        plt.title('Volumetric heat source profile across the thermal shield')
-        plt.legend()
-        plt.grid()
+    # ======================================
+    # Thermal Shield
+    # ======================================
+    plot_file_path = os.path.join(TS_plots_directory_path, "Volumetric heat source profiles.png")
+    plt.figure(figsize=(15,15))
+    plt.subplot(1,2,1)
+    if R_shield_ext - R_shield_int > 0.1:
+        plt.xlim(D_barr_ext/2, R_int)
+        plt.axvline(x = D_barr_ext/2, color='black', linewidth='3', label='Barrel Outer Surface')
+        plt.axvline(x = R_int, color='black', linewidth='3', label='Vessel Inner Surface')
+    else:
+        plt.xlim(R_shield_int - 0.05, R_shield_ext + 0.05)
+    plt.axvline(x = R_shield_int, color='black', linewidth='3', label='Thermal Shield Inner Surface')
+    plt.axvline(x = R_shield_ext, color='black', linewidth='3', label='Thermal Shield Outer Surface')
+    plt.plot(r_S, q_iiiS(r_S)/1e6, 'g', label='Radial (r) Volumetric heat source profile')
+    plt.plot(r_S[0], q_iiiS(r_S[0])/1e6, 'or', label='Thermal Shield Inner Surface Value')
+    plt.plot(r_S[-1], q_iiiS(r_S[-1])/1e6, 'or', label='Thermal Shield Outer Surface Value')
+    plt.axhline(y = 0, color='black', linewidth='1', label='y=0')
+    plt.xlabel('Radius (m)')
+    plt.ylabel(r'$q_0$ (MW/m$^3$)')
+    plt.title('Volumetric heat source profile across the thermal shield')
+    plt.legend()
+    plt.grid()
 
-        # ======================================
-        # Vessel
-        # ======================================
-        plt.subplot(1,2,2)
-        plt.axvline(x = R_int, color='black', linewidth='3', label='Vessel Surface')
-        plt.axvline(x = R_ext, color='black', linewidth='3')
-        plt.plot(r, q_iii(r), 'g', label='Radial (r) Volumetric heat source profile')
-        plt.plot(r[0], q_iii(r[0]), 'or', label='Vessel Inner Surface Value')
-        plt.plot(r[-1], q_iii(r[-1]), 'or', label='Vessel-Insulation Interface Value')
-        plt.axhline(y = 0, color='black', linewidth='1', label='y=0')
-        plt.xlabel('Radius (m)')
-        plt.ylabel(r'$q_0$ (W/m$^3$)')
-        plt.title('Volumetric heat source profile across the vessel wall')
-        plt.legend()
-        plt.grid()
-        plt.tight_layout()
-        plt.savefig(plot_file_path)
+    # ======================================
+    # Vessel
+    # ======================================
+    plt.subplot(1,2,2)
+    plt.axvline(x = R_int, color='black', linewidth='3', label='Vessel Surface')
+    plt.axvline(x = R_ext, color='black', linewidth='3')
+    plt.plot(r, q_iii(r), 'g', label='Radial (r) Volumetric heat source profile')
+    plt.plot(r[0], q_iii(r[0]), 'or', label='Vessel Inner Surface Value')
+    plt.plot(r[-1], q_iii(r[-1]), 'or', label='Vessel-Insulation Interface Value')
+    plt.axhline(y = 0, color='black', linewidth='1', label='y=0')
+    plt.xlabel('Radius (m)')
+    plt.ylabel(r'$q_0$ (W/m$^3$)')
+    plt.title('Volumetric heat source profile across the vessel wall')
+    plt.legend()
+    plt.grid()
+    plt.tight_layout()
+    plt.savefig(plot_file_path)
+    if hs_flag:
         plt.show()
+        plt.close()
+    elif not hs_flag:
         plt.close()
 
     # ======================================
@@ -2470,93 +2479,97 @@ elif TS_flag:
         creep_flag_S = bool(1)
         
     if not adiab_flag:
-        if T_pl_flag:
-            # ======================================
-            # Thermal Shield T Profile
-            # ======================================
-            os.makedirs(TS_plots_directory_path, exist_ok=True)
-            plot_file_path = os.path.join(TS_plots_directory_path, "Temperature profiles, averages and maxima.png")
-            plt.figure(figsize=(15,15))
-            plt.subplot(1,2,1)
-            if R_shield_ext - R_shield_int > 0.1:
-                plt.xlim(D_barr_ext/2, R_int)
-                plt.axvline(x = D_barr_ext/2, color='black', linewidth='3', label='Barrel Outer Surface')
-                plt.axvline(x = R_int, color='black', linewidth='3', label='Vessel Inner Surface')
-            else:
-                plt.xlim(R_shield_int - 0.05, R_shield_ext + 0.05)
-            plt.axvline(x = R_shield_int, color='black', linewidth='3', label='Thermal Shield Inner Surface')
-            plt.axvline(x = R_shield_ext, color='black', linewidth='3', label='Thermal Shield Outer Surface')
-            plt.plot(r_S, T_shield(r_S) - 273.15, label='Radial (r) T Profile')
-            plt.plot(r_T_shield_max, T_shield_max - 273.15,'or',label='Max T')
-            plt.axhline(y = T_shield_avg - 273.15, color='green', label='Thermal Shield Average T')
-            plt.xlabel('Radius (m)')
-            plt.ylabel('T (°C)')
-            plt.title('Thermal Shield Temperature Profile, Average and Maximum ')
-            plt.legend()
-            plt.grid()
-
-            # ======================================
-            # Vessel T Profile
-            # ======================================
-            plt.subplot(1,2,2)
+        
+        # ======================================
+        # Thermal Shield T Profile
+        # ======================================
+        plot_file_path = os.path.join(TS_plots_directory_path, "Temperature profiles, averages and maxima.png")
+        plt.figure(figsize=(15,15))
+        plt.subplot(1,2,1)
+        if R_shield_ext - R_shield_int > 0.1:
+            plt.xlim(D_barr_ext/2, R_int)
+            plt.axvline(x = D_barr_ext/2, color='black', linewidth='3', label='Barrel Outer Surface')
             plt.axvline(x = R_int, color='black', linewidth='3', label='Vessel Inner Surface')
-            plt.axvline(x = R_ext, color='black', linewidth='3', label='Vessel Outer Surface')
-            plt.plot(r, T_vessel(r) - 273.15, label='Radial (r) T Profile')
-            plt.plot(r_T_vessel_max, T_vessel_max - 273.15,'or',label='Max T')
-            plt.axhline(y = T_vessel_avg - 273.15, color='green', label='Vessel Wall Average T')
-            plt.xlabel('Radius (m)')
-            plt.ylabel('T (°C)')
-            plt.title('Vessel Wall Temperature Profile, Average and Maximum ')
-            plt.legend()
-            plt.grid()
-            plt.tight_layout()
-            plt.savefig(plot_file_path)
+        else:
+            plt.xlim(R_shield_int - 0.05, R_shield_ext + 0.05)
+        plt.axvline(x = R_shield_int, color='black', linewidth='3', label='Thermal Shield Inner Surface')
+        plt.axvline(x = R_shield_ext, color='black', linewidth='3', label='Thermal Shield Outer Surface')
+        plt.plot(r_S, T_shield(r_S) - 273.15, label='Radial (r) T Profile')
+        plt.plot(r_T_shield_max, T_shield_max - 273.15,'or',label='Max T')
+        plt.axhline(y = T_shield_avg - 273.15, color='green', label='Thermal Shield Average T')
+        plt.xlabel('Radius (m)')
+        plt.ylabel('T (°C)')
+        plt.title('Thermal Shield Temperature Profile, Average and Maximum ')
+        plt.legend()
+        plt.grid()
+
+        # ======================================
+        # Vessel T Profile
+        # ======================================
+        plt.subplot(1,2,2)
+        plt.axvline(x = R_int, color='black', linewidth='3', label='Vessel Inner Surface')
+        plt.axvline(x = R_ext, color='black', linewidth='3', label='Vessel Outer Surface')
+        plt.plot(r, T_vessel(r) - 273.15, label='Radial (r) T Profile')
+        plt.plot(r_T_vessel_max, T_vessel_max - 273.15,'or',label='Max T')
+        plt.axhline(y = T_vessel_avg - 273.15, color='green', label='Vessel Wall Average T')
+        plt.xlabel('Radius (m)')
+        plt.ylabel('T (°C)')
+        plt.title('Vessel Wall Temperature Profile, Average and Maximum ')
+        plt.legend()
+        plt.grid()
+        plt.tight_layout()
+        plt.savefig(plot_file_path)
+        if T_pl_flag:
             plt.show()
+            plt.close()
+        elif not T_pl_flag:
             plt.close()
      
     elif adiab_flag:
-        if T_pl_flag:
-            # ======================================
-            # Thermal Shield T Profile
-            # ======================================
-            os.makedirs(TS_plots_directory_path, exist_ok=True)
-            plot_file_path = os.path.join(TS_plots_directory_path, "Temperature profiles, averages and maxima under AOW approximation.png")
-            plt.figure(figsize=(15,15))
-            plt.subplot(1,2,1)
-            if R_shield_ext - R_shield_int > 0.1:
-                plt.xlim(D_barr_ext/2, R_int)
-                plt.axvline(x = D_barr_ext/2, color='black', linewidth='3', label='Barrel Outer Surface')
-                plt.axvline(x = R_int, color='black', linewidth='3', label='Vessel Inner Surface')
-            else:
-                plt.xlim(R_shield_int - 0.05, R_shield_ext + 0.05)
-            plt.axvline(x = R_shield_int, color='black', linewidth='3', label='Thermal Shield Inner Surface')
-            plt.axvline(x = R_shield_ext, color='black', linewidth='3', label='Thermal Shield Outer Surface')
-            plt.plot(r_S, T_shield(r_S) - 273.15, label='Radial (r) T Profile')
-            plt.plot(r_T_shield_max, T_shield_max - 273.15,'or',label='Max T')
-            plt.axhline(y = T_shield_avg - 273.15, color='green', label='Thermal Shield Average T')
-            plt.xlabel('Radius (m)')
-            plt.ylabel('T (°C)')
-            plt.title('Thermal Shield Temperature Profile, Average and Maximum')
-            plt.legend()
-            plt.grid()
-            
-            # ======================================
-            # Vessel Under Adiabatic Outer Wall Approximation
-            # ======================================
-            plt.subplot(1,2,2)
+
+        # ======================================
+        # Thermal Shield T Profile
+        # ======================================
+        plot_file_path = os.path.join(TS_plots_directory_path, "Temperature profiles, averages and maxima under AOW approximation.png")
+        plt.figure(figsize=(15,15))
+        plt.subplot(1,2,1)
+        if R_shield_ext - R_shield_int > 0.1:
+            plt.xlim(D_barr_ext/2, R_int)
+            plt.axvline(x = D_barr_ext/2, color='black', linewidth='3', label='Barrel Outer Surface')
             plt.axvline(x = R_int, color='black', linewidth='3', label='Vessel Inner Surface')
-            plt.axvline(x = R_ext, color='black', linewidth='3', label='Vessel Outer Surface')
-            plt.plot(r, T_vessel(r) - 273.15, label='Radial (r) T Profile')
-            plt.plot(r_T_vessel_max, T_vessel_max - 273.15,'or', label='Max T')
-            plt.axhline(y = T_vessel_avg - 273.15, color='green', label='Wall Average T')
-            plt.xlabel('Radius (m)')
-            plt.ylabel('T (°C)')
-            plt.title('Wall Temperature Profile, Average and Maximum under AOW Approximation')
-            plt.legend()
-            plt.grid()
-            plt.tight_layout()
-            plt.savefig(plot_file_path)
+        else:
+            plt.xlim(R_shield_int - 0.05, R_shield_ext + 0.05)
+        plt.axvline(x = R_shield_int, color='black', linewidth='3', label='Thermal Shield Inner Surface')
+        plt.axvline(x = R_shield_ext, color='black', linewidth='3', label='Thermal Shield Outer Surface')
+        plt.plot(r_S, T_shield(r_S) - 273.15, label='Radial (r) T Profile')
+        plt.plot(r_T_shield_max, T_shield_max - 273.15,'or',label='Max T')
+        plt.axhline(y = T_shield_avg - 273.15, color='green', label='Thermal Shield Average T')
+        plt.xlabel('Radius (m)')
+        plt.ylabel('T (°C)')
+        plt.title('Thermal Shield Temperature Profile, Average and Maximum')
+        plt.legend()
+        plt.grid()
+        
+        # ======================================
+        # Vessel Under Adiabatic Outer Wall Approximation
+        # ======================================
+        plt.subplot(1,2,2)
+        plt.axvline(x = R_int, color='black', linewidth='3', label='Vessel Inner Surface')
+        plt.axvline(x = R_ext, color='black', linewidth='3', label='Vessel Outer Surface')
+        plt.plot(r, T_vessel(r) - 273.15, label='Radial (r) T Profile')
+        plt.plot(r_T_vessel_max, T_vessel_max - 273.15,'or', label='Max T')
+        plt.axhline(y = T_vessel_avg - 273.15, color='green', label='Wall Average T')
+        plt.xlabel('Radius (m)')
+        plt.ylabel('T (°C)')
+        plt.title('Wall Temperature Profile, Average and Maximum under AOW Approximation')
+        plt.legend()
+        plt.grid()
+        plt.tight_layout()
+        plt.savefig(plot_file_path)
+        if T_pl_flag:
             plt.show()
+            plt.close()
+        elif not T_pl_flag:
             plt.close()
 
     # ======================================
@@ -2574,52 +2587,53 @@ elif TS_flag:
         except RuntimeError as e:
             print(e)
 
-    if sigma_th_pl_flag:
-        # ======================================
-        # Thermal shield thermal stress profiles
-        # ======================================
-        os.makedirs(TS_plots_directory_path, exist_ok=True)
-        plot_file_path = os.path.join(TS_plots_directory_path, "Thermal stresses profiles.png")
-        plt.figure(figsize=(15,15))
-        plt.subplot(1,2,1)
-        if R_shield_ext - R_shield_int > 0.1:
-            plt.xlim(D_barr_ext/2, R_int)
-            plt.axvline(x = D_barr_ext/2, color='black', linewidth='3', label='Barrel Outer Surface')
-            plt.axvline(x = R_int, color='black', linewidth='3', label='Vessel Inner Surface')
-        else:
-            plt.xlim(R_shield_int - 0.05, R_shield_ext + 0.05)
-        plt.axvline(x = R_shield_int, color='black', linewidth='3', label='Thermal Shield Inner Surface')
-        plt.axvline(x = R_shield_ext, color='black', linewidth='3', label='Thermal Shield Outer Surface')
-        plt.plot(r_S, sigma_r_th_S, linewidth='0.75', label='Radial (r) Thermal Stress Profile')
-        plt.plot(r_S, sigma_t_th_S, linewidth='0.75', label='Hoop (θ) Thermal Stress Profile')
-        plt.plot(r_S, sigma_z_th_S, color='green', linewidth='0.5', label='Axial (z) Thermal Stress Profile')
-        plt.axhline(y = 0, color='black', linewidth='1', label='y=0')
-        plt.plot(r_sigma_t_th_S_max, sigma_t_th_S_max,'or', label='Max Hoop Stress')
-        plt.xlabel('Radius (m)')
-        plt.ylabel('Thermal Stress (MPa)')
-        plt.title('Thermal Shield Thermal Stress Profiles and Maximum Hoop Stress')
-        plt.legend()
-        plt.grid()
-        
-        # ======================================
-        # Vessel thermal stress profiles
-        # ======================================
-        plt.subplot(1,2,2)
+    # ======================================
+    # Thermal shield thermal stress profiles
+    # ======================================
+    plot_file_path = os.path.join(TS_plots_directory_path, "Thermal stresses profiles.png")
+    plt.figure(figsize=(15,15))
+    plt.subplot(1,2,1)
+    if R_shield_ext - R_shield_int > 0.1:
+        plt.xlim(D_barr_ext/2, R_int)
+        plt.axvline(x = D_barr_ext/2, color='black', linewidth='3', label='Barrel Outer Surface')
         plt.axvline(x = R_int, color='black', linewidth='3', label='Vessel Inner Surface')
-        plt.axvline(x = R_ext, color='black', linewidth='3', label='Vessel Outer Surface')
-        plt.plot(r, sigma_r_th_V, linewidth='0.75', label='Radial (r) Thermal Stress Profile')
-        plt.plot(r, sigma_t_th_V, linewidth='0.75', label='Hoop (θ) Thermal Stress Profile')
-        plt.plot(r, sigma_z_th_V, color='green', linewidth='0.5', label='Axial (z) Thermal Stress Profile')
-        plt.axhline(y = 0, color='black', linewidth='1', label='y=0')
-        plt.plot(r_sigma_t_th_V_max, sigma_t_th_V_max,'or', label='Max Hoop Stress')
-        plt.xlabel('Radius (m)')
-        plt.ylabel('Thermal Stress (MPa)')
-        plt.title('Vessel Wall Thermal Stress Profiles and Maximum Hoop Stress')
-        plt.legend()
-        plt.grid()
-        plt.tight_layout()
-        plt.savefig(plot_file_path)
+    else:
+        plt.xlim(R_shield_int - 0.05, R_shield_ext + 0.05)
+    plt.axvline(x = R_shield_int, color='black', linewidth='3', label='Thermal Shield Inner Surface')
+    plt.axvline(x = R_shield_ext, color='black', linewidth='3', label='Thermal Shield Outer Surface')
+    plt.plot(r_S, sigma_r_th_S, linewidth='0.75', label='Radial (r) Thermal Stress Profile')
+    plt.plot(r_S, sigma_t_th_S, linewidth='0.75', label='Hoop (θ) Thermal Stress Profile')
+    plt.plot(r_S, sigma_z_th_S, color='green', linewidth='0.5', label='Axial (z) Thermal Stress Profile')
+    plt.axhline(y = 0, color='black', linewidth='1', label='y=0')
+    plt.plot(r_sigma_t_th_S_max, sigma_t_th_S_max,'or', label='Max Hoop Stress')
+    plt.xlabel('Radius (m)')
+    plt.ylabel('Thermal Stress (MPa)')
+    plt.title('Thermal Shield Thermal Stress Profiles and Maximum Hoop Stress')
+    plt.legend()
+    plt.grid()
+    
+    # ======================================
+    # Vessel thermal stress profiles
+    # ======================================
+    plt.subplot(1,2,2)
+    plt.axvline(x = R_int, color='black', linewidth='3', label='Vessel Inner Surface')
+    plt.axvline(x = R_ext, color='black', linewidth='3', label='Vessel Outer Surface')
+    plt.plot(r, sigma_r_th_V, linewidth='0.75', label='Radial (r) Thermal Stress Profile')
+    plt.plot(r, sigma_t_th_V, linewidth='0.75', label='Hoop (θ) Thermal Stress Profile')
+    plt.plot(r, sigma_z_th_V, color='green', linewidth='0.5', label='Axial (z) Thermal Stress Profile')
+    plt.axhline(y = 0, color='black', linewidth='1', label='y=0')
+    plt.plot(r_sigma_t_th_V_max, sigma_t_th_V_max,'or', label='Max Hoop Stress')
+    plt.xlabel('Radius (m)')
+    plt.ylabel('Thermal Stress (MPa)')
+    plt.title('Vessel Wall Thermal Stress Profiles and Maximum Hoop Stress')
+    plt.legend()
+    plt.grid()
+    plt.tight_layout()
+    plt.savefig(plot_file_path)
+    if sigma_th_pl_flag:
         plt.show()
+        plt.close()
+    elif not sigma_th_pl_flag:
         plt.close()
 
     # ======================================
@@ -2637,24 +2651,25 @@ elif TS_flag:
         except RuntimeError as e:
             print(e)
 
+    plot_file_path = os.path.join(TS_plots_directory_path, "Design curves.png")
+    plt.figure(figsize=(10,10))
+    plt.xlim(ba_ratio_plot[0], ba_ratio_plot[-1])
+    plt.plot(ba_ratio_plot, L_Interpolator(ba_ratio_plot), 'k', label=f'Iso-mu = {mu_L} 1/m')
+    plt.plot(ba_ratio_plot, R_Interpolator(ba_ratio_plot), 'k', label=f'Iso-mu = {mu_R} 1/m')
+    plt.text(ba_ratio_plot[-1]+0.001, L_Interpolator(ba_ratio_plot)[-1], f'Iso-mu = {mu_L}', color='black', fontsize=10)
+    plt.text(ba_ratio_plot[-1]+0.001, R_Interpolator(ba_ratio_plot)[-1], f'Iso-mu = {mu_R}', color='black', fontsize=10)
+    plt.plot(R_ext/R_int, sigmaT_V,'or', label=r'Current $\sigma$$_T$ in the vessel')
+    plt.plot(R_shield_ext/R_shield_int, sigmaT_S,'ob', label=r'Current $\sigma$$_T$ in the thermal shield')
+    plt.xlabel('R$_{ext}$/R$_{int}$')
+    plt.ylabel(r'$\sigma$$_T$')
+    plt.title('Design curves')
+    plt.legend()
+    plt.grid()
+    plt.savefig(plot_file_path)
     if des_pl_flag:
-        os.makedirs(TS_plots_directory_path, exist_ok=True)
-        plot_file_path = os.path.join(TS_plots_directory_path, "Design curves.png")
-        plt.figure(figsize=(10,10))
-        plt.xlim(ba_ratio_plot[0], ba_ratio_plot[-1])
-        plt.plot(ba_ratio_plot, L_Interpolator(ba_ratio_plot), 'k', label=f'Iso-mu = {mu_L} 1/m')
-        plt.plot(ba_ratio_plot, R_Interpolator(ba_ratio_plot), 'k', label=f'Iso-mu = {mu_R} 1/m')
-        plt.text(ba_ratio_plot[-1]+0.001, L_Interpolator(ba_ratio_plot)[-1], f'Iso-mu = {mu_L}', color='black', fontsize=10)
-        plt.text(ba_ratio_plot[-1]+0.001, R_Interpolator(ba_ratio_plot)[-1], f'Iso-mu = {mu_R}', color='black', fontsize=10)
-        plt.plot(R_ext/R_int, sigmaT_V,'or', label=r'Current $\sigma$$_T$ in the vessel')
-        plt.plot(R_shield_ext/R_shield_int, sigmaT_S,'ob', label=r'Current $\sigma$$_T$ in the thermal shield')
-        plt.xlabel('R$_{ext}$/R$_{int}$')
-        plt.ylabel(r'$\sigma$$_T$')
-        plt.title('Design curves')
-        plt.legend()
-        plt.grid()
-        plt.savefig(plot_file_path)
         plt.show()
+        plt.close()
+    elif not des_pl_flag:
         plt.close()
 
     # ======================================
@@ -2677,42 +2692,43 @@ elif TS_flag:
     else:
         Tplot = np.linspace(min(T_thr), T_des_vessel_C, 1000)
     
-    if Interp_pl_flag:
-        # ============================ 
-        # Yield Stress
-        # ============================
-        os.makedirs(TS_plots_directory_path, exist_ok=True)
-        plot_file_path = os.path.join(TS_plots_directory_path, "Yield Stress and Stress Intensity.png")
-        plt.figure(figsize = (12,10))
-        plt.subplot(1,2,1)
-        plt.plot(T_thr, sigma_y, 'sk', label = 'Yield Stress Data')
-        plt.plot(Tplot, Yield_Interpolator(Tplot), '--', color = 'orange', label = 'Yield Stress n-1 Interpolation')
-        plt.plot(Tplot, Yield_CubicSpline(Tplot), 'green', label = 'Yield Stress Cubic Spline Interpolation')
-        plt.plot(T_des_vessel_C, Yield_stress, '--or', label = r'Current Vessel Yield Stress $\sigma$$_y$')
-        plt.plot(T_des_shield_C, Yield_stress_S, '--ob', label = r'Current Thermal Shield Yield Stress $\sigma$$_y$')
-        plt.xlabel("Temperature (°C)")
-        plt.ylabel(r"Yield Stress $\sigma$$_y$ (MPa)")
-        plt.title("Yield Stress Data and Interpolation VS Temperature", fontsize = 10)
-        plt.legend()
-        plt.grid()
+    # ============================ 
+    # Yield Stress
+    # ============================
+    plot_file_path = os.path.join(TS_plots_directory_path, "Yield Stress and Stress Intensity.png")
+    plt.figure(figsize = (12,10))
+    plt.subplot(1,2,1)
+    plt.plot(T_thr, sigma_y, 'sk', label = 'Yield Stress Data')
+    plt.plot(Tplot, Yield_Interpolator(Tplot), '--', color = 'orange', label = 'Yield Stress n-1 Interpolation')
+    plt.plot(Tplot, Yield_CubicSpline(Tplot), 'green', label = 'Yield Stress Cubic Spline Interpolation')
+    plt.plot(T_des_vessel_C, Yield_stress, '--or', label = r'Current Vessel Yield Stress $\sigma$$_y$')
+    plt.plot(T_des_shield_C, Yield_stress_S, '--ob', label = r'Current Thermal Shield Yield Stress $\sigma$$_y$')
+    plt.xlabel("Temperature (°C)")
+    plt.ylabel(r"Yield Stress $\sigma$$_y$ (MPa)")
+    plt.title("Yield Stress Data and Interpolation VS Temperature", fontsize = 10)
+    plt.legend()
+    plt.grid()
 
-        # ============================ 
-        # Stress intensity
-        # ============================
-        plt.subplot(1,2,2)
-        plt.plot(T_thr, sigma_in, 'sk', label = 'Stress Intensity Data')
-        plt.plot(Tplot, Intensity_Interpolator(Tplot), '--', color = 'orange', label = 'Stress Intensity n-1 Interpolation')
-        plt.plot(Tplot, Intensity_CubicSpline(Tplot), 'green', label = 'Stress Intensity Cubic Spline Interpolation')
-        plt.plot(T_des_vessel_C, Stress_Intensity, '--or', label = r'Current Vessel Stress Intensity $\sigma$$_m$')
-        plt.plot(T_des_shield_C, Stress_Intensity_S, '--ob', label = r'Current Thermal Shield Stress Intensity $\sigma$$_m$')
-        plt.xlabel("Temperature (°C)")
-        plt.ylabel(r"Stress Intensity $\sigma$$_m$ (MPa)")
-        plt.title("Stress Intensity Data and Interpolation VS Temperature", fontsize = 10)
-        plt.legend()
-        plt.grid()
-        plt.tight_layout()
-        plt.savefig(plot_file_path)
+    # ============================ 
+    # Stress intensity
+    # ============================
+    plt.subplot(1,2,2)
+    plt.plot(T_thr, sigma_in, 'sk', label = 'Stress Intensity Data')
+    plt.plot(Tplot, Intensity_Interpolator(Tplot), '--', color = 'orange', label = 'Stress Intensity n-1 Interpolation')
+    plt.plot(Tplot, Intensity_CubicSpline(Tplot), 'green', label = 'Stress Intensity Cubic Spline Interpolation')
+    plt.plot(T_des_vessel_C, Stress_Intensity, '--or', label = r'Current Vessel Stress Intensity $\sigma$$_m$')
+    plt.plot(T_des_shield_C, Stress_Intensity_S, '--ob', label = r'Current Thermal Shield Stress Intensity $\sigma$$_m$')
+    plt.xlabel("Temperature (°C)")
+    plt.ylabel(r"Stress Intensity $\sigma$$_m$ (MPa)")
+    plt.title("Stress Intensity Data and Interpolation VS Temperature", fontsize = 10)
+    plt.legend()
+    plt.grid()
+    plt.tight_layout()
+    plt.savefig(plot_file_path)
+    if Interp_pl_flag:
         plt.show()
+        plt.close()
+    elif not Interp_pl_flag:
         plt.close()
         
     # ============================ 
@@ -2771,31 +2787,32 @@ elif TS_flag:
                 except RuntimeError as e:
                     print(e)
             
+            # ============================
+            # Plastic collapse and buckling plots
+            # ============================
+            plot_file_path = os.path.join(TS_plots_directory_path, "Plastic Collapse and Buckling Curves.png")
+            plt.figure(figsize = (8, 8))
+            plt.xlim(0,50)
+            plt.ylim(0.1,max(q_E_fun(Dt_ratio_plot)))
+            plt.semilogy(Dt_ratio_plot, p_E_fun(Dt_ratio_plot), 'blue', label='p$_E$')
+            plt.semilogy(Dt_ratio_plot, q_E_fun(Dt_ratio_plot), '--b', label='q$_E$')
+            plt.semilogy(Dt_ratio_plot, p_0_fun(Dt_ratio_plot), 'red', label='p$_0$')
+            plt.semilogy(Dt_ratio_plot, q_0_fun(Dt_ratio_plot), '--r', label='q$_0$')
+            plt.axvline(x = Dt_Crit_Ratio, color = 'black', linewidth = '3', label = 'Critical Slenderness')
+            plt.axvline(x = Current_Slenderness, color = 'green', linestyle='--', linewidth = '1.5', label = 'Current Vessel Slenderness')
+            plt.plot(Current_Slenderness, Corradi_vessel[1], 'og', label='Current Vessel Allowable Pressure q$_a$')
+            plt.fill_betweenx((0.1,max(q_E_fun(Dt_ratio_plot))), 0, Dt_Crit_Ratio, color='lightgreen', alpha=0.20, label='Plastic collapse dominated zone')
+            plt.fill_betweenx((0.1,max(q_E_fun(Dt_ratio_plot))), Dt_Crit_Ratio, 50, color='orange', alpha=0.15, label='Elastic instability dominated zone')
+            plt.xlabel("Geometrical Slenderness D/t")
+            plt.ylabel("Theoretical Limit Values (MPa)")
+            plt.title("Plastic Collapse and Buckling Curves")
+            plt.legend()
+            plt.grid()
+            plt.savefig(plot_file_path)
             if Collapse_pl_flag:
-                # ============================
-                # Plastic collapse and buckling plots
-                # ============================
-                os.makedirs(TS_plots_directory_path, exist_ok=True)
-                plot_file_path = os.path.join(TS_plots_directory_path, "Plastic Collapse and Buckling Curves.png")
-                plt.figure(figsize = (8, 8))
-                plt.xlim(0,50)
-                plt.ylim(0.1,max(q_E_fun(Dt_ratio_plot)))
-                plt.semilogy(Dt_ratio_plot, p_E_fun(Dt_ratio_plot), 'blue', label='p$_E$')
-                plt.semilogy(Dt_ratio_plot, q_E_fun(Dt_ratio_plot), '--b', label='q$_E$')
-                plt.semilogy(Dt_ratio_plot, p_0_fun(Dt_ratio_plot), 'red', label='p$_0$')
-                plt.semilogy(Dt_ratio_plot, q_0_fun(Dt_ratio_plot), '--r', label='q$_0$')
-                plt.axvline(x = Dt_Crit_Ratio, color = 'black', linewidth = '3', label = 'Critical Slenderness')
-                plt.axvline(x = Current_Slenderness, color = 'green', linestyle='--', linewidth = '1.5', label = 'Current Vessel Slenderness')
-                plt.plot(Current_Slenderness, Corradi_vessel[1], 'og', label='Current Vessel Allowable Pressure q$_a$')
-                plt.fill_betweenx((0.1,max(q_E_fun(Dt_ratio_plot))), 0, Dt_Crit_Ratio, color='lightgreen', alpha=0.20, label='Plastic collapse dominated zone')
-                plt.fill_betweenx((0.1,max(q_E_fun(Dt_ratio_plot))), Dt_Crit_Ratio, 50, color='orange', alpha=0.15, label='Elastic instability dominated zone')
-                plt.xlabel("Geometrical Slenderness D/t")
-                plt.ylabel("Theoretical Limit Values (MPa)")
-                plt.title("Plastic Collapse and Buckling Curves")
-                plt.legend()
-                plt.grid()
-                plt.savefig(plot_file_path)
                 plt.show()
+                plt.close()
+            elif not Collapse_pl_flag:
                 plt.close()
 
         elif Corradi_flag:
@@ -2811,70 +2828,18 @@ elif TS_flag:
                 except RuntimeError as e:
                     print(e)
             
-            if Collapse_pl_flag:
-                # ============================ 
-                # Plastic collapse and buckling plots
-                # ============================
-                os.makedirs(TS_plots_directory_path, exist_ok=True)
-                plot_file_path = os.path.join(TS_plots_directory_path, "Plastic Collapse and Buckling Curves - With Corradi.png")
-                plt.figure(figsize = (8, 8))
-                plt.xlim(0,50)
-                plt.ylim(0.1,max(q_E_fun(Dt_ratio_plot)))
-                plt.subplot(1,2,1)
-                plt.semilogy(Dt_ratio_plot, p_E_fun(Dt_ratio_plot), 'blue', label='p$_E$')
-                plt.semilogy(Dt_ratio_plot, q_E_fun(Dt_ratio_plot), '--b', label='q$_E$')
-                plt.semilogy(Dt_ratio_plot, p_0_fun(Dt_ratio_plot), 'red', label='p$_0$')
-                plt.semilogy(Dt_ratio_plot, q_0_fun(Dt_ratio_plot), '--r', label='q$_0$')
-                plt.semilogy(Dt_ratio_plot, Corradi(Dt_ratio_plot)[0], 'orange', label='Corradi q$_c$')
-                plt.axvline(x = Dt_Crit_Ratio, color = 'black', linewidth = '3', label = 'Critical Slenderness')
-                plt.axvline(x = Current_Slenderness, color = 'green', linestyle='--', linewidth = '1.5', label = 'Current Vessel Slenderness')
-                plt.plot(Current_Slenderness, Corradi_vessel[1], 'og', label='Current Vessel Allowable Pressure q$_a$')
-                plt.fill_betweenx((0.1,max(q_E_fun(Dt_ratio_plot))), 0, Dt_Crit_Ratio, color='lightgreen', alpha=0.20, label='Plastic collapse dominated zone')
-                plt.fill_betweenx((0.1,max(q_E_fun(Dt_ratio_plot))), Dt_Crit_Ratio, 50, color='orange', alpha=0.15, label='Elastic instability dominated zone')
-                plt.xlabel("Geometrical Slenderness D/t")
-                plt.ylabel("Theoretical Limit Values (MPa)")
-                plt.title("Plastic Collapse and Buckling Curves")
-                plt.legend()
-                plt.grid()
-
-                plt.subplot(1,2,2)
-                plt.plot(Dt_ratio_plot, Corradi(Dt_ratio_plot)[3], 'k', label=r'Corradi $\mu$')
-                plt.xlabel("Geometrical Slenderness D/t")
-                plt.ylabel(r"Corradi $\mu$")
-                plt.title(r"$\mu$ coefficient - Corradi Procedure")
-                plt.legend()
-                plt.grid()
-                plt.tight_layout()
-                plt.savefig(plot_file_path)
-                plt.show()
-                plt.close()
-        
-    elif not ThinTubes_flag:
-        print("Adopting Corradi Design Procedure.")
-        Corradi_flag = bool(1)
-        while True:
-            try:
-                Collapse_pl_flag = int(input("\nDo you want to visualize the buckling and plastic collapse curves for thin and thick tubes and the Corradi curve? (1: Yes, 0: No): "))
-                if Collapse_pl_flag not in (0, 1):
-                    raise RuntimeError("Invalid input! Please enter either 0 or 1.")
-                Collapse_pl_flag = bool(Collapse_pl_flag)
-                break  
-            except ValueError:
-                print("Please enter a valid integer.")
-            except RuntimeError as e:
-                print(e)
-        
-        if Collapse_pl_flag:
+            
             # ============================ 
             # Plastic collapse and buckling plots
             # ============================
-            os.makedirs(TS_plots_directory_path, exist_ok=True)
             plot_file_path = os.path.join(TS_plots_directory_path, "Plastic Collapse and Buckling Curves - With Corradi.png")
             plt.figure(figsize = (8, 8))
             plt.xlim(0,50)
             plt.ylim(0.1,max(q_E_fun(Dt_ratio_plot)))
             plt.subplot(1,2,1)
+            plt.semilogy(Dt_ratio_plot, p_E_fun(Dt_ratio_plot), 'blue', label='p$_E$')
             plt.semilogy(Dt_ratio_plot, q_E_fun(Dt_ratio_plot), '--b', label='q$_E$')
+            plt.semilogy(Dt_ratio_plot, p_0_fun(Dt_ratio_plot), 'red', label='p$_0$')
             plt.semilogy(Dt_ratio_plot, q_0_fun(Dt_ratio_plot), '--r', label='q$_0$')
             plt.semilogy(Dt_ratio_plot, Corradi(Dt_ratio_plot)[0], 'orange', label='Corradi q$_c$')
             plt.axvline(x = Dt_Crit_Ratio, color = 'black', linewidth = '3', label = 'Critical Slenderness')
@@ -2897,7 +2862,62 @@ elif TS_flag:
             plt.grid()
             plt.tight_layout()
             plt.savefig(plot_file_path)
+            if Collapse_pl_flag:
+                plt.show()
+                plt.close()
+            elif not Collapse_pl_flag:
+                plt.close()
+        
+    elif not ThinTubes_flag:
+        print("Adopting Corradi Design Procedure.")
+        Corradi_flag = bool(1)
+        while True:
+            try:
+                Collapse_pl_flag = int(input("\nDo you want to visualize the buckling and plastic collapse curves for thin and thick tubes and the Corradi curve? (1: Yes, 0: No): "))
+                if Collapse_pl_flag not in (0, 1):
+                    raise RuntimeError("Invalid input! Please enter either 0 or 1.")
+                Collapse_pl_flag = bool(Collapse_pl_flag)
+                break  
+            except ValueError:
+                print("Please enter a valid integer.")
+            except RuntimeError as e:
+                print(e)
+        
+        # ============================ 
+        # Plastic collapse and buckling plots
+        # ============================
+        plot_file_path = os.path.join(TS_plots_directory_path, "Plastic Collapse and Buckling Curves - With Corradi.png")
+        plt.figure(figsize = (8, 8))
+        plt.xlim(0,50)
+        plt.ylim(0.1,max(q_E_fun(Dt_ratio_plot)))
+        plt.subplot(1,2,1)
+        plt.semilogy(Dt_ratio_plot, q_E_fun(Dt_ratio_plot), '--b', label='q$_E$')
+        plt.semilogy(Dt_ratio_plot, q_0_fun(Dt_ratio_plot), '--r', label='q$_0$')
+        plt.semilogy(Dt_ratio_plot, Corradi(Dt_ratio_plot)[0], 'orange', label='Corradi q$_c$')
+        plt.axvline(x = Dt_Crit_Ratio, color = 'black', linewidth = '3', label = 'Critical Slenderness')
+        plt.axvline(x = Current_Slenderness, color = 'green', linestyle='--', linewidth = '1.5', label = 'Current Vessel Slenderness')
+        plt.plot(Current_Slenderness, Corradi_vessel[1], 'og', label='Current Vessel Allowable Pressure q$_a$')
+        plt.fill_betweenx((0.1,max(q_E_fun(Dt_ratio_plot))), 0, Dt_Crit_Ratio, color='lightgreen', alpha=0.20, label='Plastic collapse dominated zone')
+        plt.fill_betweenx((0.1,max(q_E_fun(Dt_ratio_plot))), Dt_Crit_Ratio, 50, color='orange', alpha=0.15, label='Elastic instability dominated zone')
+        plt.xlabel("Geometrical Slenderness D/t")
+        plt.ylabel("Theoretical Limit Values (MPa)")
+        plt.title("Plastic Collapse and Buckling Curves")
+        plt.legend()
+        plt.grid()
+
+        plt.subplot(1,2,2)
+        plt.plot(Dt_ratio_plot, Corradi(Dt_ratio_plot)[3], 'k', label=r'Corradi $\mu$')
+        plt.xlabel("Geometrical Slenderness D/t")
+        plt.ylabel(r"Corradi $\mu$")
+        plt.title(r"$\mu$ coefficient - Corradi Procedure")
+        plt.legend()
+        plt.grid()
+        plt.tight_layout()
+        plt.savefig(plot_file_path)
+        if Collapse_pl_flag:
             plt.show()
+            plt.close()
+        elif not Collapse_pl_flag:
             plt.close()
             
     # ============================ 
