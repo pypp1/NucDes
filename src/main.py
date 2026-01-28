@@ -355,6 +355,7 @@ if not TS_flag:
     # ======================================
     # Plotting the stress profiles: Lamé
     # ======================================
+    os.makedirs(NTS_plots_directory_path, exist_ok=True)
     plot_file_path = os.path.join(NTS_plots_directory_path, "Stress Distribution in the cylinder wall - Lamé Solution.png")
     plt.figure(figsize=(15,10))
     plt.axvline(x = R_int, color='black', linewidth='3', label='Vessel Inner Surface')
