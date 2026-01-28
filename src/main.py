@@ -146,7 +146,7 @@ def simpcomp(f, a, b, N):
 # ======================================
 while True:
     try:
-        Def_P_flag = int(input("\n\033[33m\033[33mAssume default pressures (75 bar = 7.5 MPa)? (1: Yes, 0: No): \033[0m"))
+        Def_P_flag = int(input("\nAssume default pressures (75 bar = 7.5 MPa)? (1: Yes, 0: No): "))
         if Def_P_flag not in (0, 1):
             raise RuntimeError("\033[31mInvalid input! Please enter either 0 or 1.\033[0m")
         Def_P_flag = bool(Def_P_flag)
@@ -159,7 +159,7 @@ while True:
 if not Def_P_flag:
     P_int = float(input("\nSet the internal pressure (bar): "))
     P_int_MPa = P_int/10
-    P_cpp = float(input("Set the external pressure (bar): "))
+    P_cpp = float(input("\nSet the external pressure (bar): "))
     P_cpp_MPa = P_cpp/10
     
     # ======================================
@@ -167,7 +167,7 @@ if not Def_P_flag:
     # ======================================
     while P_int != P_cpp: #Asks for this here, because asking for it in the sigmaL function would mean having to input the value for every iteration
         try:
-            eps_choice = int(input("\n\033[33mEnter the stress/strain condition (1: Plane Stress, 0: Plane Strain): \033[0m"))
+            eps_choice = int(input("\nEnter the stress/strain condition (1: Plane Stress, 0: Plane Strain): "))
             if eps_choice not in (0, 1):
                 raise RuntimeError("\033[31mInvalid input! Please enter either 0 or 1.\033[0m")
             break  
@@ -181,7 +181,7 @@ if not Def_P_flag:
 # ======================================
 while True:
     try:
-        q_0_flag = int(input("\n\033[33mDo you want to account for the presence of the volumetric heat source q0 inside the vessel's wall? (1: Yes, 0: No): \033[0m"))
+        q_0_flag = int(input("\nDo you want to account for the presence of the volumetric heat source q0 inside the vessel's wall? (1: Yes, 0: No): "))
         if q_0_flag not in (0, 1):
             raise RuntimeError("\033[31mInvalid input! Please enter either 0 or 1.\033[0m")
         q_0_flag = bool(q_0_flag)
@@ -197,7 +197,7 @@ while True:
 if q_0_flag:
     while True:
         try:
-            TS_flag = int(input("\n\033[33mDo you want to consider the presence of a thermal shield between the barrel and the vessel? (1: Yes, 0: No): \033[0m"))
+            TS_flag = int(input("\nDo you want to consider the presence of a thermal shield between the barrel and the vessel? (1: Yes, 0: No): "))
             if TS_flag not in (0, 1):
                 raise RuntimeError("\033[31mInvalid input! Please enter either 0 or 1.\033[0m")
             TS_flag = bool(TS_flag)
@@ -260,7 +260,7 @@ if not TS_flag:
     if Mar_criterion > 5:
         while True:
             try:
-                Mariotte_flag = int(input("\n\033[33mWith an initial thickness value of %.3f m, the vessel can be considered thin. Are you interested in visualizing the Mariotte solution for stress? (1: Yes, 0: No): \033[0m" %t))
+                Mariotte_flag = int(input("\nWith an initial thickness value of %.3f m, the vessel can be considered thin. Are you interested in visualizing the Mariotte solution for stress? (1: Yes, 0: No): " %t))
                 if Mariotte_flag not in (0, 1):
                     raise RuntimeError("\033[31mInvalid input! Please enter either 0 or 1.\033[0m")
                 Mariotte_flag = bool(Mariotte_flag)
@@ -338,7 +338,7 @@ if not TS_flag:
     if Mariotte_flag:
         while True:
             try:
-                Lame_flag = int(input("\n\033[33mThe Mariotte solution for a thin cylinder has been visualized. Are you interested in visualizing the more general Lamé solution? (1: Yes, 0: No): \033[0m"))
+                Lame_flag = int(input("\nThe Mariotte solution for a thin cylinder has been visualized. Are you interested in visualizing the more general Lamé solution? (1: Yes, 0: No): "))
                 if Lame_flag not in (0, 1):
                     raise RuntimeError("\033[31mInvalid input! Please enter either 0 or 1.\033[0m")
                 Lame_flag = bool(Lame_flag)
@@ -394,7 +394,7 @@ if not TS_flag:
         # ======================================
         while True:
             try:
-                hs_flag = int(input("\n\033[33mDo you want to visualize the volumetric heat source q0 inside the vessel's wall? (1: Yes, 0: No): \033[0m"))
+                hs_flag = int(input("\nDo you want to visualize the volumetric heat source q0 inside the vessel's wall? (1: Yes, 0: No): "))
                 if hs_flag not in (0, 1):
                     raise RuntimeError("\033[31mInvalid input! Please enter either 0 or 1.\033[0m")
                 hs_flag = bool(hs_flag)
@@ -445,7 +445,7 @@ if not TS_flag:
     # ======================================
     while True:
         try:
-            Disc_flag = int(input("\033[33mDo you want to adopt a discretization approach along z? (1: Yes, 0: No): \033[0m"))
+            Disc_flag = int(input("Do you want to adopt a discretization approach along z? (1: Yes, 0: No): "))
             if Disc_flag not in (0, 1):
                 raise RuntimeError("\033[31mInvalid input! Please enter either 0 or 1.\033[0m")
             Disc_flag = bool(Disc_flag)
@@ -459,10 +459,10 @@ if not TS_flag:
     # 1D Approach: no discretization along z
     # ======================================
     if not Disc_flag:
-        print("No discretization along z. Assuming constant temperature of the primary fluid T1.")
+        print("\033[34mNo discretization along z. Assuming constant temperature of the primary fluid T1.\033[0m")
         while True:
             try:
-                T1_choice = int(input("\n\033[33mWhat temperature do you want to use as T1 to compute C1 and C2? (0: T_in, 1: T_in + 10%, 2: T_in + 20%, 3: T_avg, 4: T_out_avg): \033[0m"))
+                T1_choice = int(input("\nWhat temperature do you want to use as T1 to compute C1 and C2? (0: T_in, 1: T_in + 10%, 2: T_in + 20%, 3: T_avg, 4: T_out_avg): "))
                 if T1_choice not in (0, 1, 2, 3, 4):
                     raise RuntimeError("Invalid input! Please enter one of the allowed values: 1, 2, 3, 4.")
                 break  
@@ -472,7 +472,7 @@ if not TS_flag:
                 print(e)
         while True:
             try:
-                adiab_flag = int(input("\033[33mApply Adiabatic Outer Wall approximation? (1: Yes, 0: No): \033[0m"))
+                adiab_flag = int(input("Apply Adiabatic Outer Wall approximation? (1: Yes, 0: No): "))
                 if adiab_flag not in (0, 1):
                     raise RuntimeError("\033[31mInvalid input! Please enter either 0 or 1.\033[0m")
                 adiab_flag = bool(adiab_flag)
@@ -544,7 +544,7 @@ if not TS_flag:
         # ======================================
         while True:
             try:
-                T_pl_flag = int(input("\n\033[33mDo you want to visualize the T profile across the vessel's wall? (1: Yes, 0: No): \033[0m"))
+                T_pl_flag = int(input("\nDo you want to visualize the T profile across the vessel's wall? (1: Yes, 0: No): "))
                 if T_pl_flag not in (0, 1):
                     raise RuntimeError("\033[31mInvalid input! Please enter either 0 or 1.\033[0m")
                 T_pl_flag = bool(T_pl_flag)
@@ -648,7 +648,7 @@ if not TS_flag:
         # ======================================
         while True:
             try:
-                sigma_th_pl_flag = int(input("\n\033[33mDo you want to visualize a plot of the thermal stress profiles in the vessel? (1: Yes, 0: No): \033[0m"))
+                sigma_th_pl_flag = int(input("\nDo you want to visualize a plot of the thermal stress profiles in the vessel? (1: Yes, 0: No): "))
                 if sigma_th_pl_flag not in (0, 1):
                     raise RuntimeError("\033[31mInvalid input! Please enter either 0 or 1.\033[0m")
                 sigma_th_pl_flag = bool(sigma_th_pl_flag)
@@ -720,7 +720,7 @@ if not TS_flag:
         # ======================================
         while True:
             try:
-                des_pl_flag = int(input("\n\033[33mDo you want to visualize a plot of the design curves and the maximum thermal stress in the vessel? (1: Yes, 0: No): \033[0m"))
+                des_pl_flag = int(input("\nDo you want to visualize a plot of the design curves and the maximum thermal stress in the vessel? (1: Yes, 0: No): "))
                 if des_pl_flag not in (0, 1):
                     raise RuntimeError("\033[31mInvalid input! Please enter either 0 or 1.\033[0m")
                 des_pl_flag = bool(des_pl_flag)
@@ -812,7 +812,7 @@ if not TS_flag:
         # ======================================
         while True:
             try:
-                Interp_pl_flag = int(input("\n\033[33mDo you want to visualize a plot of the Yield Stress and Stress Intensity as given by ASME for the vessel? (1: Yes, 0: No): \033[0m"))
+                Interp_pl_flag = int(input("\nDo you want to visualize a plot of the Yield Stress and Stress Intensity as given by ASME for the vessel? (1: Yes, 0: No): "))
                 if Interp_pl_flag not in (0, 1):
                     raise RuntimeError("\033[31mInvalid input! Please enter either 0 or 1.\033[0m")
                 Interp_pl_flag = bool(Interp_pl_flag)
@@ -867,7 +867,7 @@ if not TS_flag:
         if Mar_criterion > 5:
             while True:
                 try:
-                    ThinTubes_flag = int(input("\n\033[33mThe vessel's wall can be considered thin. Are you interested in the thin tube limits for Elastic Instability and Plastic Collapse? (1: Yes, 0: No): \033[0m"))
+                    ThinTubes_flag = int(input("\nThe vessel's wall can be considered thin. Are you interested in the thin tube limits for Elastic Instability and Plastic Collapse? (1: Yes, 0: No): "))
                     if ThinTubes_flag not in (0, 1):
                         raise RuntimeError("\033[31mInvalid input! Please enter either 0 or 1.\033[0m")
                     ThinTubes_flag = bool(ThinTubes_flag)
@@ -893,7 +893,7 @@ if not TS_flag:
         if ThinTubes_flag:
             while True:
                 try:
-                    Corradi_flag = int(input("\n\033[33mThe thin tube limits were adopted. Are you interested in the more general Corradi Design Procedure? (1: Yes, 0: No): \033[0m"))
+                    Corradi_flag = int(input("\nThe thin tube limits were adopted. Are you interested in the more general Corradi Design Procedure? (1: Yes, 0: No): "))
                     if Corradi_flag not in (0, 1):
                         raise RuntimeError("\033[31mInvalid input! Please enter either 0 or 1.\033[0m")
                     Corradi_flag = bool(Corradi_flag)
@@ -973,7 +973,7 @@ if not TS_flag:
         if ThinTubes_flag and not Corradi_flag:
             while True:
                 try:
-                    Collapse_pl_flag = int(input("\n\033[33mDo you want to visualize the buckling and plastic collapse curves for thin and thick tubes? (1: Yes, 0: No): \033[0m"))
+                    Collapse_pl_flag = int(input("\nDo you want to visualize the buckling and plastic collapse curves for thin and thick tubes? (1: Yes, 0: No): "))
                     if Collapse_pl_flag not in (0, 1):
                         raise RuntimeError("\033[31mInvalid input! Please enter either 0 or 1.\033[0m")
                     Collapse_pl_flag = bool(Collapse_pl_flag)
@@ -997,8 +997,8 @@ if not TS_flag:
             plt.axvline(x = Dt_Crit_Ratio, color = 'black', linewidth = '3', label = 'Critical Slenderness')
             plt.axvline(x = Current_Slenderness, color = 'green', linestyle='--', linewidth = '1.5', label = 'Current Vessel Slenderness')
             plt.plot(Current_Slenderness, Corradi_vessel[1], 'og', label='Current Vessel Allowable Pressure q$_a$')
-            plt.fill_betweenx((0.1,max(q_E_fun(Dt_ratio_plot))), 0, Dt_Crit_Ratio, color='lightgreen', alpha=0.20, label='Plastic collapse dominated zone')
-            plt.fill_betweenx((0.1,max(q_E_fun(Dt_ratio_plot))), Dt_Crit_Ratio, 50, color='orange', alpha=0.15, label='Elastic instability dominated zone')
+            plt.fill_betweenx((0.1,max(q_E_fun(Dt_ratio_plot))), 0, Dt_Crit_Ratio, color='lightgreen', alpha=0.40, label='Plastic collapse dominated zone')
+            plt.fill_betweenx((0.1,max(q_E_fun(Dt_ratio_plot))), Dt_Crit_Ratio, 50, color='orange', alpha=0.30, label='Elastic instability dominated zone')
             plt.xlabel("Geometrical Slenderness D/t")
             plt.ylabel("Theoretical Limit Values (MPa)")
             plt.title("Plastic Collapse and Buckling Curves")
@@ -1014,7 +1014,7 @@ if not TS_flag:
         elif ThinTubes_flag and Corradi_flag:
             while True:
                 try:
-                    Collapse_pl_flag = int(input("\n\033[33mDo you want to visualize the buckling and plastic collapse curves for thin and thick tubes and the Corradi curve? (1: Yes, 0: No): \033[0m"))
+                    Collapse_pl_flag = int(input("\nDo you want to visualize the buckling and plastic collapse curves for thin and thick tubes and the Corradi curve? (1: Yes, 0: No): "))
                     if Collapse_pl_flag not in (0, 1):
                         raise RuntimeError("\033[31mInvalid input! Please enter either 0 or 1.\033[0m")
                     Collapse_pl_flag = bool(Collapse_pl_flag)
@@ -1040,8 +1040,8 @@ if not TS_flag:
             plt.axvline(x = Dt_Crit_Ratio, color = 'black', linewidth = '3', label = 'Critical Slenderness')
             plt.axvline(x = Current_Slenderness, color = 'green', linestyle='--', linewidth = '1.5', label = 'Current Vessel Slenderness')
             plt.plot(Current_Slenderness, Corradi_vessel[1], 'og', label='Current Vessel Allowable Pressure q$_a$')
-            plt.fill_betweenx((0.1,max(q_E_fun(Dt_ratio_plot))), 0, Dt_Crit_Ratio, color='lightgreen', alpha=0.20, label='Plastic collapse dominated zone')
-            plt.fill_betweenx((0.1,max(q_E_fun(Dt_ratio_plot))), Dt_Crit_Ratio, 50, color='orange', alpha=0.15, label='Elastic instability dominated zone')
+            plt.fill_betweenx((0.1,max(q_E_fun(Dt_ratio_plot))), 0, Dt_Crit_Ratio, color='lightgreen', alpha=0.40, label='Plastic collapse dominated zone')
+            plt.fill_betweenx((0.1,max(q_E_fun(Dt_ratio_plot))), Dt_Crit_Ratio, 50, color='orange', alpha=0.30, label='Elastic instability dominated zone')
             plt.xlabel("Geometrical Slenderness D/t")
             plt.ylabel("Theoretical Limit Values (MPa)")
             plt.title("Plastic Collapse and Buckling Curves")
@@ -1162,8 +1162,8 @@ if not TS_flag:
             output_lines.append("Vessel max ovality W: %.5f = %.3f%%" %(W,W*100))
             output_lines.append("Maximum permissible deviation from theoretical form for the vessel according to NB-4221.2: e = %.3f m" %(0.3*t))
             output_lines.append("Maximum difference in cross-sectional diameters: %.3f mm" %DeltaD_max)
-            output_lines.append("\n============================================================================================================================")
             if isAbove:
+                output_lines.append("\n============================================================================================================================")
                 output_lines.append("\nThe current vessel wall thickness is equal to or greater than the minimum thickness required under internal pressure: %.3f m" %t_min)
                 output_lines.append("\n============================================================================================================================")
             elif not isAbove:
@@ -1289,13 +1289,13 @@ if not TS_flag:
             elif not flag_primsec and not flag_prim:
                 output_lines.append("\nAccording to Lamé:") 
                 output_lines.append("Maximum absolute value of the total radial stress: %.3f MPa\nMaximum absolute value of the total hoop stress: %.3f MPa\nMaximum absolute value of the total axial stress: %.3f MPa" %(max(abs(sigma_r_totL)),max(abs(sigma_t_totL)),max(abs(sigma_z_totL))))
-                output_lines.append("\nAll are lower than 3Sm = %.3f MPa" %(3*Stress_Intensity))         
+                output_lines.append("All are lower than 3Sm = %.3f MPa" %(3*Stress_Intensity))         
                 output_lines.append("\nMaximum value of the primary radial stress: %.3f MPa\nMaximum value of the primary hoop stress: %.3f MPa\nPrimary axial stress: %.3f MPa" %(max(sigma_rL),max(sigma_tL),sigma_zL))
                 output_lines.append("\nAll are lower than Sm = %.3f MPa" %Stress_Intensity)
                 output_lines.append("\n============================================================================================================================")
                 output_lines.append("\nAccording to Mariotte:")
                 output_lines.append("Maximum absolute value of the total radial stress: %.3f MPa\nMaximum absolute value of the total hoop stress: %.3f MPa\nMaximum absolute value of the total axial stress: %.3f MPa" %(max(abs(sigma_r_totM)),max(abs(sigma_t_totM)),max(abs(sigma_z_totM))))
-                output_lines.append("\nAll are lower than 3Sm = %.3f MPa" %(3*Stress_Intensity)) 
+                output_lines.append("All are lower than 3Sm = %.3f MPa" %(3*Stress_Intensity)) 
                 output_lines.append("\nPrimary radial stress: %.3f MPa\nPrimary hoop stress: %.3f MPa\nPrimary axial stress: %.3f MPa" %(sigma_rM,sigma_tM,sigma_zM))
                 output_lines.append("\nAll are lower than Sm = %.3f MPa" %Stress_Intensity)
 
@@ -1369,7 +1369,7 @@ if not TS_flag:
         T_z = np.linspace(T_in, T_out_avg, dz)
         while True:
             try:
-                adiab_flag = int(input("\n\033[33mApply Adiabatic Outer Wall approximation? (1: Yes, 0: No): \033[0m"))
+                adiab_flag = int(input("\nApply Adiabatic Outer Wall approximation? (1: Yes, 0: No): "))
                 if adiab_flag not in (0, 1):
                     raise RuntimeError("\033[31mInvalid input! Please enter either 0 or 1.\033[0m")
                 adiab_flag = bool(adiab_flag)
@@ -1406,7 +1406,7 @@ if not TS_flag:
                 T_vessel_avg_arr[i] = (1 / t) * integrate.quad(T_vessel_r_lamb, R_int, R_ext)[0]                                                       # integrate the scalar function over radius (returns scalar)
                 T_vessel_max_arr[i] = np.max(T_vessel_r[i, :])
                 r_T_vessel_max_arr[i] = r[np.argmax(T_vessel_r[i, :])]
-                print("\033[33mprogress: %.3i/%.3i\033[0m" %(i, dz))
+                print("progress: %.3i/%.3i" %(i, dz))
                 
                 # ======================================
                 # Thermal stresses computation
@@ -1581,7 +1581,7 @@ elif TS_flag:
     if Mar_criterion > 5:
         while True:
             try:
-                Mariotte_flag = int(input("\n\033[33mWith an initial thickness value of %.3f m, the vessel can be considered thin. Are you interested in visualizing the Mariotte solution for stress? (1: Yes, 0: No): \033[0m" %t))
+                Mariotte_flag = int(input("\nWith an initial thickness value of %.3f m, the vessel can be considered thin. Are you interested in visualizing the Mariotte solution for stress? (1: Yes, 0: No): " %t))
                 if Mariotte_flag not in (0, 1):
                     raise RuntimeError("\033[31mInvalid input! Please enter either 0 or 1.\033[0m")
                 Mariotte_flag = bool(Mariotte_flag)
@@ -1661,7 +1661,7 @@ elif TS_flag:
     if Mariotte_flag:
         while True:
             try:
-                Lame_flag = int(input("\n\033[33mThe Mariotte solution for a thin cylinder has been visualized. Are you interested in visualizing the more general Lamé solution? (1: Yes, 0: No): \033[0m"))
+                Lame_flag = int(input("\nThe Mariotte solution for a thin cylinder has been visualized. Are you interested in visualizing the more general Lamé solution? (1: Yes, 0: No): "))
                 if Lame_flag not in (0, 1):
                     raise RuntimeError("\033[31mInvalid input! Please enter either 0 or 1.\033[0m")
                 Lame_flag = bool(Lame_flag)
@@ -1768,7 +1768,7 @@ elif TS_flag:
         
         while abs(h_1_int - h_1_ext) > eps:
             counter_h1 += 1
-            print("\033[33mIteration no. %d\033[0m" %counter_h1)
+            print("Iteration no. %d" %counter_h1)
             if counter_h1 > N_max_h1:
                 print("\033[31mExceeded maximum number of iterations: %d. Exiting the loop.\033[0m" %N_max_h1)
                 break
@@ -1811,7 +1811,7 @@ elif TS_flag:
     print("\033[34mNo discretization along z. Assuming constant temperature of the primary fluid T1.\033[0m")
     while True:
         try:
-            T1_choice = int(input("\n\033[33mWhat temperature do you want to use as T1 to compute C1 and C2? (0: T_in, 1: T_in + 10%, 2: T_in + 20%, 3: T_avg, 4: T_out_avg): \033[0m"))
+            T1_choice = int(input("\nWhat temperature do you want to use as T1 to compute C1 and C2? (0: T_in, 1: T_in + 10%, 2: T_in + 20%, 3: T_avg, 4: T_out_avg): "))
             if T1_choice not in (0, 1, 2, 3, 4):
                 raise RuntimeError("\033[31mInvalid input! Please enter one of the allowed values: 1, 2, 3, 4.\033[0m")
             break  
@@ -1821,7 +1821,7 @@ elif TS_flag:
             print(e)
     while True:
         try:
-            adiab_flag = int(input("\033[33mApply Adiabatic Outer Wall approximation? (1: Yes, 0: No): \033[0m"))
+            adiab_flag = int(input("Apply Adiabatic Outer Wall approximation? (1: Yes, 0: No): "))
             if adiab_flag not in (0, 1):
                 raise RuntimeError("\033[31mInvalid input! Please enter either 0 or 1.\033[0m")
             adiab_flag = bool(adiab_flag)
@@ -1867,7 +1867,7 @@ elif TS_flag:
     while not final_flag:
         t_shield += 0.001
         counter += 1
-        print("\033[33mIteration no. %d\033[0m" %counter)
+        print("Iteration no. %d" %counter)
         if counter > N_max:
             print("\033[31mExceeded maximum number of iterations: %d. Exiting the loop.\033[0m" %N_max)
             break
@@ -2401,7 +2401,7 @@ elif TS_flag:
     # ======================================
     while True:
         try:
-            hs_flag = int(input("\n\033[33mDo you want to visualize the volumetric heat source q0 inside the vessel's wall and in the thermal shield? (1: Yes, 0: No): \033[0m"))
+            hs_flag = int(input("\nDo you want to visualize the volumetric heat source q0 inside the vessel's wall and in the thermal shield? (1: Yes, 0: No): "))
             if hs_flag not in (0, 1):
                 raise RuntimeError("\033[31mInvalid input! Please enter either 0 or 1.\033[0m")
             hs_flag = bool(hs_flag)
@@ -2463,7 +2463,7 @@ elif TS_flag:
     # ======================================
     while True:
         try:
-            T_pl_flag = int(input("\n\033[33mDo you want to visualize the T profile across the vessel's wall and the thermal shield? (1: Yes, 0: No): \033[0m"))
+            T_pl_flag = int(input("\nDo you want to visualize the T profile across the vessel's wall and the thermal shield? (1: Yes, 0: No): "))
             if T_pl_flag not in (0, 1):
                 raise RuntimeError("\033[31mInvalid input! Please enter either 0 or 1.\033[0m")
             T_pl_flag = bool(T_pl_flag)
@@ -2577,7 +2577,7 @@ elif TS_flag:
     # ======================================
     while True:
         try:
-            sigma_th_pl_flag = int(input("\n\033[33mDo you want to visualize a plot of the thermal stress profiles in the vessel and in the thermal shield? (1: Yes, 0: No): \033[0m"))
+            sigma_th_pl_flag = int(input("\nDo you want to visualize a plot of the thermal stress profiles in the vessel and in the thermal shield? (1: Yes, 0: No): "))
             if sigma_th_pl_flag not in (0, 1):
                 raise RuntimeError("\033[31mInvalid input! Please enter either 0 or 1.\033[0m")
             simga_th_pl_flag = bool(sigma_th_pl_flag)
@@ -2641,7 +2641,7 @@ elif TS_flag:
     # ======================================
     while True:
         try:
-            des_pl_flag = int(input("\n\033[33mDo you want to visualize a plot of the design curves and the maximum thermal stress in the vessel and in the thermal shield? (1: Yes, 0: No): \033[0m"))
+            des_pl_flag = int(input("\nDo you want to visualize a plot of the design curves and the maximum thermal stress in the vessel and in the thermal shield? (1: Yes, 0: No): "))
             if des_pl_flag not in (0, 1):
                 raise RuntimeError("\033[31mInvalid input! Please enter either 0 or 1.\033[0m")
             des_pl_flag = bool(des_pl_flag)
@@ -2677,7 +2677,7 @@ elif TS_flag:
     # ======================================
     while True:
         try:
-            Interp_pl_flag = int(input("\n\033[33mDo you want to visualize a plot of the Yield Stress and Stress Intensity as given by ASME for both the vessel and the thermal shield? (1: Yes, 0: No): \033[0m"))
+            Interp_pl_flag = int(input("\nDo you want to visualize a plot of the Yield Stress and Stress Intensity as given by ASME for both the vessel and the thermal shield? (1: Yes, 0: No): "))
             if Interp_pl_flag not in (0, 1):
                 raise RuntimeError("\033[31mInvalid input! Please enter either 0 or 1.\033[0m")
             Interp_pl_flag = bool(Interp_pl_flag)
@@ -2737,7 +2737,7 @@ elif TS_flag:
     if R_int/t > 5:
         while True:
             try:
-                ThinTubes_flag = int(input("\n\033[33mWith a thickness value of %.3f m, the vessel can be considered thin. Are you interested in the thin tube limits for Elastic Instability and Plastic Collapse? (1: Yes, 0: No): \033[0m" %t))
+                ThinTubes_flag = int(input("\nWith a thickness value of %.3f m, the vessel can be considered thin. Are you interested in the thin tube limits for Elastic Instability and Plastic Collapse? (1: Yes, 0: No): " %t))
                 if ThinTubes_flag not in (0, 1):
                     raise RuntimeError("\033[31mInvalid input! Please enter either 0 or 1.\033[0m")
                 ThinTubes_flag = bool(ThinTubes_flag)
@@ -2761,7 +2761,7 @@ elif TS_flag:
     if ThinTubes_flag:
         while True:
             try:
-                Corradi_flag = int(input("\n\033[33mThe thin tube limits were adopted. Are you interested in the more general Corradi Design Procedure? (1: Yes, 0: No): \033[0m"))
+                Corradi_flag = int(input("\nThe thin tube limits were adopted. Are you interested in the more general Corradi Design Procedure? (1: Yes, 0: No): "))
                 if Corradi_flag not in (0, 1):
                     raise RuntimeError("\033[31mInvalid input! Please enter either 0 or 1.\033[0m")
                 Corradi_flag = bool(Corradi_flag)
@@ -2777,7 +2777,7 @@ elif TS_flag:
             # ============================
             while True:
                 try:
-                    Collapse_pl_flag = int(input("\n\033[33mDo you want to visualize the buckling and plastic collapse curves for thin and thick tubes? (1: Yes, 0: No): \033[0m"))
+                    Collapse_pl_flag = int(input("\nDo you want to visualize the buckling and plastic collapse curves for thin and thick tubes? (1: Yes, 0: No): "))
                     if Collapse_pl_flag not in (0, 1):
                         raise RuntimeError("\033[31mInvalid input! Please enter either 0 or 1.\033[0m")
                     Collapse_pl_flag = bool(Collapse_pl_flag)
@@ -2801,8 +2801,8 @@ elif TS_flag:
             plt.axvline(x = Dt_Crit_Ratio, color = 'black', linewidth = '3', label = 'Critical Slenderness')
             plt.axvline(x = Current_Slenderness, color = 'green', linestyle='--', linewidth = '1.5', label = 'Current Vessel Slenderness')
             plt.plot(Current_Slenderness, Corradi_vessel[1], 'og', label='Current Vessel Allowable Pressure q$_a$')
-            plt.fill_betweenx((0.1,max(q_E_fun(Dt_ratio_plot))), 0, Dt_Crit_Ratio, color='lightgreen', alpha=0.20, label='Plastic collapse dominated zone')
-            plt.fill_betweenx((0.1,max(q_E_fun(Dt_ratio_plot))), Dt_Crit_Ratio, 50, color='orange', alpha=0.15, label='Elastic instability dominated zone')
+            plt.fill_betweenx((0.1,max(q_E_fun(Dt_ratio_plot))), 0, Dt_Crit_Ratio, color='lightgreen', alpha=0.40, label='Plastic collapse dominated zone')
+            plt.fill_betweenx((0.1,max(q_E_fun(Dt_ratio_plot))), Dt_Crit_Ratio, 50, color='orange', alpha=0.30, label='Elastic instability dominated zone')
             plt.xlabel("Geometrical Slenderness D/t")
             plt.ylabel("Theoretical Limit Values (MPa)")
             plt.title("Plastic Collapse and Buckling Curves")
@@ -2818,7 +2818,7 @@ elif TS_flag:
         elif Corradi_flag:
             while True:
                 try:
-                    Collapse_pl_flag = int(input("\n\033[33mDo you want to visualize the buckling and plastic collapse curves for thin and thick tubes and the Corradi curve? (1: Yes, 0: No): \033[0m"))
+                    Collapse_pl_flag = int(input("\nDo you want to visualize the buckling and plastic collapse curves for thin and thick tubes and the Corradi curve? (1: Yes, 0: No): "))
                     if Collapse_pl_flag not in (0, 1):
                         raise RuntimeError("\033[31mInvalid input! Please enter either 0 or 1.\033[0m")
                     Collapse_pl_flag = bool(Collapse_pl_flag)
@@ -2845,8 +2845,8 @@ elif TS_flag:
             plt.axvline(x = Dt_Crit_Ratio, color = 'black', linewidth = '3', label = 'Critical Slenderness')
             plt.axvline(x = Current_Slenderness, color = 'green', linestyle='--', linewidth = '1.5', label = 'Current Vessel Slenderness')
             plt.plot(Current_Slenderness, Corradi_vessel[1], 'og', label='Current Vessel Allowable Pressure q$_a$')
-            plt.fill_betweenx((0.1,max(q_E_fun(Dt_ratio_plot))), 0, Dt_Crit_Ratio, color='lightgreen', alpha=0.20, label='Plastic collapse dominated zone')
-            plt.fill_betweenx((0.1,max(q_E_fun(Dt_ratio_plot))), Dt_Crit_Ratio, 50, color='orange', alpha=0.15, label='Elastic instability dominated zone')
+            plt.fill_betweenx((0.1,max(q_E_fun(Dt_ratio_plot))), 0, Dt_Crit_Ratio, color='lightgreen', alpha=0.40, label='Plastic collapse dominated zone')
+            plt.fill_betweenx((0.1,max(q_E_fun(Dt_ratio_plot))), Dt_Crit_Ratio, 50, color='orange', alpha=0.30, label='Elastic instability dominated zone')
             plt.xlabel("Geometrical Slenderness D/t")
             plt.ylabel("Theoretical Limit Values (MPa)")
             plt.title("Plastic Collapse and Buckling Curves")
@@ -2873,7 +2873,7 @@ elif TS_flag:
         Corradi_flag = bool(1)
         while True:
             try:
-                Collapse_pl_flag = int(input("\n\033[33mDo you want to visualize the buckling and plastic collapse curves for thin and thick tubes and the Corradi curve? (1: Yes, 0: No): \033[0m"))
+                Collapse_pl_flag = int(input("\nDo you want to visualize the buckling and plastic collapse curves for thin and thick tubes and the Corradi curve? (1: Yes, 0: No): "))
                 if Collapse_pl_flag not in (0, 1):
                     raise RuntimeError("\033[31mInvalid input! Please enter either 0 or 1.\033[0m")
                 Collapse_pl_flag = bool(Collapse_pl_flag)
@@ -2897,8 +2897,8 @@ elif TS_flag:
         plt.axvline(x = Dt_Crit_Ratio, color = 'black', linewidth = '3', label = 'Critical Slenderness')
         plt.axvline(x = Current_Slenderness, color = 'green', linestyle='--', linewidth = '1.5', label = 'Current Vessel Slenderness')
         plt.plot(Current_Slenderness, Corradi_vessel[1], 'og', label='Current Vessel Allowable Pressure q$_a$')
-        plt.fill_betweenx((0.1,max(q_E_fun(Dt_ratio_plot))), 0, Dt_Crit_Ratio, color='lightgreen', alpha=0.20, label='Plastic collapse dominated zone')
-        plt.fill_betweenx((0.1,max(q_E_fun(Dt_ratio_plot))), Dt_Crit_Ratio, 50, color='orange', alpha=0.15, label='Elastic instability dominated zone')
+        plt.fill_betweenx((0.1,max(q_E_fun(Dt_ratio_plot))), 0, Dt_Crit_Ratio, color='lightgreen', alpha=0.40, label='Plastic collapse dominated zone')
+        plt.fill_betweenx((0.1,max(q_E_fun(Dt_ratio_plot))), Dt_Crit_Ratio, 50, color='orange', alpha=0.30, label='Elastic instability dominated zone')
         plt.xlabel("Geometrical Slenderness D/t")
         plt.ylabel("Theoretical Limit Values (MPa)")
         plt.title("Plastic Collapse and Buckling Curves")
