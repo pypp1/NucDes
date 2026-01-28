@@ -148,11 +148,11 @@ while True:
     try:
         Def_P_flag = int(input("\nAssume default pressures (75 bar = 7.5 MPa)? (1: Yes, 0: No): "))
         if Def_P_flag not in (0, 1):
-            raise RuntimeError("Invalid input! Please enter either 0 or 1.")
+            raise RuntimeError("\033[31mInvalid input! Please enter either 0 or 1.\033[0m")
         Def_P_flag = bool(Def_P_flag)
         break
     except ValueError:
-        print("Please enter a valid integer.")
+        print("\033[31mPlease enter a valid integer.\033[0m")
     except RuntimeError as e:
         print(e)
 
@@ -169,10 +169,10 @@ if not Def_P_flag:
         try:
             eps_choice = int(input("\nEnter the stress/strain condition (1: Plane Stress, 0: Plane Strain): "))
             if eps_choice not in (0, 1):
-                raise RuntimeError("Invalid input! Please enter either 0 or 1.")
+                raise RuntimeError("\033[31mInvalid input! Please enter either 0 or 1.\033[0m")
             break  
         except ValueError:
-            print("Please enter a valid integer.")
+            print("\033[31mPlease enter a valid integer.\033[0m")
         except RuntimeError as e:
             print(e)
     
@@ -183,11 +183,11 @@ while True:
     try:
         q_0_flag = int(input("\nDo you want to account for the presence of the volumetric heat source q0 inside the vessel's wall? (1: Yes, 0: No): "))
         if q_0_flag not in (0, 1):
-            raise RuntimeError("Invalid input! Please enter either 0 or 1.")
+            raise RuntimeError("\033[31mInvalid input! Please enter either 0 or 1.\033[0m")
         q_0_flag = bool(q_0_flag)
         break  
     except ValueError:
-        print("Please enter a valid integer.")
+        print("\033[31mPlease enter a valid integer.\033[0m")
     except RuntimeError as e:
         print(e)
         
@@ -199,11 +199,11 @@ if q_0_flag:
         try:
             TS_flag = int(input("\nDo you want to consider the presence of a thermal shield between the barrel and the vessel? (1: Yes, 0: No): "))
             if TS_flag not in (0, 1):
-                raise RuntimeError("Invalid input! Please enter either 0 or 1.")
+                raise RuntimeError("\033[31mInvalid input! Please enter either 0 or 1.\033[0m")
             TS_flag = bool(TS_flag)
             break  
         except ValueError:
-            print("Please enter a valid integer.")
+            print("\033[31mPlease enter a valid integer.\033[0m")
         except RuntimeError as e:
             print(e)
 elif not q_0_flag:
@@ -228,12 +228,12 @@ if not TS_flag:
             t = float(input("\nPlease enter the thickness of the vessel wall (m): "))
             if t <= 0 or t > 0.3:
                 if t <= 0:
-                    raise RuntimeError("Negative or null thickness! Please enter a positive value.")
+                    raise RuntimeError("\033[31mNegative or null thickness! Please enter a positive value.\033[0m")
                 elif t > 0.3:
-                    raise RuntimeError("Unfeasible thickness! Cylinders thicker than 30cm are currently not possible.")
+                    raise RuntimeError("\033[31mUnfeasible thickness! Cylinders thicker than 30cm are currently not possible.\033[0m")
             break
         except ValueError:
-            print("Please enter a valid float.")
+            print("\033[31mPlease enter a valid float.\033[0m")
         except RuntimeError as e:
             print(e)
 
@@ -262,11 +262,11 @@ if not TS_flag:
             try:
                 Mariotte_flag = int(input("\nWith an initial thickness value of %.3f m, the vessel can be considered thin. Are you interested in visualizing the Mariotte solution for stress? (1: Yes, 0: No): " %t))
                 if Mariotte_flag not in (0, 1):
-                    raise RuntimeError("Invalid input! Please enter either 0 or 1.")
+                    raise RuntimeError("\033[31mInvalid input! Please enter either 0 or 1.\033[0m")
                 Mariotte_flag = bool(Mariotte_flag)
                 break  
             except ValueError:
-                print("Please enter a valid integer.")
+                print("\033[31mPlease enter a valid integer.\033[0m")
             except RuntimeError as e:
                 print(e)
         sigma_M = sigmaM_func(R_int, P_int_MPa, t)
@@ -340,11 +340,11 @@ if not TS_flag:
             try:
                 Lame_flag = int(input("\nThe Mariotte solution for a thin cylinder has been visualized. Are you interested in visualizing the more general Lamé solution? (1: Yes, 0: No): "))
                 if Lame_flag not in (0, 1):
-                    raise RuntimeError("Invalid input! Please enter either 0 or 1.")
+                    raise RuntimeError("\033[31mInvalid input! Please enter either 0 or 1.\033[0m")
                 Lame_flag = bool(Lame_flag)
                 break  
             except ValueError:
-                print("Please enter a valid integer.")
+                print("\033[31mPlease enter a valid integer.\033[0m")
             except RuntimeError as e:
                 print(e)
 
@@ -396,11 +396,11 @@ if not TS_flag:
             try:
                 hs_flag = int(input("\nDo you want to visualize the volumetric heat source q0 inside the vessel's wall? (1: Yes, 0: No): "))
                 if hs_flag not in (0, 1):
-                    raise RuntimeError("Invalid input! Please enter either 0 or 1.")
+                    raise RuntimeError("\033[31mInvalid input! Please enter either 0 or 1.\033[0m")
                 hs_flag = bool(hs_flag)
                 break  
             except ValueError:
-                print("Please enter a valid integer.")
+                print("\033[31mPlease enter a valid integer.\033[0m")
             except RuntimeError as e:
                 print(e)
 
@@ -447,11 +447,11 @@ if not TS_flag:
         try:
             Disc_flag = int(input("Do you want to adopt a discretization approach along z? (1: Yes, 0: No): "))
             if Disc_flag not in (0, 1):
-                raise RuntimeError("Invalid input! Please enter either 0 or 1.")
+                raise RuntimeError("\033[31mInvalid input! Please enter either 0 or 1.\033[0m")
             Disc_flag = bool(Disc_flag)
             break  
         except ValueError:
-            print("Please enter a valid integer.")
+            print("\033[31mPlease enter a valid integer.\033[0m")
         except RuntimeError as e:
             print(e)
 
@@ -467,18 +467,18 @@ if not TS_flag:
                     raise RuntimeError("Invalid input! Please enter one of the allowed values: 1, 2, 3, 4.")
                 break  
             except ValueError:
-                print("Please enter a valid integer.")
+                print("\033[31mPlease enter a valid integer.\033[0m")
             except RuntimeError as e:
                 print(e)
         while True:
             try:
                 adiab_flag = int(input("Apply Adiabatic Outer Wall approximation? (1: Yes, 0: No): "))
                 if adiab_flag not in (0, 1):
-                    raise RuntimeError("Invalid input! Please enter either 0 or 1.")
+                    raise RuntimeError("\033[31mInvalid input! Please enter either 0 or 1.\033[0m")
                 adiab_flag = bool(adiab_flag)
                 break  
             except ValueError:
-                print("Please enter a valid integer.")
+                print("\033[31mPlease enter a valid integer.\033[0m")
             except RuntimeError as e:
                 print(e)
 
@@ -525,11 +525,11 @@ if not TS_flag:
                 try:
                     LogDelta_flag = int(input(prompt))
                     if LogDelta_flag not in (0, 1):
-                        raise RuntimeError("Invalid input! Please enter either 0 or 1.")
+                        raise RuntimeError("\033[31mInvalid input! Please enter either 0 or 1.\033[0m")
                     LogDelta_flag = bool(LogDelta_flag)
                     break  
                 except ValueError:
-                    print("Please enter a valid integer.")
+                    print("\033[31mPlease enter a valid integer.\033[0m")
                 except RuntimeError as e:
                     print(e)
             if LogDelta_flag == 1:
@@ -546,11 +546,11 @@ if not TS_flag:
             try:
                 T_pl_flag = int(input("\nDo you want to visualize the T profile across the vessel's wall? (1: Yes, 0: No): "))
                 if T_pl_flag not in (0, 1):
-                    raise RuntimeError("Invalid input! Please enter either 0 or 1.")
+                    raise RuntimeError("\033[31mInvalid input! Please enter either 0 or 1.\033[0m")
                 T_pl_flag = bool(T_pl_flag)
                 break  
             except ValueError:
-                print("Please enter a valid integer.")
+                print("\033[31mPlease enter a valid integer.\033[0m")
             except RuntimeError as e:
                 print(e)
                 
@@ -650,11 +650,11 @@ if not TS_flag:
             try:
                 sigma_th_pl_flag = int(input("\nDo you want to visualize a plot of the thermal stress profiles in the vessel? (1: Yes, 0: No): "))
                 if sigma_th_pl_flag not in (0, 1):
-                    raise RuntimeError("Invalid input! Please enter either 0 or 1.")
+                    raise RuntimeError("\033[31mInvalid input! Please enter either 0 or 1.\033[0m")
                 sigma_th_pl_flag = bool(sigma_th_pl_flag)
                 break  
             except ValueError:
-                print("Please enter a valid integer.")
+                print("\033[31mPlease enter a valid integer.\033[0m")
             except RuntimeError as e:
                 print(e)
 
@@ -722,11 +722,11 @@ if not TS_flag:
             try:
                 des_pl_flag = int(input("\nDo you want to visualize a plot of the design curves and the maximum thermal stress in the vessel? (1: Yes, 0: No): "))
                 if des_pl_flag not in (0, 1):
-                    raise RuntimeError("Invalid input! Please enter either 0 or 1.")
+                    raise RuntimeError("\033[31mInvalid input! Please enter either 0 or 1.\033[0m")
                 des_pl_flag = bool(des_pl_flag)
                 break  
             except ValueError:
-                print("Please enter a valid integer.")
+                print("\033[31mPlease enter a valid integer.\033[0m")
             except RuntimeError as e:
                 print(e)
 
@@ -754,7 +754,7 @@ if not TS_flag:
         # Yield Stress and Stress Intensity Data Interpolation
         # ============================
         T_des_vessel = T_vessel_avg                                                     #K
-        T_des_vessel_C = T_des_vessel - 273.15                                          #°C
+        T_des_vessel_C = 270 #T_des_vessel - 273.15                                          #°C
         p_yield = np.polyfit(T_thr, sigma_y, deg = len(T_thr)-1)
         p_intensity = np.polyfit(T_thr, sigma_in, deg = len(T_thr)-1)
         
@@ -814,11 +814,11 @@ if not TS_flag:
             try:
                 Interp_pl_flag = int(input("\nDo you want to visualize a plot of the Yield Stress and Stress Intensity as given by ASME for the vessel? (1: Yes, 0: No): "))
                 if Interp_pl_flag not in (0, 1):
-                    raise RuntimeError("Invalid input! Please enter either 0 or 1.")
+                    raise RuntimeError("\033[31mInvalid input! Please enter either 0 or 1.\033[0m")
                 Interp_pl_flag = bool(Interp_pl_flag)
                 break  
             except ValueError:
-                print("Please enter a valid integer.")
+                print("\033[31mPlease enter a valid integer.\033[0m")
             except RuntimeError as e:
                 print(e)
         
@@ -869,11 +869,11 @@ if not TS_flag:
                 try:
                     ThinTubes_flag = int(input("\nThe vessel's wall can be considered thin. Are you interested in the thin tube limits for Elastic Instability and Plastic Collapse? (1: Yes, 0: No): "))
                     if ThinTubes_flag not in (0, 1):
-                        raise RuntimeError("Invalid input! Please enter either 0 or 1.")
+                        raise RuntimeError("\033[31mInvalid input! Please enter either 0 or 1.\033[0m")
                     ThinTubes_flag = bool(ThinTubes_flag)
                     break  
                 except ValueError:
-                    print("Please enter a valid integer.")
+                    print("\033[31mPlease enter a valid integer.\033[0m")
                 except RuntimeError as e:
                     print(e)
 
@@ -895,11 +895,11 @@ if not TS_flag:
                 try:
                     Corradi_flag = int(input("\nThe thin tube limits were adopted. Are you interested in the more general Corradi Design Procedure? (1: Yes, 0: No): "))
                     if Corradi_flag not in (0, 1):
-                        raise RuntimeError("Invalid input! Please enter either 0 or 1.")
+                        raise RuntimeError("\033[31mInvalid input! Please enter either 0 or 1.\033[0m")
                     Corradi_flag = bool(Corradi_flag)
                     break  
                 except ValueError:
-                    print("Please enter a valid integer.")
+                    print("\033[31mPlease enter a valid integer.\033[0m")
                 except RuntimeError as e:
                     print(e)
             
@@ -921,10 +921,10 @@ if not TS_flag:
                 try:
                     s = float(input("Please enter a safety factor between 1.5 and 2 for the Corradi design procedure: "))
                     if s < 1.5 or s > 2:
-                        raise RuntimeError("Invalid input! Please enter a safety factor between 1.5 and 2.")
+                        raise RuntimeError("\033[31mInvalid input! Please enter a safety factor between 1.5 and 2.\033[0m")
                     break  
                 except ValueError:
-                    print("Please enter a valid float.")
+                    print("\033[31mPlease enter a valid float.\033[0m")
                 except RuntimeError as e:
                     print(e)
             
@@ -975,11 +975,11 @@ if not TS_flag:
                 try:
                     Collapse_pl_flag = int(input("\nDo you want to visualize the buckling and plastic collapse curves for thin and thick tubes? (1: Yes, 0: No): "))
                     if Collapse_pl_flag not in (0, 1):
-                        raise RuntimeError("Invalid input! Please enter either 0 or 1.")
+                        raise RuntimeError("\033[31mInvalid input! Please enter either 0 or 1.\033[0m")
                     Collapse_pl_flag = bool(Collapse_pl_flag)
                     break  
                 except ValueError:
-                    print("Please enter a valid integer.")
+                    print("\033[31mPlease enter a valid integer.\033[0m")
                 except RuntimeError as e:
                     print(e)
                 
@@ -1016,11 +1016,11 @@ if not TS_flag:
                 try:
                     Collapse_pl_flag = int(input("\nDo you want to visualize the buckling and plastic collapse curves for thin and thick tubes and the Corradi curve? (1: Yes, 0: No): "))
                     if Collapse_pl_flag not in (0, 1):
-                        raise RuntimeError("Invalid input! Please enter either 0 or 1.")
+                        raise RuntimeError("\033[31mInvalid input! Please enter either 0 or 1.\033[0m")
                     Collapse_pl_flag = bool(Collapse_pl_flag)
                     break  
                 except ValueError:
-                    print("Please enter a valid integer.")
+                    print("\033[31mPlease enter a valid integer.\033[0m")
                 except RuntimeError as e:
                     print(e)
 
@@ -1353,9 +1353,9 @@ if not TS_flag:
                 file.write(line + '\n')                                 # Add a newline for formatting in the text file
             shutil.move(NTS_plots_directory_path, case_directory_path)  # Move the plots directory into the case directory
             
-            print("\n\n\n\n############################################################################################################################")
-            print("Results have been saved at: %s" %case_directory_path)
-            print("############################################################################################################################")
+            print("\n\n\n\n\033[32m############################################################################################################################\033[0m")
+        print("\033[32mResults have been saved at: %s\033[0m" %case_directory_path)
+        print("\033[32m############################################################################################################################\033[0m")
             
     # ======================================
     # Discretization along z
@@ -1371,11 +1371,11 @@ if not TS_flag:
             try:
                 adiab_flag = int(input("\nApply Adiabatic Outer Wall approximation? (1: Yes, 0: No): "))
                 if adiab_flag not in (0, 1):
-                    raise RuntimeError("Invalid input! Please enter either 0 or 1.")
+                    raise RuntimeError("\033[31mInvalid input! Please enter either 0 or 1.\033[0m")
                 adiab_flag = bool(adiab_flag)
                 break  
             except ValueError:
-                print("Please enter a valid integer.")
+                print("\033[31mPlease enter a valid integer.\033[0m")
             except RuntimeError as e:
                 print(e)
 
@@ -1583,11 +1583,11 @@ elif TS_flag:
             try:
                 Mariotte_flag = int(input("\nWith an initial thickness value of %.3f m, the vessel can be considered thin. Are you interested in visualizing the Mariotte solution for stress? (1: Yes, 0: No): " %t))
                 if Mariotte_flag not in (0, 1):
-                    raise RuntimeError("Invalid input! Please enter either 0 or 1.")
+                    raise RuntimeError("\033[31mInvalid input! Please enter either 0 or 1.\033[0m")
                 Mariotte_flag = bool(Mariotte_flag)
                 break  
             except ValueError:
-                print("Please enter a valid integer.")
+                print("\033[31mPlease enter a valid integer.\033[0m")
             except RuntimeError as e:
                 print(e)
         sigma_M = sigmaM_func(R_int, P_int_MPa, t)
@@ -1663,11 +1663,11 @@ elif TS_flag:
             try:
                 Lame_flag = int(input("\nThe Mariotte solution for a thin cylinder has been visualized. Are you interested in visualizing the more general Lamé solution? (1: Yes, 0: No): "))
                 if Lame_flag not in (0, 1):
-                    raise RuntimeError("Invalid input! Please enter either 0 or 1.")
+                    raise RuntimeError("\033[31mInvalid input! Please enter either 0 or 1.\033[0m")
                 Lame_flag = bool(Lame_flag)
                 break  
             except ValueError:
-                print("Please enter a valid integer.")
+                print("\033[31mPlease enter a valid integer.\033[0m")
             except RuntimeError as e:
                 print(e)
 
@@ -1714,7 +1714,7 @@ elif TS_flag:
                 raise RuntimeError("Invalid input! Please enter either 0, 1, 2 or 3.")
             break  
         except ValueError:
-            print("Please enter a valid integer.")
+            print("\033[31mPlease enter a valid integer.\033[0m")
         except RuntimeError as e:
             print(e)
 
@@ -1723,10 +1723,10 @@ elif TS_flag:
             try:
                 D_shield_int = float(input("\nPlease enter the initial thermal shield inner diameter (m) to choose its position: "))
                 if (D_shield_int < D_barr_ext) or (D_shield_int/2 + t_shield_user) > D_vess_int/2:
-                    raise RuntimeError("The thermal shield is either starting inside the barrel or clipping inside the vessel.")
+                    raise RuntimeError("\033[31mThe thermal shield is either starting inside the barrel or clipping inside the vessel.\033[0m")
                 break  
             except ValueError:
-                print("Please enter a valid float.")
+                print("\033[31mPlease enter a valid float.\033[0m")
             except RuntimeError as e:
                 print(e)
         R_shield_int = D_shield_int/2
@@ -1813,21 +1813,21 @@ elif TS_flag:
         try:
             T1_choice = int(input("\nWhat temperature do you want to use as T1 to compute C1 and C2? (0: T_in, 1: T_in + 10%, 2: T_in + 20%, 3: T_avg, 4: T_out_avg): "))
             if T1_choice not in (0, 1, 2, 3, 4):
-                raise RuntimeError("Invalid input! Please enter one of the allowed values: 1, 2, 3, 4.")
+                raise RuntimeError("\033[31mInvalid input! Please enter one of the allowed values: 1, 2, 3, 4.\033[0m")
             break  
         except ValueError:
-            print("Please enter a valid integer.")
+            print("\033[31mPlease enter a valid integer.\033[0m")
         except RuntimeError as e:
             print(e)
     while True:
         try:
             adiab_flag = int(input("Apply Adiabatic Outer Wall approximation? (1: Yes, 0: No): "))
             if adiab_flag not in (0, 1):
-                raise RuntimeError("Invalid input! Please enter either 0 or 1.")
+                raise RuntimeError("\033[31mInvalid input! Please enter either 0 or 1.\033[0m")
             adiab_flag = bool(adiab_flag)
             break  
         except ValueError:
-            print("Please enter a valid integer.")
+            print("\033[31mPlease enter a valid integer.\033[0m")
         except RuntimeError as e:
             print(e)
 
@@ -1857,10 +1857,10 @@ elif TS_flag:
         try:
             s = float(input("Please enter a safety factor between 1.5 and 2 for the Corradi design procedure: "))
             if s < 1.5 or s > 2:
-                raise RuntimeError("Invalid input! Please enter a safety factor between 1.5 and 2.")
+                raise RuntimeError("\033[31mInvalid input! Please enter a safety factor between 1.5 and 2.\033[0m")
             break  
         except ValueError:
-            print("Please enter a valid float.")
+            print("\033[31mPlease enter a valid float.\033[0m")
         except RuntimeError as e:
             print(e)
 
@@ -2237,9 +2237,9 @@ elif TS_flag:
         # Yield Stress and Stress Intensity Data Interpolation
         # ============================
         T_des_vessel = T_vessel_avg                                                     #K  -   Check in the HARVEY/Thermomechanics Chapter how to choose the design T
-        T_des_vessel_C = T_des_vessel - 273.15                                          #°C
+        T_des_vessel_C = 270 #T_des_vessel - 273.15                                          #°C
         T_des_shield = T_shield_avg                                                     #K
-        T_des_shield_C = T_des_shield - 273.15                                          #°C
+        T_des_shield_C = 270 #T_des_shield - 273.15                                          #°C
 
         Yield_stress = Yield_CubicSpline(T_des_vessel_C)
         Stress_Intensity = Intensity_CubicSpline(T_des_vessel_C)
@@ -2403,11 +2403,11 @@ elif TS_flag:
         try:
             hs_flag = int(input("\nDo you want to visualize the volumetric heat source q0 inside the vessel's wall and in the thermal shield? (1: Yes, 0: No): "))
             if hs_flag not in (0, 1):
-                raise RuntimeError("Invalid input! Please enter either 0 or 1.")
+                raise RuntimeError("\033[31mInvalid input! Please enter either 0 or 1.\033[0m")
             hs_flag = bool(hs_flag)
             break  
         except ValueError:
-            print("Please enter a valid integer.")
+            print("\033[31mPlease enter a valid integer.\033[0m")
         except RuntimeError as e:
             print(e)
 
@@ -2465,11 +2465,11 @@ elif TS_flag:
         try:
             T_pl_flag = int(input("\nDo you want to visualize the T profile across the vessel's wall and the thermal shield? (1: Yes, 0: No): "))
             if T_pl_flag not in (0, 1):
-                raise RuntimeError("Invalid input! Please enter either 0 or 1.")
+                raise RuntimeError("\033[31mInvalid input! Please enter either 0 or 1.\033[0m")
             T_pl_flag = bool(T_pl_flag)
             break  
         except ValueError:
-            print("Please enter a valid integer.")
+            print("\033[31mPlease enter a valid integer.\033[0m")
         except RuntimeError as e:
             print(e)
             
@@ -2579,11 +2579,11 @@ elif TS_flag:
         try:
             sigma_th_pl_flag = int(input("\nDo you want to visualize a plot of the thermal stress profiles in the vessel and in the thermal shield? (1: Yes, 0: No): "))
             if sigma_th_pl_flag not in (0, 1):
-                raise RuntimeError("Invalid input! Please enter either 0 or 1.")
+                raise RuntimeError("\033[31mInvalid input! Please enter either 0 or 1.\033[0m")
             simga_th_pl_flag = bool(sigma_th_pl_flag)
             break  
         except ValueError:
-            print("Please enter a valid integer.")
+            print("\033[31mPlease enter a valid integer.\033[0m")
         except RuntimeError as e:
             print(e)
 
@@ -2643,11 +2643,11 @@ elif TS_flag:
         try:
             des_pl_flag = int(input("\nDo you want to visualize a plot of the design curves and the maximum thermal stress in the vessel and in the thermal shield? (1: Yes, 0: No): "))
             if des_pl_flag not in (0, 1):
-                raise RuntimeError("Invalid input! Please enter either 0 or 1.")
+                raise RuntimeError("\033[31mInvalid input! Please enter either 0 or 1.\033[0m")
             des_pl_flag = bool(des_pl_flag)
             break  
         except ValueError:
-            print("Please enter a valid integer.")
+            print("\033[31mPlease enter a valid integer.\033[0m")
         except RuntimeError as e:
             print(e)
 
@@ -2679,11 +2679,11 @@ elif TS_flag:
         try:
             Interp_pl_flag = int(input("\nDo you want to visualize a plot of the Yield Stress and Stress Intensity as given by ASME for both the vessel and the thermal shield? (1: Yes, 0: No): "))
             if Interp_pl_flag not in (0, 1):
-                raise RuntimeError("Invalid input! Please enter either 0 or 1.")
+                raise RuntimeError("\033[31mInvalid input! Please enter either 0 or 1.\033[0m")
             Interp_pl_flag = bool(Interp_pl_flag)
             break  
         except ValueError:
-            print("Please enter a valid integer.")
+            print("\033[31mPlease enter a valid integer.\033[0m")
         except RuntimeError as e:
             print(e)
     
@@ -2739,11 +2739,11 @@ elif TS_flag:
             try:
                 ThinTubes_flag = int(input("\nWith a thickness value of %.3f m, the vessel can be considered thin. Are you interested in the thin tube limits for Elastic Instability and Plastic Collapse? (1: Yes, 0: No): " %t))
                 if ThinTubes_flag not in (0, 1):
-                    raise RuntimeError("Invalid input! Please enter either 0 or 1.")
+                    raise RuntimeError("\033[31mInvalid input! Please enter either 0 or 1.\033[0m")
                 ThinTubes_flag = bool(ThinTubes_flag)
                 break  
             except ValueError:
-                print("Please enter a valid integer.")
+                print("\033[31mPlease enter a valid integer.\033[0m")
             except RuntimeError as e:
                 print(e)
 
@@ -2763,11 +2763,11 @@ elif TS_flag:
             try:
                 Corradi_flag = int(input("\nThe thin tube limits were adopted. Are you interested in the more general Corradi Design Procedure? (1: Yes, 0: No): "))
                 if Corradi_flag not in (0, 1):
-                    raise RuntimeError("Invalid input! Please enter either 0 or 1.")
+                    raise RuntimeError("\033[31mInvalid input! Please enter either 0 or 1.\033[0m")
                 Corradi_flag = bool(Corradi_flag)
                 break  
             except ValueError:
-                print("Please enter a valid integer.")
+                print("\033[31mPlease enter a valid integer.\033[0m")
             except RuntimeError as e:
                 print(e)
                 
@@ -2779,11 +2779,11 @@ elif TS_flag:
                 try:
                     Collapse_pl_flag = int(input("\nDo you want to visualize the buckling and plastic collapse curves for thin and thick tubes? (1: Yes, 0: No): "))
                     if Collapse_pl_flag not in (0, 1):
-                        raise RuntimeError("Invalid input! Please enter either 0 or 1.")
+                        raise RuntimeError("\033[31mInvalid input! Please enter either 0 or 1.\033[0m")
                     Collapse_pl_flag = bool(Collapse_pl_flag)
                     break  
                 except ValueError:
-                    print("Please enter a valid integer.")
+                    print("\033[31mPlease enter a valid integer.\033[0m")
                 except RuntimeError as e:
                     print(e)
             
@@ -2820,11 +2820,11 @@ elif TS_flag:
                 try:
                     Collapse_pl_flag = int(input("\nDo you want to visualize the buckling and plastic collapse curves for thin and thick tubes and the Corradi curve? (1: Yes, 0: No): "))
                     if Collapse_pl_flag not in (0, 1):
-                        raise RuntimeError("Invalid input! Please enter either 0 or 1.")
+                        raise RuntimeError("\033[31mInvalid input! Please enter either 0 or 1.\033[0m")
                     Collapse_pl_flag = bool(Collapse_pl_flag)
                     break  
                 except ValueError:
-                    print("Please enter a valid integer.")
+                    print("\033[31mPlease enter a valid integer.\033[0m")
                 except RuntimeError as e:
                     print(e)
             
@@ -2875,11 +2875,11 @@ elif TS_flag:
             try:
                 Collapse_pl_flag = int(input("\nDo you want to visualize the buckling and plastic collapse curves for thin and thick tubes and the Corradi curve? (1: Yes, 0: No): "))
                 if Collapse_pl_flag not in (0, 1):
-                    raise RuntimeError("Invalid input! Please enter either 0 or 1.")
+                    raise RuntimeError("\033[31mInvalid input! Please enter either 0 or 1.\033[0m")
                 Collapse_pl_flag = bool(Collapse_pl_flag)
                 break  
             except ValueError:
-                print("Please enter a valid integer.")
+                print("\033[31mPlease enter a valid integer.\033[0m")
             except RuntimeError as e:
                 print(e)
         
@@ -3355,6 +3355,6 @@ elif TS_flag:
             file.write(line + '\n')
         shutil.move(TS_plots_directory_path, case_directory_path)
         
-        print("\n\n\n\n############################################################################################################################")
-        print("Results have been saved at: %s" %case_directory_path)
-        print("############################################################################################################################")
+        print("\n\n\n\n\033[32m############################################################################################################################\033[0m")
+        print("\033[32mResults have been saved at: %s\033[0m" %case_directory_path)
+        print("\033[32m############################################################################################################################\033[0m")
