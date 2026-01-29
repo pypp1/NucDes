@@ -1075,7 +1075,7 @@ if not TS_flag:
         # ============================
         case_directory_name = []
         case_directory_name.append(f"t_{t}m")
-        case_directory_name.append(f"T_desV_{T_des_vessel_C}C")
+        case_directory_name.append(f"_T_desV_{T_des_vessel_C}C")
         if Def_P_flag:
             case_directory_name.append("_Def_P")
         else:
@@ -2935,8 +2935,8 @@ elif TS_flag:
     # ============================
     case_directory_name = []
     case_directory_name.append(f"t_{t}m")
-    case_directory_name.append(f"T_desV_{T_des_vessel_C}C")
-    case_directory_name.append(f"T_desS_{T_des_shield_C}C")
+    case_directory_name.append(f"_T_desV_{T_des_vessel_C}C")
+    case_directory_name.append(f"_T_desS_{T_des_shield_C}C")
     if Def_P_flag:
         case_directory_name.append("_Def_P")
     else:
@@ -3355,7 +3355,6 @@ elif TS_flag:
             output_lines.append("############################################################################################################################")
     
         for line in output_lines:
-            #print(line)
             file.write(line + '\n')
         shutil.move(TS_plots_directory_path, case_directory_path)
         
