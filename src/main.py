@@ -167,25 +167,27 @@ if not Def_P_flag:
     P_cpp = float(input("\nSet the external pressure (bar): "))
     P_cpp_MPa = P_cpp/10
     
-    # ======================================
-    # Stress/Strain Condition Input
-    # ======================================
-    while P_int != P_cpp: #Asks for this here, because asking for it in the sigmaL function would mean having to input the value for every iteration
-        try:
-            eps_choice = int(input("\nEnter the stress/strain condition (1: Plane Stress, 0: Plane Strain): "))
-            if eps_choice not in (0, 1):
-                raise RuntimeError("\033[31mInvalid input! Please enter either 0 or 1.\033[0m")
-            break  
-        except ValueError:
-            print("\033[31mPlease enter a valid integer.\033[0m")
-        except RuntimeError as e:
-            print(e)
+# ======================================
+# Stress/Strain Condition Input
+# ======================================
+while P_int != P_cpp: #Asks for this here, because asking for it in the sigmaL function would mean having to input the value for every iteration
+    try:
+        eps_choice = int(input("\nEnter the stress/strain condition (1: Plane Stress, 0: Plane Strain): "))
+        if eps_choice not in (0, 1):
+            raise RuntimeError("\033[31mInvalid input! Please enter either 0 or 1.\033[0m")
+        break  
+    except ValueError:
+        print("\033[31mPlease enter a valid integer.\033[0m")
+    except RuntimeError as e:
+        print(e)
 
-    if P_int != P_cpp:
-        if eps_choice == 1:                                                                                           #Plane Stress
-            print("\033[34mPlane stress has been assumed.\033[0m")
-        elif eps_choice == 0:
-            print("\033[34mPlane strain has been assumed.\033[0m")
+if P_int != P_cpp:
+    if eps_choice == 1:                                                                                           #Plane Stress
+        print("\033[34mPlane stress has been assumed.\033[0m")
+    elif eps_choice == 0:
+        print("\033[34mPlane strain has been assumed.\033[0m")
+elif P_int == P_cpp:
+    print("\033[34mInternal and external pressures are equal: hydrostatic stress condition is verified.\033[0m")
 
 # ======================================
 # Heat Source Check
@@ -1661,7 +1663,7 @@ elif TS_flag:
     # ============================ 
     # General Lamé Solution 
     # ============================
-    def sigmaL_func(r, P_int_MPa, P_cpp_MPa, verbose): #the "verbose" variable is used to avoid printing the hydrostatic stress condition information for every iteration of the thermal shield loop
+    def sigmaL_func(r, P_int_MPa, P_cpp_MPa):
         
         A = ((P_int_MPa*(R_int**2))-(P_cpp_MPa*(R_ext**2)))/((R_ext**2)-(R_int**2))
         B = (((R_int**2)*(R_ext**2))/((R_ext**2)-(R_int**2)))*(P_int_MPa-P_cpp_MPa)
@@ -1669,8 +1671,6 @@ elif TS_flag:
         sigma_tL = lambda r: A + B/(r**2)
 
         if P_int == P_cpp:
-            if verbose:
-                print("\n\033[34mInternal and external pressures are equal: hydrostatic stress condition is verified. Skipping.\033[0m")    #Hydrostatic Stress Condition
             eps_z_a = (2*nu-1)*rho_ii*P_cpp_MPa/E
             eps_z_b = (1-2*nu)*rho_i*P_int_MPa/E
 
@@ -1686,7 +1686,7 @@ elif TS_flag:
         sigma_zL_b = E*eps_z_b + 2*nu*rho_i*P_int_MPa   #b) P_cpp = 0
         return (sigma_rL(r), sigma_tL(r), sigma_zL_a + sigma_zL_b)              #Superposition Principle
 
-    sigma_L = sigmaL_func(r, P_int_MPa, P_cpp_MPa, 1)
+    sigma_L = sigmaL_func(r, P_int_MPa, P_cpp_MPa)
     sigma_rL = sigma_L[0]  
     sigma_tL = sigma_L[1]
     sigma_zL = sigma_L[2]
@@ -2140,7 +2140,7 @@ elif TS_flag:
         # ======================================
         # Mechanical Stresses and Principal stresses in the vessel
         # ======================================
-        sigma_L = sigmaL_func(r, P_int_MPa, P_cpp_MPa, 0)
+        sigma_L = sigmaL_func(r, P_int_MPa, P_cpp_MPa)
         sigma_rL = sigma_L[0]  
         sigma_tL = sigma_L[1]
         sigma_zL = sigma_L[2]
@@ -2231,7 +2231,7 @@ elif TS_flag:
         # ======================================
         # Mechanical Stresses and Principal Stresses in the thermal shield 
         # ======================================
-        sigma_L_S = sigmaL_func(r_S, P_int_MPa, P_int_MPa, 0)
+        sigma_L_S = sigmaL_func(r_S, P_int_MPa, P_int_MPa)
         sigma_rL_S = sigma_L_S[0]  
         sigma_tL_S = sigma_L_S[1]
         sigma_zL_S = sigma_L_S[2]
