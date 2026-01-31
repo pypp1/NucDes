@@ -141,6 +141,9 @@ def simpcomp(f, a, b, N):
     I = (h/6.0)*(f(xL)+4*f(xM)+f(xR)).sum()         # Approximate integral
     return I
 
+print("\n\033[34m############################################################################################################################\033[0m")
+print("\033[34mINITIAL SYSTEM-LEVEL ASSUMPTIONS\033[0m")
+print("\033[34m############################################################################################################################\033[0m")
 # ======================================
 # Default Pressures Check
 # ======================================
@@ -155,8 +158,10 @@ while True:
         print("\033[31mPlease enter a valid integer.\033[0m")
     except RuntimeError as e:
         print(e)
-
+if Def_P_flag:
+    print("\033[34mThe default pressures have been assumed.\033[0m")
 if not Def_P_flag:
+    print("\033[34mThe default pressures have been discarded.\033[0m")
     P_int = float(input("\nSet the internal pressure (bar): "))
     P_int_MPa = P_int/10
     P_cpp = float(input("\nSet the external pressure (bar): "))
@@ -175,7 +180,13 @@ if not Def_P_flag:
             print("\033[31mPlease enter a valid integer.\033[0m")
         except RuntimeError as e:
             print(e)
-    
+
+    if P_int != P_cpp:
+        if eps_choice == 1:                                                                                           #Plane Stress
+            print("\033[34mPlane stress has been assumed.\033[0m")
+        elif eps_choice == 0:
+            print("\033[34mPlane strain has been assumed.\033[0m")
+
 # ======================================
 # Heat Source Check
 # ======================================
@@ -195,6 +206,7 @@ while True:
 # Thermal Shield Check   -   Only if volumetric heat source is considered
 # ====================================== 
 if q_0_flag:
+    print("\033[34mThe presence of the volumetric heat source q0 has been considered.\033[0m")
     while True:
         try:
             TS_flag = int(input("\nDo you want to consider the presence of a thermal shield between the barrel and the vessel? (1: Yes, 0: No): "))
@@ -207,13 +219,16 @@ if q_0_flag:
         except RuntimeError as e:
             print(e)
 elif not q_0_flag:
+    print("\033[34mThe volumetric heat source q0 has been set to 0.\033[0m")
     TS_flag = bool(0)
 
 # =============================================================================================================================================================
 # THERMOMECHANICAL PROBLEM - POWER IMPOSED - NO THERMAL SHIELD
 # =============================================================================================================================================================
 if not TS_flag:
-    
+    print("\n\033[33m############################################################################################################################\033[0m")
+    print("\033[33mTHERMOMECHANICAL PROBLEM - POWER IMPOSED - NO THERMAL SHIELD\033[0m")
+    print("\033[33m############################################################################################################################\033[0m")
     # ============================
     # Computed additional data without the thermal shield
     # ============================
@@ -223,6 +238,9 @@ if not TS_flag:
     # =============================================================================================================================================================
     # PURELY MECHANICAL PROBLEM
     # =============================================================================================================================================================
+    print("\n\033[34m############################################################################################################################\033[0m")
+    print("\033[34mPURELY MECHANICAL PROBLEM\033[0m")
+    print("\033[34m############################################################################################################################\033[0m")
     while True:
         try:
             t = float(input("\nPlease enter the thickness of the vessel wall (m): "))
@@ -251,11 +269,14 @@ if not TS_flag:
     # Mariotte Solution for a thin-walled cylinder (R_int = R_ext = R)
     # ============================
     def sigmaM_func (R_int, P_int_MPa, t): 
-        sigma_rM_cyl = -P_int_MPa/2                        #Compressive
-        sigma_tM_cyl = R_int*P_int_MPa/t                   
-        sigma_zM_cyl = R_int*P_int_MPa/(2*t)
-        sigma_tM_sph = R_int*P_int_MPa/(2*t)
-        return (sigma_rM_cyl, sigma_tM_cyl, sigma_zM_cyl, sigma_tM_sph)
+        sigma_rM_cyl_in = -P_int_MPa/2                        #Compressive
+        sigma_tM_cyl_in = R_int*P_int_MPa/t
+        sigma_zM_cyl_in = R_int*P_int_MPa/(2*t)
+
+        sigma_rM_cyl_out = -P_cpp_MPa/2
+        sigma_tM_cyl_out = -R_int*P_cpp_MPa/t                 #sigma_tM_sph = R_int*P_int_MPa/(2*t)
+        sigma_zM_cyl_out = -R_int*P_cpp_MPa/(2*t)
+        return (sigma_rM_cyl_in+sigma_rM_cyl_out, sigma_tM_cyl_in+sigma_tM_cyl_out, sigma_zM_cyl_in+sigma_zM_cyl_out)
 
     if Mar_criterion > 5:
         while True:
@@ -298,8 +319,6 @@ if not TS_flag:
         elif not Mariotte_flag:
             plt.close()
 
-        elif not Mariotte_flag:
-            print("\033[34mSkipping Mariotte solution.\033[0m")
     else:
         print("\n\033[34mThe cylinder can't be considered thin. Skipping Mariotte solution.\033[0m")
         Mariotte_flag = bool(0)
@@ -374,13 +393,14 @@ if not TS_flag:
         plt.show()
         plt.close()
     elif not Lame_flag:
-        print("\033[34mSkipping Lamé solution.\033[0m")
         plt.close()
     
     # =============================================================================================================================================================
     # PURELY THERMAL PROBLEM
     # =============================================================================================================================================================
-
+    print("\n\033[34m############################################################################################################################\033[0m")
+    print("\033[34mPURELY THERMAL PROBLEM\033[0m")
+    print("\033[34m############################################################################################################################\033[0m")
     # ======================================
     # Radiation-induced heating in the vessel
     # ======================================
@@ -471,9 +491,26 @@ if not TS_flag:
                 print("\033[31mPlease enter a valid integer.\033[0m")
             except RuntimeError as e:
                 print(e)
+                
+        if T1_choice == 0:                #All these temperatures are expressed in K. T_out_max and T_avg_log have been discarded in favor of margins on T_in, to account for transients due to the system's geometry
+            print("\033[34mT1 = T_in has been assumed as the constant temperature of the primary fluid.\033[0m")
+            T1 = T_in
+        elif T1_choice == 1:
+            print("\033[34mT1 = T_in + 10%% has been assumed as the constant temperature of the primary fluid.\033[0m")
+            T1 = T_in * 1.1
+        elif T1_choice == 2:
+            print("\033[34mT1 = T_in + 20%% has been assumed as the constant temperature of the primary fluid.\033[0m")
+            T1 = T_in * 1.2
+        elif T1_choice == 3:
+            print("\033[34mT1 = T_avg has been assumed as the constant temperature of the primary fluid.\033[0m")
+            T1 = ((T_in + T_out_avg)/2)
+        elif T1_choice == 4:
+            print("\033[34mT1 = T_out_avg has been assumed as the constant temperature of the primary fluid.\033[0m")
+            T1 = T_out_avg
+
         while True:
             try:
-                adiab_flag = int(input("Apply Adiabatic Outer Wall approximation? (1: Yes, 0: No): "))
+                adiab_flag = int(input("\nApply Adiabatic Outer Wall approximation? (1: Yes, 0: No): "))
                 if adiab_flag not in (0, 1):
                     raise RuntimeError("\033[31mInvalid input! Please enter either 0 or 1.\033[0m")
                 adiab_flag = bool(adiab_flag)
@@ -482,24 +519,15 @@ if not TS_flag:
                 print("\033[31mPlease enter a valid integer.\033[0m")
             except RuntimeError as e:
                 print(e)
-
-        if T1_choice == 0:                #All these temperatures are expressed in K. T_out_max and T_avg_log have been discarded in favor of margins on T_in, to account for transients due to the system's geometry
-            T1 = T_in
-        elif T1_choice == 1:
-            T1 = T_in * 1.1
-        elif T1_choice == 2:
-            T1 = T_in * 1.2
-        elif T1_choice == 3:
-            T1 = ((T_in + T_out_avg)/2)
-        elif T1_choice == 4:
-            T1 = T_out_avg
         
         # ======================================
         # T profile constants for the vessel: general and under adiabatic outer wall approximation (dT/dx = 0 at r = R_ext)
         # ======================================
         if not adiab_flag:
+            print("\033[34mThe Adiabatic Outer Wall approximation has not been applied.\033[0m")
             C1 = ((q_0/(k_st*mu_st**2))*(np.exp(-mu_st*t)-1)-(q_0/mu_st)*((1/h_1)+(np.exp(-mu_st*t)/u_2))-(T1-T_cpp))/(t+(k_st/h_1)+(k_st/u_2))
         elif adiab_flag:
+            print("\033[34mThe Adiabatic Outer Wall approximation has been applied.\033[0m")
             C1 = -((q_0/(k_st*mu_st))*np.exp(-mu_st*t))
         C2 = T1 + (q_0/(h_1*mu_st)) + C1*(k_st/h_1) + (q_0/(k_st*mu_st**2))
 
@@ -879,6 +907,7 @@ if not TS_flag:
                     print(e)
 
             if ThinTubes_flag:
+                print("\033[34mThe thin tube limits were adopted.\033[0m")
                 p_E_fun = lambda Dt: 2 * (E/(1-(nu**2))) * (1/(Dt**3))              #Elastic Instability Limit for Thin Tubes
                 p_0_fun = lambda Dt: 2 * Yield_stress * 1/Dt                        #Plastic Collapse Limit for Thin Tubes
 
@@ -894,7 +923,7 @@ if not TS_flag:
         if ThinTubes_flag:
             while True:
                 try:
-                    Corradi_flag = int(input("\nThe thin tube limits were adopted. Are you interested in the more general Corradi Design Procedure? (1: Yes, 0: No): "))
+                    Corradi_flag = int(input("\nAre you interested in the Corradi Design Procedure? (1: Yes, 0: No): "))
                     if Corradi_flag not in (0, 1):
                         raise RuntimeError("\033[31mInvalid input! Please enter either 0 or 1.\033[0m")
                     Corradi_flag = bool(Corradi_flag)
@@ -1285,7 +1314,7 @@ if not TS_flag:
                 if sigma_zM > Stress_Intensity:
                     output_lines.append("\nThe primary axial stress exceeds allowable stress.")
                 output_lines.append("\n============================================================================================================================")
-                output_lines.append("The current stress state in the vessel is not acceptable.")
+                output_lines.append("WARNING: The current stress state in the vessel is not acceptable.")
                 output_lines.append("============================================================================================================================")
             
             elif not flag_primsec and not flag_prim:
@@ -1306,14 +1335,14 @@ if not TS_flag:
                 output_lines.append("\nThe comparison stress of primary stresses only according to Tresca-Lamé Sc = %.3f MPa is lower than the allowable stress Sa = %.3f MPa" %(sigma_cTR_L_PO, Stress_Intensity))
             else:
                 output_lines.append("\n============================================================================================================================")
-                output_lines.append("The comparison stress of primary stresses only according to Tresca-Lamé Sc = %.3f MPa is higher than the allowable stress Sa = %.3f MPa" %(sigma_cTR_L_PO, Stress_Intensity))
+                output_lines.append("WARNING: The comparison stress of primary stresses only according to Tresca-Lamé Sc = %.3f MPa is higher than the allowable stress Sa = %.3f MPa" %(sigma_cTR_L_PO, Stress_Intensity))
                 output_lines.append("============================================================================================================================")
             if (sigma_cTR_M_PO < Stress_Intensity):
                 output_lines.append("The comparison stress of primary stresses only according to Tresca-Mariotte Sc = %.3f MPa is lower than the allowable stress Sa = %.3f MPa" %(sigma_cTR_M_PO, Stress_Intensity))
                 output_lines.append("\n============================================================================================================================")
             else:
                 output_lines.append("\n============================================================================================================================")
-                output_lines.append("The comparison stress of primary stresses only according to Tresca-Mariotte Sc = %.3f MPa is higher than the allowable stress Sa = %.3f MPa" %(sigma_cTR_M_PO, Stress_Intensity))
+                output_lines.append("WARNING: The comparison stress of primary stresses only according to Tresca-Mariotte Sc = %.3f MPa is higher than the allowable stress Sa = %.3f MPa" %(sigma_cTR_M_PO, Stress_Intensity))
                 output_lines.append("============================================================================================================================")
                 
             if (sigma_cTR_L < 3*Stress_Intensity):
@@ -1321,14 +1350,14 @@ if not TS_flag:
                 output_lines.append("\nThe comparison stress according to Tresca-Lamé Sc = %.3f MPa is lower than the allowable stress Sa = %.3f MPa" %(sigma_cTR_L, 3*Stress_Intensity))
             else:
                 output_lines.append("\n============================================================================================================================")
-                output_lines.append("The comparison stress according to Tresca-Lamé Sc = %.3f MPa is higher than the allowable stress Sa = %.3f MPa" %(sigma_cTR_L, 3*Stress_Intensity))
+                output_lines.append("WARNING: The comparison stress according to Tresca-Lamé Sc = %.3f MPa is higher than the allowable stress Sa = %.3f MPa" %(sigma_cTR_L, 3*Stress_Intensity))
                 output_lines.append("============================================================================================================================")
             if (sigma_cTR_M < 3*Stress_Intensity):
                 output_lines.append("The comparison stress according to Tresca-Mariotte Sc = %.3f MPa is lower than the allowable stress Sa = %.3f MPa" %(sigma_cTR_M, 3*Stress_Intensity))
                 output_lines.append("\n============================================================================================================================")
             else:
                 output_lines.append("\n============================================================================================================================")
-                output_lines.append("The comparison stress according to Tresca-Mariotte Sc = %.3f MPa is higher than the allowable stress Sa = %.3f MPa" %(sigma_cTR_M, 3*Stress_Intensity))
+                output_lines.append("WARNING: The comparison stress according to Tresca-Mariotte Sc = %.3f MPa is higher than the allowable stress Sa = %.3f MPa" %(sigma_cTR_M, 3*Stress_Intensity))
                 output_lines.append("============================================================================================================================")
                 
             output_lines.append("\n\n\n\n######################################################### Buckling #########################################################")
@@ -1342,7 +1371,7 @@ if not TS_flag:
                 output_lines.append("\n============================================================================================================================")
             elif not buckling_flag:
                 output_lines.append("\n============================================================================================================================")
-                output_lines.append("The given external pressure of %.3f bar is higher than the allowable pressure of %.3f bar: a change in thickness is required!" %(P_cpp, 10*Corradi_vessel[1]))
+                output_lines.append("WARNING: The given external pressure of %.3f bar is higher than the allowable pressure of %.3f bar: a change in thickness is required!" %(P_cpp, 10*Corradi_vessel[1]))
                 output_lines.append("============================================================================================================================")
 
             if buckling_flag and sigma_cTR_L_PO < Stress_Intensity and sigma_cTR_M_PO < Stress_Intensity and sigma_cTR_L < 3*Stress_Intensity and sigma_cTR_M < 3*Stress_Intensity and not creep_flag_V:
@@ -1355,9 +1384,9 @@ if not TS_flag:
                 file.write(line + '\n')                                 # Add a newline for formatting in the text file
             shutil.move(NTS_plots_directory_path, case_directory_path)  # Move the plots directory into the case directory
             
-            print("\n\n\n\n\033[32m############################################################################################################################\033[0m")
+            print("\n\n\033[32m############################################################################################################################\033[0m")
         print("\033[32mResults have been saved at: %s\033[0m" %case_directory_path)
-        print("\033[32m############################################################################################################################\033[0m")
+        print("\033[32m############################################################################################################################\033[0m\n\n")
             
     # ======================================
     # Discretization along z
@@ -1555,10 +1584,16 @@ if not TS_flag:
 # THERMOMECHANICAL PROBLEM - POWER IMPOSED - THERMAL SHIELD
 # =============================================================================================================================================================
 elif TS_flag:
-    
+    print("\n\033[33m############################################################################################################################\033[0m")
+    print("\033[33mTHERMOMECHANICAL PROBLEM - POWER IMPOSED - THERMAL SHIELD\033[0m")
+    print("\033[33m############################################################################################################################\033[0m")
+
     # =============================================================================================================================================================
     # PURELY MECHANICAL PROBLEM
     # =============================================================================================================================================================
+    print("\n\033[34m############################################################################################################################\033[0m")
+    print("\033[34mPURELY MECHANICAL PROBLEM\033[0m")
+    print("\033[34m############################################################################################################################\033[0m")
     t = 0.05                                    #m
     R_ext = R_int + t                           #m
     D_vess_ext = 2*R_ext                        #m
@@ -1574,11 +1609,14 @@ elif TS_flag:
     # Mariotte Solution for a thin-walled cylinder (R_int = R_ext = R)
     # ============================
     def sigmaM_func (R_int, P_int_MPa, t): 
-        sigma_rM_cyl = -P_int_MPa/2                        #Compressive
-        sigma_tM_cyl = R_int*P_int_MPa/t                   
-        sigma_zM_cyl = R_int*P_int_MPa/(2*t)
-        sigma_tM_sph = R_int*P_int_MPa/(2*t)
-        return (sigma_rM_cyl, sigma_tM_cyl, sigma_zM_cyl, sigma_tM_sph)
+        sigma_rM_cyl_in = -P_int_MPa/2                        #Compressive
+        sigma_tM_cyl_in = R_int*P_int_MPa/t
+        sigma_zM_cyl_in = R_int*P_int_MPa/(2*t)
+
+        sigma_rM_cyl_out = -P_cpp_MPa/2
+        sigma_tM_cyl_out = -R_int*P_cpp_MPa/t                 #sigma_tM_sph = R_int*P_int_MPa/(2*t)
+        sigma_zM_cyl_out = -R_int*P_cpp_MPa/(2*t)
+        return (sigma_rM_cyl_in+sigma_rM_cyl_out, sigma_tM_cyl_in+sigma_tM_cyl_out, sigma_zM_cyl_in+sigma_zM_cyl_out)
 
     if Mar_criterion > 5:
         while True:
@@ -1621,8 +1659,6 @@ elif TS_flag:
         elif not Mariotte_flag:
             plt.close()
 
-        elif not Mariotte_flag:
-            print("\033[34mSkipping Mariotte solution.\033[0m")
     else:
         print("\n\033[34mThe cylinder can't be considered thin. Skipping Mariotte solution.\033[0m")
         Mariotte_flag = bool(0)
@@ -1699,14 +1735,13 @@ elif TS_flag:
         plt.close()
     elif not Lame_flag:
         plt.close()
-
-    elif not Lame_flag:
-        print("\033[34mSkipping Lamé solution.\033[0m")
     
     # =============================================================================================================================================================
     # PURELY THERMAL PROBLEM
     # =============================================================================================================================================================
-    
+    print("\n\033[34m############################################################################################################################\033[0m")
+    print("\033[34mPURELY THERMAL PROBLEM\033[0m")
+    print("\033[34m############################################################################################################################\033[0m")
     t_shield_user = 0.001           #Initial guess for the thermal shield thickness
 
     while True:
@@ -1821,9 +1856,26 @@ elif TS_flag:
             print("\033[31mPlease enter a valid integer.\033[0m")
         except RuntimeError as e:
             print(e)
+
+    if T1_choice == 0:                #All these temperatures are expressed in K. T_out_max and T_avg_log have been discarded in favor of margins on T_in, to account for transients due to the system's geometry
+        print("\033[34mT1 = T_in has been assumed as the constant temperature of the primary fluid.\033[0m")
+        T1 = T_in
+    elif T1_choice == 1:
+        print("\033[34mT1 = T_in + 10%% has been assumed as the constant temperature of the primary fluid.\033[0m")
+        T1 = T_in * 1.1
+    elif T1_choice == 2:
+        print("\033[34mT1 = T_in + 20%% has been assumed as the constant temperature of the primary fluid.\033[0m")
+        T1 = T_in * 1.2
+    elif T1_choice == 3:
+        print("\033[34mT1 = T_avg has been assumed as the constant temperature of the primary fluid.\033[0m")
+        T1 = ((T_in + T_out_avg)/2)
+    elif T1_choice == 4:
+        print("\033[34mT1 = T_out_avg has been assumed as the constant temperature of the primary fluid.\033[0m")
+        T1 = T_out_avg
+
     while True:
         try:
-            adiab_flag = int(input("Apply Adiabatic Outer Wall approximation? (1: Yes, 0: No): "))
+            adiab_flag = int(input("\nApply Adiabatic Outer Wall approximation? (1: Yes, 0: No): "))
             if adiab_flag not in (0, 1):
                 raise RuntimeError("\033[31mInvalid input! Please enter either 0 or 1.\033[0m")
             adiab_flag = bool(adiab_flag)
@@ -1832,6 +1884,10 @@ elif TS_flag:
             print("\033[31mPlease enter a valid integer.\033[0m")
         except RuntimeError as e:
             print(e)
+    if not adiab_flag:
+        print("\033[34mThe Adiabatic Outer Wall approximation has not been applied.\033[0m")
+    elif adiab_flag:
+        print("\033[34mThe Adiabatic Outer Wall approximation has been applied.\033[0m")
 
     # =============================================================================================================================================================
     # Thermal Shield Thickness Iterative Computation
@@ -1857,7 +1913,7 @@ elif TS_flag:
     
     while True:
         try:
-            s = float(input("Please enter a safety factor between 1.5 and 2 for the Corradi design procedure: "))
+            s = float(input("\nPlease enter a safety factor between 1.5 and 2 for the Corradi design procedure: "))
             if s < 1.5 or s > 2:
                 raise RuntimeError("\033[31mInvalid input! Please enter a safety factor between 1.5 and 2.\033[0m")
             break  
@@ -2003,17 +2059,6 @@ elif TS_flag:
         h_2 = (Nu_2*k_cpp)/L                                                                        #W/(m²·K)
         R_th_2_tot = (1/(2*np.pi*(R_ext + t_th_ins)*L)) * ((((R_ext + t_th_ins)/k_th_ins)*np.log((R_ext + t_th_ins)/R_ext)) + (1/h_2))                          #Thermal Resistance of the insulation layer + natural convection outside the vessel
         u_2 = 1/(2*np.pi*(R_ext + t_th_ins)*L*R_th_2_tot)                                           #W/(m²·K)   -   Overall heat transfer coefficient outside the vessel
-
-        if T1_choice == 0:                #All these temperatures are expressed in K. T_out_max and T_avg_log have been discarded in favor of margins on T_in, to account for transients due to the system's geometry
-            T1 = T_in
-        elif T1_choice == 1:
-            T1 = T_in * 1.1
-        elif T1_choice == 2:
-            T1 = T_in * 1.2
-        elif T1_choice == 3:
-            T1 = ((T_in + T_out_avg)/2)
-        elif T1_choice == 4:
-            T1 = T_out_avg
 
         R_ext = R_int + t
         r = np.linspace(R_int, R_ext, dr)
@@ -2750,6 +2795,7 @@ elif TS_flag:
                 print(e)
 
         if ThinTubes_flag:
+            print("\033[34mThe thin tube limits were adopted.\033[0m")
             p_E_fun = lambda Dt: 2 * (E/(1-(nu**2))) * (1/(Dt**3))              #Elastic Instability Limit for Thin Tubes
             p_0_fun = lambda Dt: 2 * Yield_stress * 1/Dt                        #Plastic Collapse Limit for Thin Tubes  -   Vessel
             p_0_fun_S = lambda Dt: 2 * Yield_stress_S * 1/Dt                    #Plastic Collapse Limit for Thin Tubes  -   Thermal Shield
@@ -2763,7 +2809,7 @@ elif TS_flag:
     if ThinTubes_flag:
         while True:
             try:
-                Corradi_flag = int(input("\nThe thin tube limits were adopted. Are you interested in the more general Corradi Design Procedure? (1: Yes, 0: No): "))
+                Corradi_flag = int(input("\nAre you interested in the Corradi Design Procedure? (1: Yes, 0: No): "))
                 if Corradi_flag not in (0, 1):
                     raise RuntimeError("\033[31mInvalid input! Please enter either 0 or 1.\033[0m")
                 Corradi_flag = bool(Corradi_flag)
@@ -3138,7 +3184,7 @@ elif TS_flag:
         #output_lines.append("Maximum Thermal Hoop Stress in the vessel (Simplified formula): %.3f Mpa at r = %.3f m" %(sigma_t_th_V_max_SIMP, r_sigma_t_th_V_max_SIMP))
         output_lines.append("Maximum thermal hoop stress in the vessel via design curves: %.3f MPa" %sigma_t_th_V_max_DES)
 
-        output_lines.append("Maximum Thermal Hoop Stress in the thermal shield: %.3f Mpa at r = %.3f m" %(sigma_t_th_S_max, r_sigma_t_th_S_max))
+        output_lines.append("\nMaximum Thermal Hoop Stress in the thermal shield: %.3f Mpa at r = %.3f m" %(sigma_t_th_S_max, r_sigma_t_th_S_max))
         #output_lines.append("Maximum Thermal Hoop Stress in the thermal shield (Simplified formula): %.3f Mpa at r = %.3f m" %(sigma_t_th_S_max_SIMP, r_sigma_t_th_S_max_SIMP))
         output_lines.append("Maximum thermal hoop stress in the thermal shield via design curves: %.3f MPa" %sigma_t_th_S_max_DES)
         output_lines.append("\n============================================================================================================================")
@@ -3201,7 +3247,7 @@ elif TS_flag:
             if sigma_zM_S > Stress_Intensity_S:
                 output_lines.append("\nThe primary axial stress exceeds allowable stress.")
             output_lines.append("\n============================================================================================================================")
-            output_lines.append("The current stress state in the thermal shield is not acceptable.")
+            output_lines.append("WARNING: The current stress state in the thermal shield is not acceptable.")
             output_lines.append("============================================================================================================================")
         
         elif not flag_primsec_S and not flag_prim_S:
@@ -3222,34 +3268,34 @@ elif TS_flag:
             output_lines.append("\nThe comparison stress of primary stresses only according to Tresca-Lamé Sc = %.3f MPa is lower than the allowable stress Sa = %.3f MPa" %(sigma_cTR_LS_PO, Stress_Intensity_S))
         else:
             output_lines.append("\n============================================================================================================================")
-            output_lines.append("The comparison stress of primary stresses only according to Tresca-Lamé Sc = %.3f MPa is higher than the allowable stress Sa = %.3f MPa" %(sigma_cTR_LS_PO, Stress_Intensity_S))
+            output_lines.append("WARNING: The comparison stress of primary stresses only according to Tresca-Lamé Sc = %.3f MPa is higher than the allowable stress Sa = %.3f MPa" %(sigma_cTR_LS_PO, Stress_Intensity_S))
             output_lines.append("============================================================================================================================")
         if (sigma_cTR_MS_PO < Stress_Intensity_S):
             output_lines.append("The comparison stress of primary stresses only according to Tresca-Mariotte Sc = %.3f MPa is lower than the allowable stress Sa = %.3f MPa" %(sigma_cTR_MS_PO, Stress_Intensity_S))
             output_lines.append("\n============================================================================================================================")
         else:
             output_lines.append("\n============================================================================================================================")
-            output_lines.append("The comparison stress of primary stresses only according to Tresca-Mariotte Sc = %.3f MPa is higher than the allowable stress Sa = %.3f MPa" %(sigma_cTR_MS_PO, Stress_Intensity_S))
+            output_lines.append("WARNING: The comparison stress of primary stresses only according to Tresca-Mariotte Sc = %.3f MPa is higher than the allowable stress Sa = %.3f MPa" %(sigma_cTR_MS_PO, Stress_Intensity_S))
             output_lines.append("============================================================================================================================")
         
         if (sigma_cTR_LS < 3*Stress_Intensity_S):
             output_lines.append("\nThe comparison stress according to Tresca-Lamé Sc = %.3f MPa is lower than the allowable stress Sa = %.3f MPa" %(sigma_cTR_LS, 3*Stress_Intensity_S))
         else:
             output_lines.append("\n============================================================================================================================")
-            output_lines.append("The comparison stress according to Tresca-Lamé Sc = %.3f MPa is higher than the allowable stress Sa = %.3f MPa" %(sigma_cTR_LS, 3*Stress_Intensity_S))
+            output_lines.append("WARNING: The comparison stress according to Tresca-Lamé Sc = %.3f MPa is higher than the allowable stress Sa = %.3f MPa" %(sigma_cTR_LS, 3*Stress_Intensity_S))
             output_lines.append("============================================================================================================================")
         if (sigma_cTR_MS < 3*Stress_Intensity_S):
             output_lines.append("The comparison stress according to Tresca-Mariotte Sc = %.3f MPa is lower than the allowable stress Sa = %.3f MPa" %(sigma_cTR_MS, 3*Stress_Intensity_S))
             output_lines.append("\n============================================================================================================================")
         else:
             output_lines.append("\n============================================================================================================================")
-            output_lines.append("The comparison stress according to Tresca-Mariotte Sc = %.3f MPa is higher than the allowable stress Sa = %.3f MPa" %(sigma_cTR_MS, 3*Stress_Intensity_S))
+            output_lines.append("WARNING: The comparison stress according to Tresca-Mariotte Sc = %.3f MPa is higher than the allowable stress Sa = %.3f MPa" %(sigma_cTR_MS, 3*Stress_Intensity_S))
             output_lines.append("============================================================================================================================")
             
-        if not flag_primsec_S and not flag_prim_S and sigma_cTR_LS < sigma_allowable_S and sigma_cTR_MS < sigma_allowable_S and not creep_flag_S:
-            output_lines.append("\n\n\n\n############################################################################################################################")
-            output_lines.append("The thermal shield's integrity is ensured.")
-            output_lines.append("############################################################################################################################")
+        # if not flag_primsec_S and not flag_prim_S and sigma_cTR_LS < sigma_allowable_S and sigma_cTR_MS < sigma_allowable_S and not creep_flag_S:
+        #     output_lines.append("\n\n\n\n############################################################################################################################")
+        #     output_lines.append("The thermal shield's integrity is ensured.")
+        #     output_lines.append("############################################################################################################################")
 
         # ============================
         # Vessel
@@ -3290,7 +3336,7 @@ elif TS_flag:
             if sigma_zM > Stress_Intensity:
                 output_lines.append("\nThe primary axial stress exceeds allowable stress.")
             output_lines.append("\n============================================================================================================================")
-            output_lines.append("The current stress state in the vessel is not acceptable. \nPrimary + Secondary Stresses flag: %d \nPrimary Stresses flag: %d" %(flag_primsec, flag_prim))
+            output_lines.append("WARNING: The current stress state in the vessel is not acceptable.")
             output_lines.append("============================================================================================================================")
     
         elif not flag_primsec and not flag_prim:
@@ -3311,28 +3357,28 @@ elif TS_flag:
             output_lines.append("\nThe comparison stress of primary stresses only according to Tresca-Lamé Sc = %.3f MPa is lower than the allowable stress Sa = %.3f MPa" %(sigma_cTR_L_PO, Stress_Intensity))
         else:
             output_lines.append("\n============================================================================================================================")
-            output_lines.append("The comparison stress of primary stresses only according to Tresca-Lamé Sc = %.3f MPa is higher than the allowable stress Sa = %.3f MPa" %(sigma_cTR_L_PO, Stress_Intensity))
+            output_lines.append("WARNING: The comparison stress of primary stresses only according to Tresca-Lamé Sc = %.3f MPa is higher than the allowable stress Sa = %.3f MPa" %(sigma_cTR_L_PO, Stress_Intensity))
             output_lines.append("============================================================================================================================")
         if (sigma_cTR_M_PO < Stress_Intensity):
             output_lines.append("The comparison stress of primary stresses only according to Tresca-Mariotte Sc = %.3f MPa is lower than the allowable stress Sa = %.3f MPa" %(sigma_cTR_M_PO, Stress_Intensity))
             output_lines.append("\n============================================================================================================================")
         else:
             output_lines.append("\n============================================================================================================================")
-            output_lines.append("The comparison stress of primary stresses only according to Tresca-Mariotte Sc = %.3f MPa is higher than the allowable stress Sa = %.3f MPa" %(sigma_cTR_M_PO, Stress_Intensity))
+            output_lines.append("WARNING: The comparison stress of primary stresses only according to Tresca-Mariotte Sc = %.3f MPa is higher than the allowable stress Sa = %.3f MPa" %(sigma_cTR_M_PO, Stress_Intensity))
             output_lines.append("============================================================================================================================")
             
         if (sigma_cTR_L < 3*Stress_Intensity):
             output_lines.append("\nThe comparison stress according to Tresca-Lamé Sc = %.3f MPa is lower than the allowable stress Sa = %.3f MPa" %(sigma_cTR_L, 3*Stress_Intensity))
         else:
             output_lines.append("\n============================================================================================================================")
-            output_lines.append("The comparison stress according to Tresca-Lamé Sc = %.3f MPa is higher than the allowable stress Sa = %.3f MPa" %(sigma_cTR_L, 3*Stress_Intensity))
+            output_lines.append("WARNING: The comparison stress according to Tresca-Lamé Sc = %.3f MPa is higher than the allowable stress Sa = %.3f MPa" %(sigma_cTR_L, 3*Stress_Intensity))
             output_lines.append("============================================================================================================================")
         if (sigma_cTR_M < 3*Stress_Intensity):
             output_lines.append("The comparison stress according to Tresca-Mariotte Sc = %.3f MPa is lower than the allowable stress Sa = %.3f MPa" %(sigma_cTR_M, 3*Stress_Intensity))
             output_lines.append("\n============================================================================================================================")
         else:
             output_lines.append("\n============================================================================================================================")
-            output_lines.append("The comparison stress according to Tresca-Mariotte Sc = %.3f MPa is higher than the allowable stress Sa = %.3f MPa" %(sigma_cTR_M, 3*Stress_Intensity))
+            output_lines.append("WARNING: The comparison stress according to Tresca-Mariotte Sc = %.3f MPa is higher than the allowable stress Sa = %.3f MPa" %(sigma_cTR_M, 3*Stress_Intensity))
             output_lines.append("============================================================================================================================")
         
         output_lines.append("\n\n\n\n######################################################### Buckling #########################################################")
@@ -3346,7 +3392,7 @@ elif TS_flag:
             output_lines.append("\n============================================================================================================================")
         elif not buckling_flag:
             output_lines.append("\n============================================================================================================================")
-            output_lines.append("The given external pressure of %.3f bar is higher than the allowable pressure of %.3f bar: a change in thickness is required!" %(P_cpp, 10*Corradi_vessel[1]))
+            output_lines.append("WARNING: The given external pressure of %.3f bar is higher than the allowable pressure of %.3f bar: a change in thickness is required!" %(P_cpp, 10*Corradi_vessel[1]))
             output_lines.append("============================================================================================================================")
             
         if buckling_flag and sigma_cTR_L_PO < Stress_Intensity and sigma_cTR_M_PO < Stress_Intensity and sigma_cTR_L < 3*Stress_Intensity and sigma_cTR_M < 3*Stress_Intensity and not creep_flag_V:
@@ -3359,6 +3405,6 @@ elif TS_flag:
             file.write(line + '\n')
         shutil.move(TS_plots_directory_path, case_directory_path)
         
-        print("\n\n\n\n\033[32m############################################################################################################################\033[0m")
+        print("\n\n\033[32m############################################################################################################################\033[0m")
         print("\033[32mResults have been saved at: %s\033[0m" %case_directory_path)
-        print("\033[32m############################################################################################################################\033[0m")
+        print("\033[32m############################################################################################################################\033[0m\n\n")
