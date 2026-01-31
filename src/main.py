@@ -461,7 +461,7 @@ if not TS_flag:
     # ======================================
     while True:
         try:
-            Disc_flag = int(input("Do you want to adopt a discretization approach along z? (1: Yes, 0: No): "))
+            Disc_flag = int(input("\nDo you want to adopt a discretization approach along z? (1: Yes, 0: No): "))
             if Disc_flag not in (0, 1):
                 raise RuntimeError("\033[31mInvalid input! Please enter either 0 or 1.\033[0m")
             Disc_flag = bool(Disc_flag)
