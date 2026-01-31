@@ -281,7 +281,7 @@ if not TS_flag:
     if Mar_criterion > 5:
         while True:
             try:
-                Mariotte_flag = int(input("\nWith an initial thickness value of %.3f m, the vessel can be considered thin. Are you interested in visualizing the Mariotte solution for stress? (1: Yes, 0: No): " %t))
+                Mariotte_flag = int(input("\nWith an initial thickness value of %.3f m, the vessel can be considered thin. Do you want to visualize the Mariotte solution for stress? (1: Yes, 0: No): " %t))
                 if Mariotte_flag not in (0, 1):
                     raise RuntimeError("\033[31mInvalid input! Please enter either 0 or 1.\033[0m")
                 Mariotte_flag = bool(Mariotte_flag)
@@ -354,22 +354,17 @@ if not TS_flag:
     sigma_tL = sigma_L[1]
     sigma_zL = sigma_L[2]
 
-    if Mariotte_flag:
-        while True:
-            try:
-                Lame_flag = int(input("\nThe Mariotte solution for a thin cylinder has been visualized. Are you interested in visualizing the more general Lamé solution? (1: Yes, 0: No): "))
-                if Lame_flag not in (0, 1):
-                    raise RuntimeError("\033[31mInvalid input! Please enter either 0 or 1.\033[0m")
-                Lame_flag = bool(Lame_flag)
-                break  
-            except ValueError:
-                print("\033[31mPlease enter a valid integer.\033[0m")
-            except RuntimeError as e:
-                print(e)
-
-    elif not Mariotte_flag:
-        print("\033[34mVisualizing general Lamé solution.\033[0m")
-        Lame_flag = bool(1)
+    while True:
+        try:
+            Lame_flag = int(input("\nDo you want to visualize the Lamé solution? (1: Yes, 0: No): "))
+            if Lame_flag not in (0, 1):
+                raise RuntimeError("\033[31mInvalid input! Please enter either 0 or 1.\033[0m")
+            Lame_flag = bool(Lame_flag)
+            break  
+        except ValueError:
+            print("\033[31mPlease enter a valid integer.\033[0m")
+        except RuntimeError as e:
+            print(e)
 
     # ======================================
     # Plotting the stress profiles: Lamé
@@ -1621,7 +1616,7 @@ elif TS_flag:
     if Mar_criterion > 5:
         while True:
             try:
-                Mariotte_flag = int(input("\nWith an initial thickness value of %.3f m, the vessel can be considered thin. Are you interested in visualizing the Mariotte solution for stress? (1: Yes, 0: No): " %t))
+                Mariotte_flag = int(input("\nWith an initial thickness value of %.3f m, the vessel can be considered thin. Do you want to visualize the Mariotte solution for stress? (1: Yes, 0: No): " %t))
                 if Mariotte_flag not in (0, 1):
                     raise RuntimeError("\033[31mInvalid input! Please enter either 0 or 1.\033[0m")
                 Mariotte_flag = bool(Mariotte_flag)
@@ -1696,22 +1691,17 @@ elif TS_flag:
     sigma_tL = sigma_L[1]
     sigma_zL = sigma_L[2]
 
-    if Mariotte_flag:
-        while True:
-            try:
-                Lame_flag = int(input("\nThe Mariotte solution for a thin cylinder has been visualized. Are you interested in visualizing the more general Lamé solution? (1: Yes, 0: No): "))
-                if Lame_flag not in (0, 1):
-                    raise RuntimeError("\033[31mInvalid input! Please enter either 0 or 1.\033[0m")
-                Lame_flag = bool(Lame_flag)
-                break  
-            except ValueError:
-                print("\033[31mPlease enter a valid integer.\033[0m")
-            except RuntimeError as e:
-                print(e)
-
-    elif not Mariotte_flag:
-        print("\033[34mVisualizing general Lamé solution.\033[0m")
-        Lame_flag = bool(1)
+    while True:
+        try:
+            Lame_flag = int(input("\nDo you want to visualize the Lamé solution? (1: Yes, 0: No): "))
+            if Lame_flag not in (0, 1):
+                raise RuntimeError("\033[31mInvalid input! Please enter either 0 or 1.\033[0m")
+            Lame_flag = bool(Lame_flag)
+            break  
+        except ValueError:
+            print("\033[31mPlease enter a valid integer.\033[0m")
+        except RuntimeError as e:
+            print(e)
 
     # ======================================
     # Plotting the stress profiles: Lamé
